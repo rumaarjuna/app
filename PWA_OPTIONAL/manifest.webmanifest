@@ -1,14 +1,20 @@
 {
+  "id": "./",
   "name": "RUMA - Personal & Household Assistant",
   "short_name": "RUMA",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
+  "orientation": "any",
   "background_color": "#fff8fc",
   "theme_color": "#ec4899",
-  "description": "Asisten pribadi dan rumah tangga untuk pasangan.",
+  "description": "Asisten personal dan rumah tangga untuk pasangan.",
+  "categories": ["finance", "productivity", "lifestyle"],
   "icons": [
-    {"src":"icon-192.png","sizes":"192x192","type":"image/png"},
-    {"src":"icon-512.png","sizes":"512x512","type":"image/png"}
+    {"src":"./icon-192.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},
+    {"src":"./icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}
+  ],
+  "shortcuts": [
+    {"name":"Buka RUMA","short_name":"RUMA","url":"./","icons":[{"src":"./icon-192.png","sizes":"192x192"}]}
   ]
 }
