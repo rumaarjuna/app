@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#ec4899">
+  <title>RUMA</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <script src="config.js"></script>
+  <style>
+    :root{
+      --pink:#ec4899; --pink-2:#f472b6; --pink-3:#fce7f3; --pink-4:#fff1f7;
+      --ink:#211827; --muted:#756777; --line:#eadde6; --bg:#fff8fc; --card:#fff;
+      --ok:#0f9f6e; --warn:#d97706; --danger:#dc2626; --shadow:0 12px 34px rgba(92,43,72,.10);
+      --radius:20px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+    body{min-height:100vh}
+    button,input,select,textarea{font:inherit}
+    button{cursor:pointer}
+    .hidden{display:none!important}
+    .app{max-width:1180px;margin:auto;min-height:100vh;padding:0 18px 96px}
+    .top{position:sticky;top:0;z-index:20;background:rgba(255,248,252,.92);backdrop-filter:blur(12px);padding:14px 0;border-bottom:1px solid rgba(234,221,230,.8)}
+    .topin{display:flex;align-items:center;gap:12px}
+    .brand{width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,var(--pink),#db2777);color:#fff;display:grid;place-items:center;font-weight:900;font-size:20px;box-shadow:var(--shadow)}
+    .grow{flex:1}
+    .title{font-size:18px;font-weight:800}
+    .sub{font-size:12px;color:var(--muted)}
+    .iconbtn{border:1px solid var(--line);background:#fff;width:42px;height:42px;border-radius:14px;display:grid;place-items:center}
+    .hero{margin:22px 0 14px;background:linear-gradient(135deg,#db2777,#f472b6 70%,#f9a8d4);color:#fff;border-radius:28px;padding:24px;box-shadow:0 18px 40px rgba(236,72,153,.20)}
+    .hero h1{margin:0 0 5px;font-size:28px}
+    .hero p{margin:0;opacity:.9}
+    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:0 6px 20px rgba(92,43,72,.045)}
+    .span4{grid-column:span 4}.span6{grid-column:span 6}.span8{grid-column:span 8}.span12{grid-column:span 12}
+    .metric{font-size:25px;font-weight:900;margin-top:7px}.muted{color:var(--muted)}.small{font-size:12px}.label{font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+    .row{display:flex;align-items:center;gap:10px}.between{justify-content:space-between}.wrap{flex-wrap:wrap}
+    .badge{padding:5px 9px;border-radius:999px;background:var(--pink-3);color:#be185d;font-size:11px;font-weight:800}
+    .badge.ok{background:#dff8ef;color:#087a54}.badge.warn{background:#fff1d5;color:#a15c00}.badge.gray{background:#f2edf0;color:#665b62}
+    .list{display:flex;flex-direction:column;gap:9px;margin-top:12px}
+    .item{border:1px solid var(--line);border-radius:15px;padding:12px;background:#fff;display:flex;align-items:center;gap:11px}
+    .item .main{flex:1;min-width:0}.item .name{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.item .meta{font-size:12px;color:var(--muted);margin-top:2px}
+    .amount{font-weight:900}.amount.expense{color:#c0266d}.amount.income{color:#07835b}
+    .btn{border:0;border-radius:14px;padding:11px 15px;font-weight:800;background:var(--pink);color:#fff}
+    .btn.secondary{background:var(--pink-3);color:#be185d}.btn.ghost{background:#fff;border:1px solid var(--line);color:var(--ink)}.btn.danger{background:#fee2e2;color:#b91c1c}
+    .btn.sm{padding:7px 10px;border-radius:11px;font-size:12px}
+    .tabs{display:flex;gap:7px;overflow:auto;padding-bottom:4px;margin:12px 0}.tab{white-space:nowrap;border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 12px;font-weight:700;color:var(--muted)}.tab.active{background:var(--pink);color:#fff;border-color:var(--pink)}
+    .page{display:none}.page.active{display:block}
+    .nav{position:fixed;bottom:0;left:0;right:0;z-index:30;background:rgba(255,255,255,.94);backdrop-filter:blur(14px);border-top:1px solid var(--line);padding:8px max(10px,env(safe-area-inset-left)) calc(8px + env(safe-area-inset-bottom));}
+    .navin{max-width:700px;margin:auto;display:grid;grid-template-columns:repeat(5,1fr);gap:4px}.navbtn{border:0;background:transparent;color:#897784;padding:7px 4px;border-radius:13px;font-size:11px;font-weight:800}.navbtn b{display:block;font-size:19px;margin-bottom:2px}.navbtn.active{color:#be185d;background:var(--pink-4)}
+    .fab{position:fixed;right:24px;bottom:82px;width:56px;height:56px;border-radius:18px;border:0;background:linear-gradient(135deg,var(--pink),#db2777);color:#fff;font-size:28px;box-shadow:0 12px 30px rgba(236,72,153,.28);z-index:31}
+    .modal{position:fixed;inset:0;background:rgba(32,18,28,.48);z-index:50;display:grid;place-items:end center;padding:18px}.sheet{width:min(640px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:26px;padding:20px;box-shadow:0 24px 70px rgba(0,0,0,.18)}
+    .field{margin:12px 0}.field label{display:block;font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px}.field input,.field select,.field textarea{width:100%;border:1px solid var(--line);border-radius:13px;padding:11px 12px;background:#fff;color:var(--ink);outline:none}.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--pink-2);box-shadow:0 0 0 3px var(--pink-3)}textarea{min-height:90px;resize:vertical}
+    .loginwrap{min-height:100vh;display:grid;place-items:center;padding:20px}.loginbox{width:min(470px,100%);background:#fff;border:1px solid var(--line);border-radius:28px;padding:26px;box-shadow:var(--shadow)}.loginbrand{width:58px;height:58px;border-radius:18px;background:linear-gradient(135deg,var(--pink),#db2777);color:#fff;display:grid;place-items:center;font-size:25px;font-weight:900}
+    .alert{border:1px solid var(--line);border-radius:14px;padding:11px 12px;background:#fff;font-size:13px}.alert.warn{border-color:#fed7aa;background:#fff7ed}.alert.danger{border-color:#fecaca;background:#fff1f2}.alert.ok{border-color:#bbf7d0;background:#f0fdf4}
+    .toast{position:fixed;top:18px;right:18px;z-index:80;max-width:380px;background:#211827;color:#fff;padding:12px 15px;border-radius:14px;box-shadow:var(--shadow);font-size:13px}.toast.error{background:#9f1239}
+    .chat{height:54vh;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:20px;padding:13px;display:flex;flex-direction:column;gap:9px}.bubble{max-width:86%;padding:11px 13px;border-radius:17px;white-space:pre-wrap;line-height:1.45}.bubble.user{align-self:flex-end;background:var(--pink);color:#fff;border-bottom-right-radius:5px}.bubble.ai{align-self:flex-start;background:var(--pink-4);border:1px solid var(--pink-3);border-bottom-left-radius:5px}
+    .chatinput{display:flex;gap:8px;margin-top:10px}.chatinput input{flex:1;border:1px solid var(--line);border-radius:14px;padding:11px 12px}
+    .progress{height:8px;background:#f4e9ef;border-radius:99px;overflow:hidden;margin-top:7px}.progress span{display:block;height:100%;background:linear-gradient(90deg,var(--pink),var(--pink-2))}
+    .sectionhead{display:flex;align-items:center;justify-content:space-between;margin:20px 0 10px}.sectionhead h2{font-size:18px;margin:0}
+    .empty{padding:26px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:16px;background:#fff}
+    .pillbar{display:flex;gap:8px;overflow:auto}.pill{border:1px solid var(--line);border-radius:999px;padding:8px 11px;background:#fff;white-space:nowrap;font-size:12px;font-weight:700}
+    .pinkdot{width:9px;height:9px;background:var(--pink);border-radius:50%;display:inline-block;margin-right:6px}
+    @media(max-width:760px){.span4,.span6,.span8{grid-column:span 12}.app{padding-left:12px;padding-right:12px}.hero{padding:20px;border-radius:23px}.hero h1{font-size:23px}.fab{right:16px}.card{padding:15px}}
+    @media(prefers-color-scheme:dark){
+      body[data-theme="system"]{--bg:#171116;--card:#211920;--ink:#fff7fb;--muted:#b8aab3;--line:#3a2d36;--pink-3:#452034;--pink-4:#2c1824}
+      body[data-theme="system"] .top,body[data-theme="system"] .nav{background:rgba(23,17,22,.94)}
+      body[data-theme="system"] .item,body[data-theme="system"] .field input,body[data-theme="system"] .field select,body[data-theme="system"] .field textarea,body[data-theme="system"] .tab,body[data-theme="system"] .pill,body[data-theme="system"] .iconbtn,body[data-theme="system"] .chat{background:#211920;color:var(--ink)}
+    }
+    body[data-theme="dark"]{--bg:#171116;--card:#211920;--ink:#fff7fb;--muted:#b8aab3;--line:#3a2d36;--pink-3:#452034;--pink-4:#2c1824}
+    body[data-theme="dark"] .top,body[data-theme="dark"] .nav{background:rgba(23,17,22,.94)}
+    body[data-theme="dark"] .item,body[data-theme="dark"] .field input,body[data-theme="dark"] .field select,body[data-theme="dark"] .field textarea,body[data-theme="dark"] .tab,body[data-theme="dark"] .pill,body[data-theme="dark"] .iconbtn,body[data-theme="dark"] .chat{background:#211920;color:var(--ink)}
+  </style>
+</head>
+<body data-theme="system">
+<div id="toast" class="toast hidden"></div>
+
+<section id="gate" class="loginwrap">
+  <div class="loginbox">
+    <div class="loginbrand">R</div>
+    <h1 style="margin-bottom:4px">RUMA</h1>
+    <p class="muted" style="margin-top:0">Asisten pribadi & rumah tangga suami–istri.</p>
+    <div id="endpointWarning" class="alert warn hidden"></div>
+    <div id="loginPanel">
+      <div class="field"><label>Email</label><input id="loginEmail" type="email" autocomplete="username" placeholder="nama@email.com"></div>
+      <div class="field"><label>Password</label><input id="loginPassword" type="password" autocomplete="current-password" placeholder="Minimal 8 karakter"></div>
+      <button class="btn" style="width:100%" onclick="login()">Masuk</button>
+      <button class="btn ghost" style="width:100%;margin-top:8px" onclick="checkBootstrap(true)">Cek koneksi backend</button>
+    </div>
+    <div id="bootstrapPanel" class="hidden">
+      <div class="alert">Database sudah dibuat, tetapi pemilik pertama belum diaktifkan.</div>
+      <div class="field"><label>Setup Code</label><input id="setupCode" placeholder="Kode dari setupRuma()"></div>
+      <div class="field"><label>Nama</label><input id="ownerName" placeholder="Nama pemilik"></div>
+      <div class="field"><label>Email</label><input id="ownerEmail" type="email"></div>
+      <div class="field"><label>Password</label><input id="ownerPassword" type="password" placeholder="Minimal 8 karakter"></div>
+      <button class="btn" style="width:100%" onclick="createOwner()">Aktifkan RUMA</button>
+    </div>
+    <div class="small muted" style="margin-top:16px">v<span id="gateVersion">2.0.0</span> · Pink Edition</div>
+  </div>
+</section>
+
+<main id="mainApp" class="hidden">
+  <div class="app">
+    <header class="top">
+      <div class="topin">
+        <div class="brand">R</div>
+        <div class="grow"><div class="title">RUMA</div><div class="sub" id="userLine">Memuat...</div></div>
+        <button class="iconbtn" onclick="syncAll()" title="Sinkronkan">↻</button>
+        <button class="iconbtn" onclick="openSettings()" title="Pengaturan">⚙</button>
+      </div>
+    </header>
+
+    <section id="page-today" class="page active">
+      <div class="hero"><div class="small" id="todayDate"></div><h1 id="hello">Selamat datang 👋</h1><p id="dailyLine">Semua urusan rumah tangga dalam satu tempat.</p></div>
+      <div class="grid">
+        <div class="card span4"><div class="label">Saldo saya</div><div class="metric" id="myBalance">Rp0</div><div class="small muted" id="myAccountsCount">0 rekening</div></div>
+        <div class="card span4"><div class="label">Saldo bersama</div><div class="metric" id="jointBalance">Rp0</div><div class="small muted">Rekening household</div></div>
+        <div class="card span4"><div class="label">Pengeluaran bulan ini</div><div class="metric" id="monthExpense">Rp0</div><div class="small muted" id="monthIncome">Pemasukan Rp0</div></div>
+        <div class="card span6"><div class="row between"><div><div class="label">Agenda hari ini</div><div class="metric" id="todayEventCount">0</div></div><span class="badge">PLAN</span></div><div id="todayEvents" class="list"></div></div>
+        <div class="card span6"><div class="row between"><div><div class="label">Task aktif</div><div class="metric" id="openTaskCount">0</div></div><span class="badge">HOME</span></div><div id="todayTasks" class="list"></div></div>
+        <div class="card span12"><div class="row between"><div><div class="label">AI Feedback</div><div style="font-weight:900;font-size:18px;margin-top:5px">Ringkasan kondisi rumah tangga</div></div><button class="btn secondary sm" onclick="askPreset('Berikan feedback singkat kondisi keuangan, agenda, tagihan, dan task rumah tangga saya. Fokus pada hal yang perlu diperhatikan hari ini.')">Analisis</button></div><div id="aiInsight" class="alert" style="margin-top:12px">Tekan Analisis untuk mendapatkan feedback berdasarkan data terbaru.</div></div>
+      </div>
+    </section>
+
+    <section id="page-money" class="page">
+      <div class="sectionhead"><h2>Money</h2><button class="btn sm" onclick="openTransactionModal()">+ Transaksi</button></div>
+      <div class="tabs">
+        <button class="tab active" data-moneytab="transactions" onclick="moneyTab('transactions',this)">Transaksi</button>
+        <button class="tab" data-moneytab="accounts" onclick="moneyTab('accounts',this)">Rekening & Wallet</button>
+        <button class="tab" data-moneytab="budgets" onclick="moneyTab('budgets',this)">Budget</button>
+        <button class="tab" data-moneytab="bills" onclick="moneyTab('bills',this)">Tagihan</button>
+        <button class="tab" data-moneytab="goals" onclick="moneyTab('goals',this)">Goals</button>
+      </div>
+      <div id="money-transactions"><div class="card"><div class="row between"><b>Transaksi terbaru</b><select id="txFilter" onchange="renderTransactions()" style="border:1px solid var(--line);border-radius:10px;padding:7px"><option value="ALL">Semua</option><option value="EXPENSE">Pengeluaran</option><option value="INCOME">Pemasukan</option><option value="TRANSFER">Transfer</option></select></div><div id="transactionsList" class="list"></div></div></div>
+      <div id="money-accounts" class="hidden"><div class="sectionhead"><h2>Rekening & Wallet</h2><button class="btn sm" onclick="openAccountModal()">+ Rekening</button></div><div id="accountsGrid" class="grid"></div></div>
+      <div id="money-budgets" class="hidden"><div class="sectionhead"><h2>Budget</h2><button class="btn sm" onclick="openBudgetModal()">+ Budget</button></div><div id="budgetsList" class="grid"></div></div>
+      <div id="money-bills" class="hidden"><div class="sectionhead"><h2>Tagihan</h2><button class="btn sm" onclick="openBillModal()">+ Tagihan</button></div><div id="billsList" class="list"></div></div>
+      <div id="money-goals" class="hidden"><div class="sectionhead"><h2>Goals</h2><button class="btn sm" onclick="openGoalModal()">+ Goal</button></div><div id="goalsList" class="grid"></div></div>
+    </section>
+
+    <section id="page-ai" class="page">
+      <div class="sectionhead"><h2>RUMA AI ✨</h2><span class="badge" id="aiStatus">Belum dikonfigurasi</span></div>
+      <div class="pillbar" style="margin-bottom:10px">
+        <button class="pill" onclick="askPreset('Bulan ini saya paling boros di kategori apa? Berikan saran konkret.')">💸 Analisis bulan ini</button>
+        <button class="pill" onclick="askPreset('Apa saja yang harus saya perhatikan dalam 7 hari ke depan?')">📅 7 hari ke depan</button>
+        <button class="pill" onclick="askPreset('Apakah pembagian task suami istri saat ini seimbang? Jelaskan netral.')">🏠 Pembagian task</button>
+      </div>
+      <div id="chat" class="chat"><div class="bubble ai">Halo! Saya membaca data RUMA yang boleh Anda akses lalu memberi feedback. Data privat pasangan tetap mengikuti pengaturan rekening.</div></div>
+      <div class="chatinput"><input id="chatInput" placeholder="Tanya tentang keuangan, jadwal, tagihan, task..." onkeydown="if(event.key==='Enter')sendChat()"><button class="btn" onclick="sendChat()">Kirim</button></div>
+    </section>
+
+    <section id="page-plan" class="page">
+      <div class="tabs">
+        <button class="tab active" onclick="planTab('tasks',this)">Task</button>
+        <button class="tab" onclick="planTab('events',this)">Kalender</button>
+      </div>
+      <div id="plan-tasks"><div class="sectionhead"><h2>Task</h2><button class="btn sm" onclick="openTaskModal()">+ Task</button></div><div id="tasksList" class="list"></div></div>
+      <div id="plan-events" class="hidden"><div class="sectionhead"><h2>Agenda</h2><button class="btn sm" onclick="openEventModal()">+ Agenda</button></div><div id="eventsList" class="list"></div></div>
+    </section>
+
+    <section id="page-more" class="page">
+      <div class="tabs">
+        <button class="tab active" onclick="moreTab('shopping',this)">Belanja</button>
+        <button class="tab" onclick="moreTab('notes',this)">Catatan</button>
+        <button class="tab" onclick="moreTab('settings',this)">Pengaturan</button>
+      </div>
+      <div id="more-shopping"><div class="sectionhead"><h2>Shopping List</h2><button class="btn sm" onclick="openShoppingModal()">+ Item</button></div><div id="shoppingList" class="list"></div></div>
+      <div id="more-notes" class="hidden"><div class="sectionhead"><h2>Catatan</h2><button class="btn sm" onclick="openNoteModal()">+ Catatan</button></div><div id="notesList" class="grid"></div></div>
+      <div id="more-settings" class="hidden">
+        <div class="grid">
+          <div class="card span6"><div class="sectionhead" style="margin-top:0"><h2>User</h2><button class="btn sm" onclick="openUserModal()">+ User</button></div><div id="usersList" class="list"></div></div>
+          <div class="card span6"><h2 style="margin-top:0">AI & Tampilan</h2>
+            <div class="field"><label>AI Provider</label><select id="setAiProvider"><option value="GEMINI">Gemini</option><option value="GROQ">Groq</option></select></div>
+            <div class="field"><label>Model</label><input id="setAiModel"></div>
+            <div class="field"><label>API Key baru (opsional)</label><input id="setAiKey" type="password" placeholder="Tidak pernah ditampilkan kembali"></div>
+            <div class="field"><label>Tema</label><select id="setTheme"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></div>
+            <button class="btn" onclick="saveSystemSettings()">Simpan Pengaturan</button>
+          </div>
+          <div class="card span12"><div class="row between wrap"><div><b>Database</b><div id="dbInfo" class="small muted"></div></div><div class="row"><button class="btn ghost sm" onclick="syncAll()">Sinkronkan</button><button class="btn danger sm" onclick="logout()">Keluar</button></div></div></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <button class="fab" onclick="openQuick()">+</button>
+  <nav class="nav"><div class="navin">
+    <button class="navbtn active" data-page="today" onclick="goPage('today',this)"><b>⌂</b>Today</button>
+    <button class="navbtn" data-page="money" onclick="goPage('money',this)"><b>₿</b>Money</button>
+    <button class="navbtn" data-page="ai" onclick="goPage('ai',this)"><b>✦</b>AI</button>
+    <button class="navbtn" data-page="plan" onclick="goPage('plan',this)"><b>□</b>Plan</button>
+    <button class="navbtn" data-page="more" onclick="goPage('more',this)"><b>☰</b>More</button>
+  </nav>
+</main>
+
+<div id="modal" class="modal hidden" onclick="if(event.target===this)closeModal()"><div class="sheet"><div class="row between"><h2 id="modalTitle" style="margin:0"></h2><button class="iconbtn" onclick="closeModal()">×</button></div><div id="modalBody"></div></div></div>
+
+<script>
+const C = window.RUMA_CONFIG || {};
+const API_URL = (C.API_URL || '').trim();
+const VERSION = C.APP_VERSION || '2.0.0';
+const TIMEOUT = Number(C.REQUEST_TIMEOUT || 25000);
+let S = {session:localStorage.getItem('ruma_session')||'', user:null, users:[], accounts:[], transactions:[], budgets:[], bills:[], goals:[], tasks:[], events:[], shopping:[], notes:[], settings:{}};
+document.getElementById('gateVersion').textContent=VERSION;
+
+function rupiah(n){return new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(Number(n||0))}
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function toast(msg,bad=false){const t=document.getElementById('toast');t.textContent=msg;t.className='toast'+(bad?' error':'');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.add('hidden'),3300)}
+function id(prefix){return prefix+'_'+(crypto.randomUUID?crypto.randomUUID().replaceAll('-',''):Date.now().toString(36)+Math.random().toString(36).slice(2,14))}
+function todayISO(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function localDT(v){if(!v)return'';const d=new Date(v);return d.toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'})}
+function fmtDate(v){if(!v)return'-';const d=new Date(v+'T00:00:00');return d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}
+function formVal(id){return document.getElementById(id)?.value ?? ''}
+function checked(id){return !!document.getElementById(id)?.checked}
+
+function api(action,payload={},opts={}){
+  if(!API_URL) return Promise.reject(new Error('API_URL belum diisi di config.js'));
+  return new Promise((resolve,reject)=>{
+    const rid=id('RID'), frameName='bridge_'+rid;
+    const iframe=document.createElement('iframe');iframe.name=frameName;iframe.style.display='none';document.body.appendChild(iframe);
+    const form=document.createElement('form');form.method='POST';form.action=API_URL;form.target=frameName;form.style.display='none';
+    const fields={rid,action,payload:JSON.stringify(payload||{}),session:opts.noSession?'':S.session};
+    Object.entries(fields).forEach(([k,v])=>{const i=document.createElement('input');i.name=k;i.value=v;form.appendChild(i)});document.body.appendChild(form);
+    let done=false,tries=0,timer;
+    const cleanup=()=>{done=true;clearTimeout(timer);form.remove();setTimeout(()=>iframe.remove(),1000)};
+    const poll=()=>{
+      if(done)return; tries++;
+      const cb='__ruma_'+rid+'_'+tries;
+      const scr=document.createElement('script');
+      const kill=()=>{try{delete window[cb]}catch(e){};scr.remove()};
+      window[cb]=(res)=>{kill(); if(res&&res.pending){return setTimeout(poll,300)} cleanup(); if(res&&res.ok)resolve(res.data); else reject(new Error((res&&res.error)||'Respons backend tidak valid'))};
+      scr.onerror=()=>{kill(); if(Date.now()-started>TIMEOUT){cleanup();reject(new Error('Backend tidak merespons. Pastikan Web App Apps Script = Anyone dan URL /exec benar.'))}else setTimeout(poll,450)};
+      scr.src=API_URL+'?action=poll&rid='+encodeURIComponent(rid)+'&callback='+encodeURIComponent(cb)+'&_='+Date.now();
+      document.head.appendChild(scr);
+    };
+    const started=Date.now();
+    timer=setTimeout(()=>{if(!done){cleanup();reject(new Error('Timeout koneksi Apps Script'))}},TIMEOUT+2500);
+    form.submit();setTimeout(poll,450);
+  });
+}
+
+async function checkBootstrap(force=false){
+  if(!API_URL){
+    document.getElementById('endpointWarning').classList.remove('hidden');
+    document.getElementById('endpointWarning').textContent='Isi API_URL pada config.js dengan URL Web App Apps Script yang berakhiran /exec.';
+    return;
+  }
+  try{
+    const r=await api('bootstrap.status',{}, {noSession:true});
+    document.getElementById('endpointWarning').classList.add('hidden');
+    if(!r.ownerReady){
+      document.getElementById('loginPanel').classList.add('hidden');
+      document.getElementById('bootstrapPanel').classList.remove('hidden');
+    }else if(force){toast('Backend terhubung ✓')}
+  }catch(e){
+    document.getElementById('endpointWarning').classList.remove('hidden');
+    document.getElementById('endpointWarning').textContent=e.message;
+    if(force)toast(e.message,true);
+  }
+}
+async function createOwner(){
+  try{
+    await api('bootstrap.owner',{setupCode:formVal('setupCode'),name:formVal('ownerName'),email:formVal('ownerEmail'),password:formVal('ownerPassword')},{noSession:true});
+    toast('Owner berhasil dibuat. Silakan login.');
+    document.getElementById('bootstrapPanel').classList.add('hidden');document.getElementById('loginPanel').classList.remove('hidden');
+    document.getElementById('loginEmail').value=formVal('ownerEmail');
+  }catch(e){toast(e.message,true)}
+}
+async function login(){
+  try{
+    const r=await api('auth.login',{email:formVal('loginEmail'),password:formVal('loginPassword'),device:navigator.userAgent.slice(0,120)},{noSession:true});
+    S.session=r.session;localStorage.setItem('ruma_session',S.session);
+    await syncAll(true);
+  }catch(e){toast(e.message,true)}
+}
+async function logout(){
+  try{if(S.session)await api('auth.logout',{})}catch(e){}
+  localStorage.removeItem('ruma_session');S.session='';location.reload();
+}
+async function syncAll(first=false){
+  try{
+    const r=await api('app.snapshot',{});
+    Object.assign(S,r);
+    localStorage.setItem('ruma_snapshot',JSON.stringify({at:Date.now(),data:r}));
+    showApp();renderAll(); if(!first)toast('Data tersinkron ✓');
+  }catch(e){
+    if(e.message.toLowerCase().includes('session')){localStorage.removeItem('ruma_session');S.session='';document.getElementById('gate').classList.remove('hidden');document.getElementById('mainApp').classList.add('hidden')}
+    else toast(e.message,true);
+  }
+}
+function showApp(){document.getElementById('gate').classList.add('hidden');document.getElementById('mainApp').classList.remove('hidden')}
+function renderAll(){
+  if(!S.user)return;
+  document.getElementById('userLine').textContent=S.user.name+' · '+(S.user.role==='OWNER'?'Owner':'Partner');
+  document.getElementById('hello').textContent='Halo, '+S.user.name.split(' ')[0]+' 👋';
+  document.getElementById('todayDate').textContent=new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const mine=S.accounts.filter(a=>a.ownerId===S.user.id && a.scope==='PERSONAL'), joint=S.accounts.filter(a=>a.scope==='JOINT');
+  document.getElementById('myBalance').textContent=rupiah(mine.reduce((x,a)=>x+Number(a.balance||0),0));
+  document.getElementById('jointBalance').textContent=rupiah(joint.reduce((x,a)=>x+Number(a.balance||0),0));
+  document.getElementById('myAccountsCount').textContent=mine.length+' rekening/wallet';
+  const month=todayISO().slice(0,7), txm=S.transactions.filter(t=>String(t.date).slice(0,7)===month);
+  const exp=txm.filter(t=>t.type==='EXPENSE').reduce((x,t)=>x+Number(t.amount||0),0), inc=txm.filter(t=>t.type==='INCOME').reduce((x,t)=>x+Number(t.amount||0),0);
+  document.getElementById('monthExpense').textContent=rupiah(exp);document.getElementById('monthIncome').textContent='Pemasukan '+rupiah(inc);
+  const tev=S.events.filter(e=>String(e.startAt).slice(0,10)===todayISO());document.getElementById('todayEventCount').textContent=tev.length;renderSmallList('todayEvents',tev.slice(0,4),e=>({name:e.title,meta:localDT(e.startAt)}));
+  const ot=S.tasks.filter(t=>t.status!=='DONE');document.getElementById('openTaskCount').textContent=ot.length;renderSmallList('todayTasks',ot.slice(0,4),t=>({name:t.title,meta:(t.dueDate?fmtDate(t.dueDate):'Tanpa jatuh tempo')+' · '+userName(t.assignedTo)}));
+  document.getElementById('aiStatus').textContent=S.settings.aiConfigured?(S.settings.aiProvider+' · '+S.settings.aiModel):'Belum dikonfigurasi';
+  document.getElementById('setAiProvider').value=S.settings.aiProvider||'GEMINI';document.getElementById('setAiModel').value=S.settings.aiModel||'gemini-3.6-flash';document.getElementById('setTheme').value=S.settings.theme||'system';applyTheme(S.settings.theme||'system');
+  document.getElementById('dbInfo').textContent=(S.settings.databaseName||'RUMA Database')+' · '+(S.settings.spreadsheetId||'');
+  renderAccounts();renderTransactions();renderBudgets();renderBills();renderGoals();renderTasks();renderEvents();renderShopping();renderNotes();renderUsers();
+}
+function renderSmallList(el,data,map){
+  const e=document.getElementById(el);if(!data.length){e.innerHTML='<div class="empty small">Belum ada data.</div>';return}
+  e.innerHTML=data.map(x=>{const m=map(x);return `<div class="item"><span class="pinkdot"></span><div class="main"><div class="name">${esc(m.name)}</div><div class="meta">${esc(m.meta||'')}</div></div></div>`}).join('');
+}
+function userName(uid){return (S.users.find(u=>u.id===uid)||{}).name||'Bersama'}
+function accountName(id){return (S.accounts.find(a=>a.id===id)||{}).name||'-'}
+function renderAccounts(){
+  const el=document.getElementById('accountsGrid');if(!el)return;
+  if(!S.accounts.length){el.innerHTML='<div class="empty span12">Belum ada rekening/wallet.</div>';return}
+  el.innerHTML=S.accounts.map(a=>`<div class="card span4"><div class="row between"><span class="badge ${a.scope==='JOINT'?'':'gray'}">${esc(a.scope)}</span><span class="small muted">${esc(a.type)}</span></div><div style="font-weight:900;font-size:18px;margin-top:10px">${esc(a.name)}</div><div class="metric">${rupiah(a.balance)}</div><div class="small muted">${a.scope==='JOINT'?'Bersama':esc(a.ownerName||userName(a.ownerId))} · ${esc(a.visibility||'PRIVATE')}</div>${a.canEdit?`<div class="row" style="margin-top:12px"><button class="btn ghost sm" onclick="openAccountModal('${a.id}')">Edit</button><button class="btn danger sm" onclick="removeItem('account','${a.id}')">Arsip</button></div>`:''}</div>`).join('');
+}
+function renderTransactions(){
+  const el=document.getElementById('transactionsList');if(!el)return;const f=document.getElementById('txFilter')?.value||'ALL';
+  const arr=S.transactions.filter(t=>f==='ALL'||t.type===f);
+  if(!arr.length){el.innerHTML='<div class="empty">Belum ada transaksi.</div>';return}
+  el.innerHTML=arr.slice(0,150).map(t=>`<div class="item"><div class="main"><div class="name">${esc(t.description||t.category||t.type)}</div><div class="meta">${fmtDate(t.date)} · ${esc(accountName(t.accountId))}${t.type==='TRANSFER'?' → '+esc(accountName(t.toAccountId)):''} · ${esc(t.category||'')}</div></div><div class="amount ${t.type==='EXPENSE'?'expense':t.type==='INCOME'?'income':''}">${t.type==='EXPENSE'?'-':t.type==='INCOME'?'+':''}${rupiah(t.amount)}</div>${t.canEdit?`<button class="btn ghost sm" onclick="openTransactionModal('${t.id}')">Edit</button>`:''}</div>`).join('');
+}
+function renderBudgets(){
+  const el=document.getElementById('budgetsList');if(!el)return;if(!S.budgets.length){el.innerHTML='<div class="empty span12">Belum ada budget.</div>';return}
+  el.innerHTML=S.budgets.map(b=>{const pct=Math.min(100,Math.round((Number(b.spent||0)/Math.max(1,Number(b.amount||0)))*100));return `<div class="card span4"><div class="row between"><b>${esc(b.category)}</b><span class="badge">${esc(b.month)}</span></div><div class="metric">${rupiah(b.spent)} <span class="small muted">/ ${rupiah(b.amount)}</span></div><div class="progress"><span style="width:${pct}%"></span></div><div class="row between" style="margin-top:8px"><span class="small muted">${pct}% terpakai</span><button class="btn ghost sm" onclick="openBudgetModal('${b.id}')">Edit</button></div></div>`}).join('');
+}
+function renderBills(){
+  const el=document.getElementById('billsList');if(!el)return;if(!S.bills.length){el.innerHTML='<div class="empty">Belum ada tagihan.</div>';return}
+  el.innerHTML=S.bills.map(b=>`<div class="item"><div class="main"><div class="name">${esc(b.name)}</div><div class="meta">${fmtDate(b.dueDate)} · ${esc(accountName(b.accountId))} · ${esc(b.status)}</div></div><div class="amount">${rupiah(b.amount)}</div><button class="btn ${b.status==='PAID'?'secondary':'ghost'} sm" onclick="toggleBill('${b.id}')">${b.status==='PAID'?'Lunas':'Bayar'}</button><button class="btn ghost sm" onclick="openBillModal('${b.id}')">Edit</button></div>`).join('');
+}
+function renderGoals(){
+  const el=document.getElementById('goalsList');if(!el)return;if(!S.goals.length){el.innerHTML='<div class="empty span12">Belum ada goal.</div>';return}
+  el.innerHTML=S.goals.map(g=>{const pct=Math.min(100,Math.round(Number(g.current||0)/Math.max(1,Number(g.target||0))*100));return `<div class="card span4"><div class="row between"><b>${esc(g.name)}</b><span class="badge">${pct}%</span></div><div class="metric">${rupiah(g.current)}</div><div class="small muted">Target ${rupiah(g.target)} ${g.dueDate?'· '+fmtDate(g.dueDate):''}</div><div class="progress"><span style="width:${pct}%"></span></div><button class="btn ghost sm" style="margin-top:10px" onclick="openGoalModal('${g.id}')">Edit</button></div>`}).join('');
+}
+function renderTasks(){
+  const el=document.getElementById('tasksList');if(!el)return;if(!S.tasks.length){el.innerHTML='<div class="empty">Belum ada task.</div>';return}
+  el.innerHTML=S.tasks.map(t=>`<div class="item"><button class="iconbtn" style="width:34px;height:34px" onclick="toggleTask('${t.id}')">${t.status==='DONE'?'✓':'○'}</button><div class="main"><div class="name" style="${t.status==='DONE'?'text-decoration:line-through;opacity:.55':''}">${esc(t.title)}</div><div class="meta">${t.dueDate?fmtDate(t.dueDate):'Tanpa tanggal'} · ${esc(userName(t.assignedTo))} · ${esc(t.priority)}</div></div><button class="btn ghost sm" onclick="openTaskModal('${t.id}')">Edit</button></div>`).join('');
+}
+function renderEvents(){
+  const el=document.getElementById('eventsList');if(!el)return;if(!S.events.length){el.innerHTML='<div class="empty">Belum ada agenda.</div>';return}
+  el.innerHTML=S.events.map(e=>`<div class="item"><div class="main"><div class="name">${esc(e.title)}</div><div class="meta">${localDT(e.startAt)}${e.location?' · '+esc(e.location):''}</div></div><button class="btn ghost sm" onclick="openEventModal('${e.id}')">Edit</button></div>`).join('');
+}
+function renderShopping(){
+  const el=document.getElementById('shoppingList');if(!el)return;if(!S.shopping.length){el.innerHTML='<div class="empty">Daftar belanja kosong.</div>';return}
+  el.innerHTML=S.shopping.map(x=>`<div class="item"><button class="iconbtn" style="width:34px;height:34px" onclick="toggleShopping('${x.id}')">${x.status==='DONE'?'✓':'○'}</button><div class="main"><div class="name" style="${x.status==='DONE'?'text-decoration:line-through;opacity:.55':''}">${esc(x.item)}</div><div class="meta">${esc(x.qty||'')} · ditambah ${esc(userName(x.addedBy))}</div></div><button class="btn danger sm" onclick="removeItem('shopping','${x.id}')">Hapus</button></div>`).join('');
+}
+function renderNotes(){
+  const el=document.getElementById('notesList');if(!el)return;if(!S.notes.length){el.innerHTML='<div class="empty span12">Belum ada catatan.</div>';return}
+  el.innerHTML=S.notes.map(n=>`<div class="card span6"><div class="row between"><b>${esc(n.title)}</b><span class="badge gray">${esc(n.scope)}</span></div><div class="muted" style="white-space:pre-wrap;margin-top:10px">${esc(n.body)}</div><button class="btn ghost sm" style="margin-top:12px" onclick="openNoteModal('${n.id}')">Edit</button></div>`).join('');
+}
+function renderUsers(){
+  const el=document.getElementById('usersList');if(!el)return;el.innerHTML=S.users.map(u=>`<div class="item"><div class="main"><div class="name">${esc(u.name)}</div><div class="meta">${esc(u.email)} · ${esc(u.role)}</div></div>${S.user.role==='OWNER'?`<button class="btn ghost sm" onclick="openUserModal('${u.id}')">Edit</button>`:''}</div>`).join('');
+}
+
+function goPage(p,b){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.getElementById('page-'+p).classList.add('active');document.querySelectorAll('.navbtn').forEach(x=>x.classList.remove('active'));b?.classList.add('active');window.scrollTo({top:0,behavior:'smooth'})}
+function moneyTab(p,b){['transactions','accounts','budgets','bills','goals'].forEach(x=>document.getElementById('money-'+x).classList.toggle('hidden',x!==p));b.parentElement.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active')}
+function planTab(p,b){['tasks','events'].forEach(x=>document.getElementById('plan-'+x).classList.toggle('hidden',x!==p));b.parentElement.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active')}
+function moreTab(p,b){['shopping','notes','settings'].forEach(x=>document.getElementById('more-'+x).classList.toggle('hidden',x!==p));b.parentElement.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active')}
+function openSettings(){goPage('more',document.querySelector('.navbtn[data-page="more"]'));const btn=[...document.querySelectorAll('#page-more .tab')].find(x=>x.textContent.includes('Pengaturan'));moreTab('settings',btn)}
+function closeModal(){document.getElementById('modal').classList.add('hidden')}
+function modal(title,html){document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').innerHTML=html;document.getElementById('modal').classList.remove('hidden')}
+function accountOptions(sel=''){return S.accounts.filter(a=>a.canEdit||a.scope==='JOINT'||a.ownerId===S.user.id).map(a=>`<option value="${a.id}" ${a.id===sel?'selected':''}>${esc(a.name)} · ${esc(a.scope)}</option>`).join('')}
+function userOptions(sel=''){return S.users.map(u=>`<option value="${u.id}" ${u.id===sel?'selected':''}>${esc(u.name)}</option>`).join('')}
+
+function openQuick(){modal('Tambah cepat',`<div class="grid" style="margin-top:14px"><button class="btn secondary span6" onclick="closeModal();openTransactionModal()">💸 Transaksi</button><button class="btn secondary span6" onclick="closeModal();openTaskModal()">✅ Task</button><button class="btn secondary span6" onclick="closeModal();openEventModal()">📅 Agenda</button><button class="btn secondary span6" onclick="closeModal();openShoppingModal()">🛒 Belanja</button></div>`)}
+function openAccountModal(i=''){const a=S.accounts.find(x=>x.id===i)||{};modal(i?'Edit Rekening':'Tambah Rekening',`
+<div class="field"><label>Nama rekening/wallet</label><input id="mAccName" value="${esc(a.name||'')}"></div>
+<div class="field"><label>Jenis</label><select id="mAccType">${['BANK','EWALLET','CASH','SAVING','CREDIT','INVESTMENT','OTHER'].map(x=>`<option ${a.type===x?'selected':''}>${x}</option>`).join('')}</select></div>
+<div class="field"><label>Scope</label><select id="mAccScope"><option value="PERSONAL" ${a.scope!=='JOINT'?'selected':''}>PERSONAL</option><option value="JOINT" ${a.scope==='JOINT'?'selected':''}>JOINT / BERSAMA</option></select></div>
+<div class="field"><label>Pemilik personal</label><select id="mAccOwner">${userOptions(a.ownerId||S.user.id)}</select></div>
+<div class="field"><label>Visibility</label><select id="mAccVis">${['PRIVATE','SUMMARY','SHARED'].map(x=>`<option ${a.visibility===x?'selected':''}>${x}</option>`).join('')}</select></div>
+<div class="field"><label>Saldo awal</label><input id="mAccStart" type="number" value="${Number(a.startBalance||0)}"></div>
+<button class="btn" onclick="saveAccount('${i}')">Simpan</button>`)}
+async function saveAccount(i){try{await api('account.save',{id:i,name:formVal('mAccName'),type:formVal('mAccType'),scope:formVal('mAccScope'),ownerId:formVal('mAccOwner'),visibility:formVal('mAccVis'),startBalance:Number(formVal('mAccStart')||0)});closeModal();await syncAll()}catch(e){toast(e.message,true)}}
+
+function openTransactionModal(i=''){const t=S.transactions.find(x=>x.id===i)||{};modal(i?'Edit Transaksi':'Tambah Transaksi',`
+<div class="field"><label>Tipe</label><select id="mTxType" onchange="document.getElementById('toAccWrap').classList.toggle('hidden',this.value!=='TRANSFER')">${['EXPENSE','INCOME','TRANSFER'].map(x=>`<option ${t.type===x?'selected':''}>${x}</option>`).join('')}</select></div>
+<div class="field"><label>Tanggal</label><input id="mTxDate" type="date" value="${t.date||todayISO()}"></div>
+<div class="field"><label>Nominal</label><input id="mTxAmount" type="number" value="${Number(t.amount||0)}"></div>
+<div class="field"><label>Rekening</label><select id="mTxAcc">${accountOptions(t.accountId)}</select></div>
+<div id="toAccWrap" class="field ${t.type==='TRANSFER'?'':'hidden'}"><label>Ke rekening</label><select id="mTxTo">${accountOptions(t.toAccountId)}</select></div>
+<div class="field"><label>Kategori</label><input id="mTxCat" value="${esc(t.category||'Umum')}"></div>
+<div class="field"><label>Keterangan</label><input id="mTxDesc" value="${esc(t.description||'')}"></div>
+<div class="field"><label>Scope transaksi</label><select id="mTxScope"><option ${t.scope!=='JOINT'?'selected':''}>PERSONAL</option><option ${t.scope==='JOINT'?'selected':''}>JOINT</option></select></div>
+<div class="row"><button class="btn" onclick="saveTransaction('${i}')">Simpan</button>${i?`<button class="btn danger" onclick="removeItem('transaction','${i}')">Hapus</button>`:''}</div>`)}
+async function saveTransaction(i){try{await api('transaction.save',{id:i,type:formVal('mTxType'),date:formVal('mTxDate'),amount:Number(formVal('mTxAmount')),accountId:formVal('mTxAcc'),toAccountId:formVal('mTxTo'),category:formVal('mTxCat'),description:formVal('mTxDesc'),scope:formVal('mTxScope')});closeModal();await syncAll()}catch(e){toast(e.message,true)}}
+
+function openBudgetModal(i=''){const b=S.budgets.find(x=>x.id===i)||{};modal(i?'Edit Budget':'Tambah Budget',`
+<div class="field"><label>Bulan</label><input id="mBudMonth" type="month" value="${b.month||todayISO().slice(0,7)}"></div><div class="field"><label>Kategori</label><input id="mBudCat" value="${esc(b.category||'Makan')}"></div><div class="field"><label>Nominal</label><input id="mBudAmount" type="number" value="${Number(b.amount||0)}"></div><div class="field"><label>Scope</label><select id="mBudScope"><option ${b.scope!=='JOINT'?'selected':''}>PERSONAL</option><option ${b.scope==='JOINT'?'selected':''}>JOINT</option></select></div><div class="row"><button class="btn" onclick="saveBudget('${i}')">Simpan</button>${i?`<button class="btn danger" onclick="removeItem('budget','${i}')">Hapus</button>`:''}</div>`)}
+async function saveBudget(i){try{await api('budget.save',{id:i,month:formVal('mBudMonth'),category:formVal('mBudCat'),amount:Number(formVal('mBudAmount')),scope:formVal('mBudScope')});closeModal();await syncAll()}catch(e){toast(e.message,true)}}
+
+function openBillModal(i=''){const b=S.bills.find(x=>x.id===i)||{};modal(i?'Edit Tagihan':'Tambah Tagihan',`
+<div class="field"><label>Nama tagihan</label><input id="mBillName" value="${esc(b.name||'')}"></div><div class="field"><label>Nominal</label><input id="mBillAmount" type="number" value="${Number(b.amount||0)}"></div><div class="field"><label>Jatuh tempo</label><input id="mBillDate" type="date" value="${b.dueDate||todayISO()}"></div><div class="field"><label>Rekening</label><select id="mBillAcc">${accountOptions(b.accountId)}</select></div><div class="field"><label>Berulang bulanan</label><select id="mBillRec"><option value="NO" ${b.recurring!=='YES'?'selected':''}>Tidak</option><option value="YES" ${b.recurring==='YES'?'selected':''}>Ya</option></select></div><div class="field"><label>Scope</label><select id="mBillScope"><option ${b.scope!=='JOINT'?'selected':''}>PERSONAL</option><option ${b.scope==='JOINT'?'selected':''}>JOINT</option></select></div><div class="row"><button class="btn" onclick="saveBill('${i}')">Simpan</button>${i?`<button class="btn danger" onclick="removeItem('bill','${i}')">Hapus</button>`:''}</div>`)}
+async function saveBill(i){try{await api('bill.save',{id:i,name:formVal('mBillName'),amount:Number(formVal('mBillAmount')),dueDate:formVal('mBillDate'),accountId:formVal('mBillAcc'),recurring:formVal('mBillRec'),scope:formVal('mBillScope')});closeModal();await syncAll()}catch(e){toast(e.message,true)}}
+async function toggleBill(i){try{await api('bill.toggle',{id:i});await syncAll()}catch(e){toast(e.message,true)}}
+
+function openGoalModal(i=''){const g=S.goals.find(x=>x.id===i)||{};modal(i?'Edit Goal':'Tambah Goal',`
+<div class="field"><label>Nama goal</label><input id="mGoalName" value="${esc(g.name||'')}"></div><div class="field"><label>Target</label><input id="mGoalTarget" type="number" value="${Number(g.target||0)}"></div><div class="field"><label>Saat ini</label><input id="mGoalCurrent" type="number" value="${Number(g.current||0)}"></div><div class="field"><label>Target tanggal</label><input id="mGoalDate" type="date" value="${g.dueDate||''}"></div><div class="field"><label>Scope</label><select id="mGoalScope"><option ${g.scope!=='JOINT'?'selected':''}>PERSONAL</option><option ${g.scope==='JOINT'?'selected':''}>JOINT</option></select></div><div class="row"><button class="btn" onclick="saveGoal('${i}')">Simpan</button>${i?`<button class="btn danger" onclick="removeItem('goal','${i}')">Hapus</button>`:''}</div>`)}
+async function saveGoal(i){try{await api('goal.save',{id:i,name:formVal('mGoalName'),target:Number(formVal('mGoalTarget')),current:Number(formVal('mGoalCurrent')),dueDate:formVal('mGoalDate'),scope:formVal('mGoalScope')});closeModal();await syncAll()}catch(e){toast(e.message,true)}}
+
+function openTaskModal(i=''){const t=S.tasks.find(x=>x.id===i)||{};modal(i?'Edit Task':'Tambah Task',`
+<div class="field"><label>Task</label><input id="mTaskTitle" value="${esc(t.title||'')}"></div><div class="field"><label>Jatuh tempo</label><input id="mTaskDate" type="date" value="${t.dueDate||''}"></div><div class="field"><label>Ditugaskan ke</label><select id="mTaskUser">${userOptions(t.assignedTo||S.user.id)}</select></div><div class="field"><label>Prioritas</label><select id="mTaskPri">${['LOW','NORMAL','HIGH'].map(x=>`<option ${t.priority===x?'selected':''}>${x}</option>`).join('')}</select></div><div class="field"><label>Scope</label><select id="mTaskScope"><option ${t.scope!=='JOINT'?'selected':''}>PERSONAL</option><option ${t.scope==='JOINT'?'selected':''}>JOINT</option></select></div><div class="row"><button class="btn" onclick="saveTask('${i}')">Simpan</button>${i?`<button class="btn danger" onclick="removeItem('task','${i}')">Hapus</button>`:''}</div>`)}
+async function saveTask(i){try{await api('task.save',{id:i,title:formVal('mTaskTitle'),dueDate:formVal('mTaskDate'),assignedTo:formVal('mTaskUser'),priority:formVal('mTaskPri'),scope:formVal('mTaskScope')});closeModal();await syncAll()}catch(e){toast(e.message,true)}}
+async function toggleTask(i){try{await api('task.toggle',{id:i});await syncAll()}catch(e){toast(e.message,true)}}
+
+function openEventModal(i=''){const e=S.events.find(x=>x.id===i)||{};const dt=x=>x?String(x).slice(0,16):'';modal(i?'Edit Agenda':'Tambah Agenda',`
+<div class="field"><label>Judul</label><input id="mEventTitle" value="${esc(e.title||'')}"></div><div class="field"><label>Mulai</label><input id="mEventStart" type="datetime-local" value="${dt(e.startAt)}"></div><div class="field"><label>Selesai</label><input id="mEventEnd" type="datetime-local" value="${dt(e.endAt)}"></div><div class="field"><label>Lokasi</label><input id="mEventLoc" value="${esc(e.location||'')}"></div><div class="field"><label>Scope</label><select id="mEventScope"><option ${e.scope!=='JOINT'?'selected':''}>PERSONAL</option><option ${e.scope==='JOINT'?'selected':''}>JOINT</option></select></div><div class="row"><button class="btn" onclick="saveEvent('${i}')">Simpan</button>${i?`<button class="btn danger" onclick="removeItem('event','${i}')">Hapus</button>`:''}</div>`)}
+async function saveEvent(i){try{await api('event.save',{id:i,title:formVal('mEventTitle'),startAt:formVal('mEventStart'),endAt:formVal('mEventEnd'),location:formVal('mEventLoc'),scope:formVal('mEventScope')});closeModal();await syncAll()}catch(e){toast(e.message,true)}}
+
+function openShoppingModal(){modal('Tambah Belanja',`<div class="field"><label>Item</label><input id="mShopItem"></div><div class="field"><label>Jumlah/catatan</label><input id="mShopQty" placeholder="2 pcs / 1 kg"></div><button class="btn" onclick="saveShopping()">Tambah</button>`)}
+async function saveShopping(){try{await api('shopping.save',{item:formVal('mShopItem'),qty:formVal('mShopQty')});closeModal();await syncAll()}catch(e){toast(e.message,true)}}
+async function toggleShopping(i){try{await api('shopping.toggle',{id:i});await syncAll()}catch(e){toast(e.message,true)}}
+
+function openNoteModal(i=''){const n=S.notes.find(x=>x.id===i)||{};modal(i?'Edit Catatan':'Tambah Catatan',`
+<div class="field"><label>Judul</label><input id="mNoteTitle" value="${esc(n.title||'')}"></div><div class="field"><label>Catatan</label><textarea id="mNoteBody">${esc(n.body||'')}</textarea></div><div class="field"><label>Scope</label><select id="mNoteScope"><option ${n.scope!=='JOINT'?'selected':''}>PERSONAL</option><option ${n.scope==='JOINT'?'selected':''}>JOINT</option></select></div><div class="row"><button class="btn" onclick="saveNote('${i}')">Simpan</button>${i?`<button class="btn danger" onclick="removeItem('note','${i}')">Hapus</button>`:''}</div>`)}
+async function saveNote(i){try{await api('note.save',{id:i,title:formVal('mNoteTitle'),body:formVal('mNoteBody'),scope:formVal('mNoteScope')});closeModal();await syncAll()}catch(e){toast(e.message,true)}}
+
+function openUserModal(i=''){if(S.user.role!=='OWNER'){toast('Hanya owner yang dapat mengelola user.',true);return}const u=S.users.find(x=>x.id===i)||{};modal(i?'Edit User':'Tambah User',`
+<div class="field"><label>Nama</label><input id="mUserName" value="${esc(u.name||'')}"></div><div class="field"><label>Email</label><input id="mUserEmail" type="email" value="${esc(u.email||'')}"></div><div class="field"><label>Role</label><select id="mUserRole"><option value="PARTNER" ${u.role!=='OWNER'?'selected':''}>PARTNER</option><option value="OWNER" ${u.role==='OWNER'?'selected':''}>OWNER</option></select></div><div class="field"><label>${i?'Password baru (kosong = tetap)':'Password sementara'}</label><input id="mUserPass" type="password"></div><button class="btn" onclick="saveUser('${i}')">Simpan User</button>`)}
+async function saveUser(i){try{await api('user.save',{id:i,name:formVal('mUserName'),email:formVal('mUserEmail'),role:formVal('mUserRole'),password:formVal('mUserPass')});closeModal();await syncAll()}catch(e){toast(e.message,true)}}
+
+async function saveSystemSettings(){try{
+  const r=await api('settings.save',{aiProvider:formVal('setAiProvider'),aiModel:formVal('setAiModel'),aiKey:formVal('setAiKey'),theme:formVal('setTheme')});
+  document.getElementById('setAiKey').value='';await syncAll();toast('Pengaturan disimpan');
+}catch(e){toast(e.message,true)}}
+function applyTheme(t){document.body.dataset.theme=t||'system'}
+
+async function removeItem(type,i){if(!confirm('Yakin menghapus/mengarsipkan data ini?'))return;try{await api(type+'.delete',{id:i});closeModal();await syncAll()}catch(e){toast(e.message,true)}}
+
+async function sendChat(){const q=formVal('chatInput').trim();if(!q)return;document.getElementById('chatInput').value='';await askPreset(q)}
+async function askPreset(q){
+  goPage('ai',document.querySelector('.navbtn[data-page="ai"]'));
+  const ch=document.getElementById('chat');ch.insertAdjacentHTML('beforeend',`<div class="bubble user">${esc(q)}</div><div id="thinking" class="bubble ai">Menganalisis data RUMA…</div>`);ch.scrollTop=ch.scrollHeight;
+  try{const r=await api('ai.chat',{message:q});document.getElementById('thinking')?.remove();ch.insertAdjacentHTML('beforeend',`<div class="bubble ai">${esc(r.text)}</div>`);document.getElementById('aiInsight').textContent=r.text;ch.scrollTop=ch.scrollHeight}
+  catch(e){document.getElementById('thinking')?.remove();ch.insertAdjacentHTML('beforeend',`<div class="bubble ai">⚠ ${esc(e.message)}</div>`);toast(e.message,true)}
+}
+
+(async function init(){
+  const cached=localStorage.getItem('ruma_snapshot');if(S.session&&cached){try{Object.assign(S,JSON.parse(cached).data);showApp();renderAll()}catch(e){}}
+  if(S.session) await syncAll(true); else await checkBootstrap(false);
+  if(C.PWA_ENABLED && 'serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}
+})();
+</script>
+</body>
+</html>
