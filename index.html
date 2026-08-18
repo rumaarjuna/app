@@ -82,6 +82,30 @@
       .nav{padding-top:6px}.navbtn{min-height:50px;padding:5px 2px}.navbtn b{font-size:18px}.fab{right:14px;bottom:84px;width:52px;height:52px;border-radius:17px}.connpill{padding:6px 8px}.pillbar{padding-bottom:3px}
     }
     @media(max-width:430px){.grid>.card.span4{grid-column:span 6}.statusgrid{grid-template-columns:1fr}.hero p{max-width:90%}.navbtn{font-size:10px}.card.span6{grid-column:span 12}}
+
+    /* v2.5.1 mobile cleanup */
+    .mobile-quick{display:none}
+    .activity-item .main{min-width:0}.activity-item .name{white-space:normal;line-height:1.25}
+    .activity-item .meta{line-height:1.35;word-break:break-word}
+    .activity-time{display:none!important}
+    @media(max-width:760px){
+      .mobile-quick{display:grid}
+      .fab{display:none!important}
+      .grid{gap:10px}
+      .cashflow-card{grid-column:span 12!important}
+      #page-today .card.span6{grid-column:span 12}
+      .item{gap:9px}
+      .activity-item{align-items:flex-start}
+      .activity-item .checkbtn{width:40px;height:40px;min-width:40px;border-radius:13px}
+      .activity-item .duechip,.activity-item>.badge{flex:0 0 auto;align-self:flex-start}
+      #todayActivities .item,#todayBills .item{padding:10px}
+      #todayBills .item{flex-wrap:wrap}
+      #todayBills .item .main{min-width:160px}
+      #todayBills .duechip,#todayBills .badge{margin-left:49px}
+      .hero{box-shadow:0 10px 28px rgba(236,72,153,.16)}
+      .topin{gap:8px}.connpill{margin-left:auto}
+    }
+
     @media(prefers-color-scheme:dark){
       body[data-theme="system"]{--bg:#171116;--card:#211920;--ink:#fff7fb;--muted:#b8aab3;--line:#3a2d36;--pink-3:#452034;--pink-4:#2c1824}
       body[data-theme="system"] .top,body[data-theme="system"] .nav{background:rgba(23,17,22,.94)}
@@ -91,7 +115,7 @@
     body[data-theme="dark"] .top,body[data-theme="dark"] .nav{background:rgba(23,17,22,.94)}
     body[data-theme="dark"] .item,body[data-theme="dark"] .field input,body[data-theme="dark"] .field select,body[data-theme="dark"] .field textarea,body[data-theme="dark"] .tab,body[data-theme="dark"] .pill,body[data-theme="dark"] .iconbtn,body[data-theme="dark"] .chat{background:#211920;color:var(--ink)}
 
-    /* v2.5.0: Aktivitas, Kalender, AI Full Chat, Scan Struk */
+    /* v2.5.1: Mobile UI + temporal repair + email diagnostics */
     .activity-time{width:54px;min-width:54px;font-weight:900;color:#be185d;font-size:12px;text-align:center}.repeatmark{font-size:11px;color:#be185d;font-weight:800}.overdue-text{color:var(--danger);font-weight:800}
     .calendar-toolbar{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.cal-head{text-align:center;font-size:11px;font-weight:900;color:var(--muted);padding:6px 0}.cal-day{min-height:78px;border:1px solid var(--line);border-radius:14px;background:var(--card);padding:8px;text-align:left;position:relative}.cal-day.out{opacity:.35}.cal-day.today{border-color:var(--pink);box-shadow:0 0 0 2px var(--pink-3)}.cal-day.selected{background:var(--pink-4)}.cal-num{font-weight:900}.cal-dots{display:flex;gap:3px;position:absolute;left:8px;bottom:7px}.cal-dot{width:6px;height:6px;border-radius:50%;background:var(--pink)}.cal-dot.bill{background:var(--danger)}.cal-dot.done{background:var(--ok)}
     .week-list,.agenda-list{display:flex;flex-direction:column;gap:10px}.daygroup{border:1px solid var(--line);border-radius:16px;background:var(--card);padding:12px}.daygroup h3{margin:0 0 8px;font-size:14px}
@@ -126,7 +150,7 @@
       <div class="field"><label>Password</label><input id="ownerPassword" type="password" placeholder="Minimal 10 karakter + huruf & angka"></div>
       <button class="btn" style="width:100%" onclick="createOwner()">Aktifkan RUMA</button>
     </div>
-    <div class="small muted" style="margin-top:16px">v<span id="gateVersion">2.5.0</span> · Pink Edition</div>
+    <div class="small muted" style="margin-top:16px">v<span id="gateVersion">2.5.1</span> · Pink Edition</div>
   </div>
 </section>
 
@@ -137,6 +161,7 @@
         <div class="brand">R</div>
         <div class="grow"><div class="title">RUMA</div><div class="sub" id="userLine">Memuat...</div></div>
         <div class="connpill" onclick="openSettings()" title="Status koneksi"><span id="topConnDot" class="conndot"></span><span id="topConnText">Cek...</span></div>
+        <button class="iconbtn mobile-quick" onclick="openQuick()" title="Tambah cepat">＋</button>
         <button class="iconbtn" onclick="syncAll(false,{silent:false})" title="Sinkronkan">↻</button>
         <button class="iconbtn" onclick="openSettings()" title="Pengaturan">⚙</button>
       </div>
@@ -147,7 +172,7 @@
       <div class="grid">
         <div class="card span4"><div class="label">Saldo saya</div><div class="metric" id="myBalance">Rp0</div><div class="small muted" id="myAccountsCount">0 rekening</div></div>
         <div class="card span4"><div class="label">Saldo bersama</div><div class="metric" id="jointBalance">Rp0</div><div class="small muted">Rekening household</div></div>
-        <div class="card span4"><div class="label">Pengeluaran bulan ini</div><div class="metric" id="monthExpense">Rp0</div><div class="small muted" id="monthIncome">Pemasukan Rp0</div></div>
+        <div class="card span4 cashflow-card"><div class="label">Pengeluaran bulan ini</div><div class="metric" id="monthExpense">Rp0</div><div class="small muted" id="monthIncome">Pemasukan Rp0</div></div>
         <div class="card span6"><div class="row between"><div><div class="label">Aktivitas hari ini</div><div class="metric" id="todayActivityCount">0</div></div><span class="badge">PLAN</span></div><div id="todayActivities" class="list"></div><button class="btn ghost sm" style="margin-top:10px" onclick="goPage('plan',document.querySelector('.navbtn[data-page=plan]'))">Lihat semua →</button></div>
         <div class="card span6"><div class="row between"><div><div class="label">Reminder tagihan</div><div style="font-weight:900;font-size:18px;margin-top:5px">H-2 · H-1 · Hari H</div></div><span class="badge warn" id="billReminderCount">0 tagihan</span></div><div id="todayBills" class="list"></div></div>
         <div class="card span12"><div class="row between"><div><div class="label">AI Feedback</div><div style="font-weight:900;font-size:18px;margin-top:5px">Ringkasan kondisi rumah tangga</div></div><button class="btn secondary sm" onclick="askPreset('Berikan feedback singkat kondisi keuangan, aktivitas, dan tagihan rumah tangga saya. Fokus pada hal yang perlu diperhatikan hari ini.')">Analisis</button></div><div id="aiInsight" class="alert" style="margin-top:12px">Tekan Analisis untuk mendapatkan feedback berdasarkan data terbaru.</div></div>
@@ -243,7 +268,7 @@
             <div class="settings-toggle"><span>Tagihan terlambat</span><input id="setBillOverdue" type="checkbox" checked></div>
             <div class="settings-toggle"><span>Follow-up Hari H malam</span><input id="setBillFollowup" type="checkbox" checked></div>
             <div class="row"><div class="field grow"><label>Email pagi jam</label><input id="setBillMorningHour" type="number" min="0" max="23" value="8"></div><div class="field grow"><label>Follow-up jam</label><input id="setBillEveningHour" type="number" min="0" max="23" value="19"></div></div>
-            <div class="row wrap"><button class="btn" onclick="saveSystemSettings()">Simpan Pengaturan</button><button class="btn ghost" onclick="testNotification()">Tes Email</button></div>
+            <div class="row wrap"><button class="btn" onclick="saveSystemSettings()">Simpan Pengaturan</button><button class="btn ghost" onclick="testNotification()">Tes Email Sekarang</button><button class="btn ghost" onclick="repairNotification()">Perbaiki Reminder</button></div><div id="emailDiagnostic" class="small muted" style="margin-top:8px">Gunakan Tes Email untuk memastikan izin pengiriman sudah aktif.</div>
           </div>
           <div class="card span12">
             <div class="row between wrap"><div><h2 style="margin:0">Status Sistem</h2><div class="small muted">Koneksi, cache, session, database, dan AI.</div></div><button class="btn ghost sm" onclick="checkSystemStatus(true)">Periksa Semua</button></div>
@@ -294,7 +319,7 @@
 <script>
 const C = window.RUMA_CONFIG || {};
 const API_URL = (C.API_URL || '').trim();
-const VERSION = '2.5.0';
+const VERSION = '2.5.1';
 const CACHE_TTL = Number(C.CACHE_TTL_MS || 300000);
 const BG_SYNC_MS = Number(C.BACKGROUND_SYNC_MS || 120000);
 const SNAP_KEY='ruma_snapshot_v2_5';
@@ -321,7 +346,17 @@ function toast(msg,bad=false){const t=document.getElementById('toast');t.textCon
 function id(prefix){return prefix+'_'+(crypto.randomUUID?crypto.randomUUID().replaceAll('-',''):Date.now().toString(36)+Math.random().toString(36).slice(2,14))}
 function todayISO(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function localDT(v){if(!v)return'';const d=new Date(v);return d.toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'})}
-function fmtDate(v){if(!v)return'-';const d=new Date(v+'T00:00:00');return d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}
+function jakartaParts(d){try{const p=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Jakarta',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(d),o={};p.forEach(x=>o[x.type]=x.value);return o}catch(e){return{}}}
+function normalizeDateClient(v){
+  if(!v)return'';const s=String(v).trim();if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;if(/^1899-12-3[01]T/i.test(s))return'';
+  const d=new Date(s);if(isNaN(d.getTime()))return'';const p=jakartaParts(d);return p.year&&p.month&&p.day?`${p.year}-${p.month}-${p.day}`:'';
+}
+function normalizeTimeClient(v){
+  if(!v)return'';const s=String(v).trim(),m=s.match(/^(\d{1,2}):(\d{2})/);if(m)return String(Math.min(23,+m[1])).padStart(2,'0')+':'+String(Math.min(59,+m[2])).padStart(2,'0');
+  const d=new Date(s);if(isNaN(d.getTime()))return'';const p=jakartaParts(d);return p.hour&&p.minute?`${p.hour}:${p.minute}`:'';
+}
+function fmtDate(v){const n=normalizeDateClient(v);if(!n)return'-';const [y,m,d]=n.split('-').map(Number);return new Date(y,m-1,d,12).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}
+function normalizeTemporalSnapshot(){(S.activities||[]).forEach(a=>{a.date=normalizeDateClient(a.date);a.nextDate=normalizeDateClient(a.nextDate)||a.date;a.lastCompletedDate=normalizeDateClient(a.lastCompletedDate);a.repeatEnd=normalizeDateClient(a.repeatEnd);a.time=normalizeTimeClient(a.time)});(S.activityHistory||[]).forEach(h=>h.scheduledDate=normalizeDateClient(h.scheduledDate));(S.bills||[]).forEach(b=>b.dueDate=normalizeDateClient(b.dueDate));(S.goals||[]).forEach(g=>g.dueDate=normalizeDateClient(g.dueDate));(S.transactions||[]).forEach(t=>t.date=normalizeDateClient(t.date));}
 function formVal(id){return document.getElementById(id)?.value ?? ''}
 function checked(id){return !!document.getElementById(id)?.checked}
 
@@ -422,6 +457,7 @@ function scheduleSync(delay=700){clearTimeout(syncTimer);syncTimer=setTimeout(()
 function showApp(){document.getElementById('gate').classList.add('hidden');document.getElementById('mainApp').classList.remove('hidden')}
 function renderAll(){
   if(!S.user)return;
+  normalizeTemporalSnapshot();
   document.getElementById('userLine').textContent=S.user.name+' · '+(S.user.role==='OWNER'?'Owner':'Partner');document.getElementById('hello').textContent='Halo, '+S.user.name.split(' ')[0]+' 👋';document.getElementById('todayDate').textContent=new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   const mine=S.accounts.filter(a=>a.ownerId===S.user.id&&a.scope==='PERSONAL'),joint=S.accounts.filter(a=>a.scope==='JOINT');document.getElementById('myBalance').textContent=rupiah(mine.reduce((x,a)=>x+Number(a.balance||0),0));document.getElementById('jointBalance').textContent=rupiah(joint.reduce((x,a)=>x+Number(a.balance||0),0));document.getElementById('myAccountsCount').textContent=mine.length+' rekening/wallet';
   const exp=Number((S.summary||{}).monthExpense||0),inc=Number((S.summary||{}).monthIncome||0);document.getElementById('monthExpense').textContent=rupiah(exp);document.getElementById('monthIncome').textContent='Pemasukan '+rupiah(inc);
@@ -445,13 +481,13 @@ function activityOccurrencesForDate(date){
   const out=[];(S.activities||[]).forEach(a=>{const h=activityHistoryFor(a.id,date);if(h){out.push({...a,scheduledDate:date,occurrenceStatus:h.status});return}if(String(a.repeatType||'NONE')==='NONE'){if(a.date===date)out.push({...a,scheduledDate:date,occurrenceStatus:a.status||'OPEN'});return}let cur=a.nextDate||a.date;if(!cur)return;let guard=0;while(cur&&cur<date&&guard++<400)cur=nextActivityDateLocal(a,cur);if(cur===date)out.push({...a,scheduledDate:date,occurrenceStatus:'OPEN'});});return out;
 }
 function overdueActivities(){const t=todayISO();return (S.activities||[]).filter(a=>a.status!=='DONE'&&a.status!=='SKIPPED'&&(a.nextDate||a.date)&&(a.nextDate||a.date)<t&&!activityHistoryFor(a.id,a.nextDate||a.date)).map(a=>({...a,scheduledDate:a.nextDate||a.date,occurrenceStatus:'OPEN',overdue:true}))}
-function activityMeta(a){const parts=[];if(a.time)parts.push(a.time);parts.push(userName(a.assignedTo));if(a.repeatType&&a.repeatType!=='NONE')parts.push(activityRepeatLabel(a));if(a.location)parts.push(a.location);return parts.join(' · ')}
+function activityMeta(a){const parts=[],tm=normalizeTimeClient(a.time);if(tm)parts.push('🕒 '+tm);parts.push(userName(a.assignedTo));if(a.repeatType&&a.repeatType!=='NONE')parts.push(activityRepeatLabel(a));if(a.location)parts.push(a.location);return parts.join(' · ')}
 function activityRepeatLabel(a){const t=a.repeatType||'NONE',n=Number(a.repeatInterval||1);if(t==='DAILY')return n===1?'Harian':'Setiap '+n+' hari';if(t==='WEEKLY')return (a.repeatDays?String(a.repeatDays).replace(/MON/g,'Sen').replace(/TUE/g,'Sel').replace(/WED/g,'Rab').replace(/THU/g,'Kam').replace(/FRI/g,'Jum').replace(/SAT/g,'Sab').replace(/SUN/g,'Min'):'Mingguan');if(t==='MONTHLY')return n===1?'Bulanan':'Setiap '+n+' bulan';if(t==='YEARLY')return n===1?'Tahunan':'Setiap '+n+' tahun';if(t==='CUSTOM')return 'Setiap '+n+' '+({DAY:'hari',WEEK:'minggu',MONTH:'bulan',YEAR:'tahun'}[a.repeatUnit]||'hari');return''}
-function activityItemHtml(a,opts={}){const done=a.occurrenceStatus==='DONE'||a.status==='DONE',skipped=a.occurrenceStatus==='SKIPPED'||a.status==='SKIPPED',label=a.overdue?'<span class="duechip overdue">Terlambat</span>':a.repeatType&&a.repeatType!=='NONE'?'<span class="badge">↻</span>':'';return `<div class="item"><button class="checkbtn ${done?'done':''}" ${done&&a.repeatType!=='NONE'?'disabled':''} onclick="toggleActivity('${a.id}','${a.scheduledDate||a.nextDate||a.date||todayISO()}')">${done?'✓':skipped?'—':'○'}</button><div class="activity-time">${a.time||''}</div><div class="main"><div class="name ${done?'done-text':''}">${esc(a.title)}</div><div class="meta ${a.overdue?'overdue-text':''}">${esc(activityMeta(a))}${a.overdue?' · '+fmtDate(a.scheduledDate):''}</div></div>${label}${opts.edit===false?'':`<button class="btn ghost sm" onclick="openActivityActions('${a.id}','${a.scheduledDate||a.nextDate||a.date||todayISO()}')">•••</button>`}</div>`}
+function activityItemHtml(a,opts={}){const done=a.occurrenceStatus==='DONE'||a.status==='DONE',skipped=a.occurrenceStatus==='SKIPPED'||a.status==='SKIPPED',scheduled=normalizeDateClient(a.scheduledDate||a.nextDate||a.date)||todayISO(),label=a.overdue?'<span class="duechip overdue">Terlambat</span>':a.repeatType&&a.repeatType!=='NONE'?'<span class="badge">↻</span>':'';return `<div class="item activity-item"><button class="checkbtn ${done?'done':''}" ${done&&a.repeatType!=='NONE'?'disabled':''} onclick="toggleActivity('${a.id}','${scheduled}')">${done?'✓':skipped?'—':'○'}</button><div class="main"><div class="name ${done?'done-text':''}">${esc(a.title)}</div><div class="meta ${a.overdue?'overdue-text':''}">${esc(activityMeta(a))}${a.overdue?' · '+fmtDate(scheduled):''}</div></div>${label}${opts.edit===false?'':`<button class="btn ghost sm" onclick="openActivityActions('${a.id}','${scheduled}')">•••</button>`}</div>`}
 function renderTodayActivities(){const arr=[...activityOccurrencesForDate(todayISO()),...overdueActivities()].sort((a,b)=>String(a.time||'99:99').localeCompare(String(b.time||'99:99')));const open=arr.filter(a=>a.occurrenceStatus!=='DONE'&&a.occurrenceStatus!=='SKIPPED').length;document.getElementById('todayActivityCount').textContent=open;const e=document.getElementById('todayActivities');e.innerHTML=arr.length?arr.slice(0,7).map(a=>activityItemHtml(a,{edit:false})).join(''):'<div class="empty small">Tidak ada aktivitas yang perlu ditangani hari ini ✓</div>';}
 function renderPlan(){const today=[...activityOccurrencesForDate(todayISO()),...overdueActivities()];document.getElementById('activitiesTodayList').innerHTML=today.length?today.map(a=>activityItemHtml(a)).join(''):'<div class="empty">Tidak ada aktivitas hari ini.</div>';const routines=(S.activities||[]).filter(a=>a.repeatType&&a.repeatType!=='NONE');document.getElementById('routinesList').innerHTML=routines.length?routines.map(a=>activityItemHtml({...a,scheduledDate:a.nextDate||a.date,occurrenceStatus:'OPEN'})).join(''):'<div class="empty">Belum ada rutinitas berulang.</div>';const done=(S.activityHistory||[]).filter(h=>h.status==='DONE').slice(0,80);document.getElementById('completedActivitiesList').innerHTML=done.length?done.map(h=>{const a=S.activities.find(x=>x.id===h.activityId)||{title:'Aktivitas'};return `<div class="item"><span class="checkbtn done">✓</span><div class="main"><div class="name done-text">${esc(a.title)}</div><div class="meta">${fmtDate(h.scheduledDate)}${h.completedAt?' · '+new Date(h.completedAt).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}):''}</div></div></div>`}).join(''):'<div class="empty">Belum ada riwayat selesai.</div>';renderCalendar();}
 
-function daysTo(dateStr){if(!dateStr)return 9999;const a=new Date(todayISO()+'T00:00:00'),b=new Date(String(dateStr).slice(0,10)+'T00:00:00');return Math.round((b-a)/86400000)}
+function daysTo(dateStr){const n=normalizeDateClient(dateStr);if(!n)return 9999;const a=new Date(todayISO()+'T12:00:00'),b=new Date(n+'T12:00:00');return Math.round((b-a)/86400000)}
 function dueLabel(d){const n=daysTo(d);if(n===2)return ['H-2','h2'];if(n===1)return ['H-1','h1'];if(n===0)return ['Hari ini','today'];if(n<0)return ['Terlambat '+Math.abs(n)+' hari','overdue'];return ['H-'+n,'h2']}
 function renderTodayBills(){const e=document.getElementById('todayBills'),badge=document.getElementById('billReminderCount');if(!e)return;const arr=S.bills.filter(b=>{const d=daysTo(b.dueDate);return (d>=0&&d<=2)||(b.status!=='PAID'&&d<0)}).sort((a,b)=>String(a.dueDate).localeCompare(String(b.dueDate))).slice(0,8);const unpaid=arr.filter(b=>b.status!=='PAID').length;badge.textContent=unpaid+' perlu dibayar';if(!arr.length){e.innerHTML='<div class="empty small">Tidak ada tagihan H-2/H-1/Hari H yang perlu dibayar.</div>';return}e.innerHTML=arr.map(b=>{const d=b.status==='PAID'?['Lunas','']:dueLabel(b.dueDate);return `<div class="item"><button class="checkbtn ${b.status==='PAID'?'done':''}" onclick="toggleBill('${b.id}')" title="${b.status==='PAID'?'Batalkan status lunas':'Tandai sudah dibayar'}">${b.status==='PAID'?'✓':'○'}</button><div class="main"><div class="name ${b.status==='PAID'?'done-text':''}">${esc(b.name)}</div><div class="meta">${rupiah(b.amount)} · ${fmtDate(b.dueDate)} · ${esc(accountName(b.accountId))}</div></div>${b.status==='PAID'?'<span class="badge ok">Lunas</span>':`<span class="duechip ${d[1]}">${d[0]}</span>`}</div>`}).join('')}
 function renderSmallList(el,data,map){
@@ -563,7 +599,7 @@ function updateConnectionUI(){
 }
 async function checkSystemStatus(showToast=false){
   if(!S.session)return checkBootstrap(showToast);if(CONN.checking)return;CONN.checking=true;updateConnectionUI();
-  try{const t=performance.now(),r=await api('system.status',{});CONN.backend=true;CONN.latency=Math.round(performance.now()-t);if(r){CONN.activeSessions=Number(r.activeSessions||0);S.settings={...S.settings,version:r.version,databaseName:r.databaseName,spreadsheetId:r.spreadsheetId,aiProvider:r.aiProvider,aiModel:r.aiModel,aiConfigured:r.aiConfigured,receiptVisionConfigured:r.receiptVisionConfigured,driveStatus:r.drive?'Terhubung · '+(r.driveName||'STRUK'):'Tidak terhubung',emailStatus:r.emailTrigger?'Aktif · quota '+(r.emailQuota??'-'):'Trigger belum aktif',appUrl:r.appUrl||S.settings.appUrl};}updateConnectionUI();if(showToast)toast((r&&r.version!==VERSION)?'Koneksi aktif, tetapi versi backend berbeda. Deploy backend.gs terbaru.':'Semua koneksi utama terdeteksi ✓',!!(r&&r.version!==VERSION))}
+  try{const t=performance.now(),r=await api('system.status',{});CONN.backend=true;CONN.latency=Math.round(performance.now()-t);if(r){CONN.activeSessions=Number(r.activeSessions||0);S.settings={...S.settings,version:r.version,databaseName:r.databaseName,spreadsheetId:r.spreadsheetId,aiProvider:r.aiProvider,aiModel:r.aiModel,aiConfigured:r.aiConfigured,receiptVisionConfigured:r.receiptVisionConfigured,driveStatus:r.drive?'Terhubung · '+(r.driveName||'STRUK'):'Tidak terhubung',emailStatus:r.emailLastError?'Error · '+r.emailLastError:(r.emailTrigger?'Aktif · quota '+(r.emailQuota??'-')+(r.emailLastSent?' · terkirim '+new Date(r.emailLastSent).toLocaleString('id-ID'):''):'Trigger belum aktif'),emailLastRun:r.emailLastRun||'',emailLastSent:r.emailLastSent||'',emailLastError:r.emailLastError||'',appUrl:r.appUrl||S.settings.appUrl};}updateConnectionUI();if(showToast)toast((r&&r.version!==VERSION)?'Koneksi aktif, tetapi versi backend berbeda. Deploy backend.gs terbaru.':'Semua koneksi utama terdeteksi ✓',!!(r&&r.version!==VERSION))}
   catch(e){CONN.backend=false;CONN.lastError=e.message;updateConnectionUI();if(showToast)toast(e.message,true)}finally{CONN.checking=false}
 }
 async function clearAppCache(){
@@ -788,7 +824,7 @@ function saveGoal(i){const p={id:i,name:formVal('mGoalName'),target:Number(formV
 function repeatFieldsVisibility(){const t=formVal('mActRepeat');document.getElementById('repeatDaysWrap')?.classList.toggle('hidden',t!=='WEEKLY');document.getElementById('repeatCustomWrap')?.classList.toggle('hidden',t!=='CUSTOM');document.getElementById('repeatIntervalWrap')?.classList.toggle('hidden',!['DAILY','WEEKLY','MONTHLY','YEARLY','CUSTOM'].includes(t))}
 function openActivityModal(i='',scheduled=''){const a=S.activities.find(x=>x.id===i)||{},days=String(a.repeatDays||'').split(',');modal(i?'Edit Aktivitas':'Tambah Aktivitas',`
 <div class="field"><label>Aktivitas</label><input id="mActTitle" value="${esc(a.title||'')}" placeholder="Apa yang perlu dilakukan?"></div>
-<div class="row"><div class="field grow"><label>Tanggal</label><input id="mActDate" type="date" value="${scheduled||a.nextDate||a.date||todayISO()}"></div><div class="field grow"><label>Jam (opsional)</label><input id="mActTime" type="time" value="${a.time||''}"></div></div>
+<div class="row"><div class="field grow"><label>Tanggal</label><input id="mActDate" type="date" value="${normalizeDateClient(scheduled||a.nextDate||a.date)||todayISO()}"></div><div class="field grow"><label>Jam (opsional)</label><input id="mActTime" type="time" value="${normalizeTimeClient(a.time)}"></div></div>
 <div class="field"><label>Penanggung jawab</label><select id="mActUser">${userOptions(a.assignedTo||S.user.id)}</select></div>
 <div class="row"><div class="field grow"><label>Prioritas</label><select id="mActPri">${['LOW','NORMAL','HIGH'].map(x=>`<option ${a.priority===x?'selected':''}>${x}</option>`).join('')}</select></div><div class="field grow"><label>Scope</label><select id="mActScope"><option ${a.scope!=='JOINT'?'selected':''}>PERSONAL</option><option ${a.scope==='JOINT'?'selected':''}>JOINT</option></select></div></div>
 <div class="field"><label>Berulang</label><select id="mActRepeat" onchange="repeatFieldsVisibility()">${[['NONE','Tidak berulang'],['DAILY','Harian'],['WEEKLY','Mingguan / hari tertentu'],['MONTHLY','Bulanan'],['YEARLY','Tahunan'],['CUSTOM','Custom']].map(([v,l])=>`<option value="${v}" ${String(a.repeatType||'NONE')===v?'selected':''}>${l}</option>`).join('')}</select></div>
@@ -819,7 +855,8 @@ function openUserModal(i=''){if(S.user.role!=='OWNER'){toast('Hanya owner yang d
 function saveUser(i){const p={id:i,name:formVal('mUserName'),email:formVal('mUserEmail'),role:formVal('mUserRole'),password:formVal('mUserPass')};if(!i&&p.password.length<10)return toast('Password user baru minimal 10 karakter dan mengandung huruf & angka.',true);optimistic('user.save',p,()=>{const tid=i||id('TMPUSR');upsert(S.users,{id:tid,name:p.name,email:p.email,role:p.role},i||tid);return{tempId:i?'':tid}})}
 
 function saveSystemSettings(){const p={aiProvider:formVal('setAiProvider'),aiModel:formVal('setAiModel'),aiKey:formVal('setAiKey'),receiptGeminiKey:formVal('setReceiptGeminiKey'),receiptVisionModel:formVal('setReceiptVisionModel'),theme:formVal('setTheme'),appUrl:formVal('setAppUrl'),activityEmail:checked('setActivityEmail'),activityEveningHour:Number(formVal('setActivityHour')||19),billH2:checked('setBillH2'),billH1:checked('setBillH1'),billDue:checked('setBillDue'),billOverdue:checked('setBillOverdue'),billFollowup:checked('setBillFollowup'),billMorningHour:Number(formVal('setBillMorningHour')||8),billEveningHour:Number(formVal('setBillEveningHour')||19)};S.settings={...S.settings,...p};applyTheme(p.theme);document.getElementById('setAiKey').value='';document.getElementById('setReceiptGeminiKey').value='';persistSnapshot();renderAll();api('settings.save',p).then(()=>{toast('Pengaturan disimpan');scheduleSync(300);checkSystemStatus(false)}).catch(e=>toast(e.message,true))}
-function testNotification(){api('notification.test',{clientMutationId:id('MUTMAIL')}).then(r=>toast('Email tes dikirim ke '+(r.email||'email user')+' ✓')).catch(e=>toast(e.message,true))}
+function testNotification(){const d=document.getElementById('emailDiagnostic');if(d)d.textContent='Mengirim email tes...';api('notification.test',{clientMutationId:id('MUTMAIL')}).then(r=>{if(d)d.textContent='✓ Email tes berhasil dikirim ke '+(r.email||'email user')+'. Cek Inbox/Spam.';toast('Email tes dikirim ✓');checkSystemStatus(false)}).catch(e=>{if(d)d.textContent='✕ '+e.message;toast(e.message,true)})}
+function repairNotification(){const d=document.getElementById('emailDiagnostic');if(d)d.textContent='Memeriksa trigger dan izin email...';api('notification.repair',{clientMutationId:id('MUTMAILFIX')}).then(r=>{if(d)d.textContent='✓ Trigger aktif. Sisa quota '+(r.quota??'-')+'.';toast('Reminder email aktif ✓');checkSystemStatus(false)}).catch(e=>{if(d)d.textContent='✕ '+e.message;toast(e.message,true)})}
 function applyTheme(t){document.body.dataset.theme=t||'system'}
 
 function removeItem(type,i){if(!confirm('Yakin menghapus/mengarsipkan data ini?'))return;const map={account:'accounts',transaction:'transactions',budget:'budgets',bill:'bills',goal:'goals',activity:'activities',shopping:'shopping',note:'notes'};const k=map[type];if(!k)return;optimistic(type+'.delete',{id:i},()=>{if(type==='transaction'){const old=S.transactions.find(x=>x.id===i);if(old)adjustTx(old,-1)}S[k]=S[k].filter(x=>x.id!==i)})}
