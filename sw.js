@@ -1,4 +1,4 @@
-const VERSION = 'ruma-shell-v1.0.2';
+const VERSION = 'ruma-shell-v1.0.2 ';
 const CORE = [
   './index.html',
   './styles.css',
