@@ -211,12 +211,14 @@
               <div class="statusbox"><b>Versi</b><div id="stVersion" class="statusvalue">-</div></div>
               <div class="statusbox"><b>PWA</b><div id="stPWA" class="statusvalue">Memeriksa...</div></div>
               <div class="statusbox"><b>Anti Duplikat</b><div id="stDedupe" class="statusvalue">Frontend + backend aktif</div></div>
+              <div class="statusbox"><b>Kesehatan Data</b><div id="stDataHealth" class="statusvalue">Belum diperiksa</div></div>
               <div class="statusbox"><b>API Endpoint</b><div id="stEndpoint" class="statusvalue">-</div></div>
             </div>
             <div class="row wrap" style="margin-top:14px">
               <button class="btn secondary sm" onclick="syncAll(false,{silent:false})">Sinkronkan Sekarang</button>
               <button id="installPwaBtn" class="btn secondary sm installbtn" onclick="installPWA()">Install RUMA</button>
               <button class="btn ghost sm" onclick="clearAppCache()">Bersihkan Cache</button>
+              <button id="repairLegacyBtn" class="btn ghost sm" onclick="cleanupLegacyGhostData()">Bersihkan Data Bug Lama</button>
               <button class="btn ghost sm" onclick="logoutAllDevices()">Keluar Semua Perangkat</button>
               <button class="btn danger sm" onclick="logout()">Keluar Perangkat Ini</button>
             </div>
@@ -242,7 +244,7 @@
 <script>
 const C = window.RUMA_CONFIG || {};
 const API_URL = (C.API_URL || '').trim();
-const VERSION = '2.4.1';
+const VERSION = '2.5.3';
 const CACHE_TTL = Number(C.CACHE_TTL_MS || 300000);
 const BG_SYNC_MS = Number(C.BACKGROUND_SYNC_MS || 120000);
 const SNAP_KEY='ruma_snapshot_v2_4';
@@ -487,7 +489,7 @@ function upsert(list,item,idValue){const i=list.findIndex(x=>x.id===idValue);if(
 function updateConnectionUI(){
   CONN.online=navigator.onLine;
   const dot=document.getElementById('topConnDot'),text=document.getElementById('topConnText'),versionMismatch=!!(S.settings.version&&S.settings.version!==VERSION);
-  if(dot&&text){dot.className='conndot '+(!CONN.online?'bad':CONN.backend===false?'bad':(CONN.pendingWrites||versionMismatch)?'warn':CONN.backend===true?'ok':'warn');text.textContent=!CONN.online?'Offline':CONN.backend===false?'Backend error':CONN.pendingWrites?'Menyimpan…':versionMismatch?'Update backend':CONN.backend===true?'Online':'Online'}
+  if(dot&&text){dot.className='conndot '+(!CONN.online?'bad':CONN.backend===false?'bad':(CONN.pendingWrites||versionMismatch)?'warn':CONN.backend===true?'ok':'warn');text.textContent=!CONN.online?'Offline':CONN.backend===false?'Backend error':CONN.pendingWrites?'Menyimpan…':versionMismatch?('Backend '+(S.settings.version||'?')+' → '+VERSION):CONN.backend===true?'Online':'Online'}
   const cacheRaw=localStorage.getItem(SNAP_KEY),cache=(()=>{try{return JSON.parse(cacheRaw||'{}')}catch(e){return{}}})();
   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};
   set('stInternet',CONN.online?'Online':'Offline');
@@ -505,8 +507,17 @@ function updateConnectionUI(){
 }
 async function checkSystemStatus(showToast=false){
   if(!S.session)return checkBootstrap(showToast);if(CONN.checking)return;CONN.checking=true;updateConnectionUI();
-  try{const t=performance.now(),r=await api('system.status',{});CONN.backend=true;CONN.latency=Math.round(performance.now()-t);if(r){CONN.activeSessions=Number(r.activeSessions||0);S.settings={...S.settings,version:r.version,databaseName:r.databaseName,spreadsheetId:r.spreadsheetId,aiProvider:r.aiProvider,aiModel:r.aiModel,aiConfigured:r.aiConfigured};}updateConnectionUI();if(showToast)toast((r&&r.version!==VERSION)?'Koneksi aktif, tetapi versi backend berbeda. Deploy backend.gs terbaru.':'Semua koneksi utama terdeteksi ✓',!!(r&&r.version!==VERSION))}
+  try{const t=performance.now(),r=await api('system.status',{});CONN.backend=true;CONN.latency=Math.round(performance.now()-t);if(r){CONN.activeSessions=Number(r.activeSessions||0);S.settings={...S.settings,version:r.version,databaseName:r.databaseName,spreadsheetId:r.spreadsheetId,aiProvider:r.aiProvider,aiModel:r.aiModel,aiConfigured:r.aiConfigured,legacyGhostBills:Number(r.legacyGhostBills||0)};}updateConnectionUI();if(showToast)toast((r&&r.version!==VERSION)?('Backend masih v'+r.version+'. Deploy backend.gs v'+VERSION+' sebagai New version.'):'Semua koneksi utama terdeteksi ✓',!!(r&&r.version!==VERSION))}
   catch(e){CONN.backend=false;CONN.lastError=e.message;updateConnectionUI();if(showToast)toast(e.message,true)}finally{CONN.checking=false}
+}
+async function cleanupLegacyGhostData(){
+  if(!S.session)return;
+  if(!confirm('Bersihkan hanya tagihan palsu yang cocok dengan pola bug chat lama (nominal Rp0, tanpa rekening, dan judul berbentuk pertanyaan/feedback)? Tagihan normal tidak disentuh.'))return;
+  try{
+    const r=await api('system.cleanupLegacyGhosts',{clientMutationId:id('MUTCLEAN')});
+    toast((r.cleaned||0)+' data bug lama dibersihkan ✓');
+    S.settings.legacyGhostBills=0;await syncAll(true,{silent:true});updateConnectionUI();
+  }catch(e){toast('Belum bisa membersihkan: '+e.message,true)}
 }
 async function clearAppCache(){
   localStorage.removeItem(SNAP_KEY);localStorage.removeItem('ruma_snapshot_v2_3');localStorage.removeItem('ruma_snapshot_v2_1');localStorage.removeItem('ruma_snapshot');AI_CACHE.clear();
@@ -702,8 +713,13 @@ Kalau mau, saya bisa lanjut cek arus kas bulan ini.`;
   if(/(agenda|jadwal).*(besok)/.test(x)){const d=new Date();d.setDate(d.getDate()+1);const iso=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'),a=S.events.filter(e=>e.status!=='DONE'&&String(e.startAt).slice(0,10)===iso);return a.length?`Agenda besok:\n${a.map(e=>`- **${e.title}** · ${localDT(e.startAt)}`).join('\n')}`:'Belum ada agenda besok yang tercatat.'}
   return null;
 }
+function aiDisplayText(text){
+  let out=String(text||'');
+  (S.users||[]).forEach(u=>{if(u&&u.id&&u.name)out=out.split(u.id).join(u.name)});
+  return out.replace(/\bUSR_[A-Z0-9_-]{6,}\b/g,'anggota keluarga');
+}
 function chatHtml(text){
-  const safe=esc(text);return safe.split(/\n{2,}/).map(block=>{const lines=block.split('\n');if(lines.every(l=>/^[-•] /.test(l.trim())))return '<ul>'+lines.map(l=>'<li>'+l.trim().replace(/^[-•] /,'').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')+'</li>').join('')+'</ul>';return '<p>'+block.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>')+'</p>'}).join('')
+  const safe=esc(aiDisplayText(text));return safe.split(/\n{2,}/).map(block=>{const lines=block.split('\n');if(lines.every(l=>/^[-•] /.test(l.trim())))return '<ul>'+lines.map(l=>'<li>'+l.trim().replace(/^[-•] /,'').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')+'</li>').join('')+'</ul>';return '<p>'+block.replace(/^#{1,4}\s+/gm,'').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>')+'</p>'}).join('')
 }
 
 function mergeChatHistory(server,local){const m=new Map();[...(server||[]),...(local||[])].forEach(x=>{if(x&&x.id)m.set(x.id,x)});return [...m.values()].sort((a,b)=>String(a.createdAt||'').localeCompare(String(b.createdAt||''))).slice(-180)}
@@ -791,7 +807,7 @@ function askPreset(q){
   const fast=fastLocalAnswer(q);if(fast){appendChatMessage('assistant',fast,'normal',true);return}
   const ck=(S.revision||0)+'|'+q.trim().toLowerCase(),cached=AI_CACHE.get(ck);if(cached&&Date.now()-cached.at<180000){appendChatMessage('assistant',cached.text,'normal',true);return}
   CHAT_BUSY=true;showChatThinking('Saya cek');
-  api('ai.chat',{message:q,history:(S.chatHistory||[]).slice(-10).map(m=>({role:m.role,text:m.text}))}).then(r=>{AI_CACHE.set(ck,{at:Date.now(),text:r.text});document.getElementById('aiInsight').textContent=r.text;finishChat(r.text,'normal')}).catch(e=>{finishChat('Saya belum bisa menyelesaikan pengecekan ini. **'+e.message+'**\n\nCoba lagi sebentar, atau tulis permintaan dengan detail yang lebih spesifik.','feedback');toast(e.message,true)})
+  api('ai.chat',{message:q,history:(S.chatHistory||[]).slice(-10).map(m=>({role:m.role,text:m.text}))}).then(r=>{AI_CACHE.set(ck,{at:Date.now(),text:r.text});document.getElementById('aiInsight').innerHTML=chatHtml(r.text);finishChat(r.text,'normal')}).catch(e=>{finishChat('Saya belum bisa menyelesaikan pengecekan ini. **'+e.message+'**\n\nCoba lagi sebentar, atau tulis permintaan dengan detail yang lebih spesifik.','feedback');toast(e.message,true)})
 }
 
 async function installPWA(){
