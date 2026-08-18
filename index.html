@@ -62,7 +62,24 @@
     .empty{padding:26px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:16px;background:#fff}
     .pillbar{display:flex;gap:8px;overflow:auto}.pill{border:1px solid var(--line);border-radius:999px;padding:8px 11px;background:#fff;white-space:nowrap;font-size:12px;font-weight:700}
     .pinkdot{width:9px;height:9px;background:var(--pink);border-radius:50%;display:inline-block;margin-right:6px}
-    @media(max-width:760px){.span4,.span6,.span8{grid-column:span 12}.app{padding-left:12px;padding-right:12px}.hero{padding:20px;border-radius:23px}.hero h1{font-size:23px}.fab{right:16px}.card{padding:15px}}
+    .connpill{display:flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:7px 10px;font-size:11px;font-weight:800;color:var(--muted)}
+    .conndot{width:8px;height:8px;border-radius:50%;background:#9ca3af}.conndot.ok{background:var(--ok);box-shadow:0 0 0 4px rgba(15,159,110,.10)}.conndot.warn{background:var(--warn)}.conndot.bad{background:var(--danger)}
+    .statusgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.statusbox{border:1px solid var(--line);border-radius:15px;padding:12px;background:var(--card)}.statusbox b{display:block;font-size:13px;margin-bottom:4px}.statusvalue{font-size:12px;color:var(--muted);word-break:break-word}
+    .saving{opacity:.62}.syncline{font-size:11px;color:var(--muted);margin-top:4px}.bubble.ai strong{font-weight:900;color:#a31559}.bubble.ai ul{padding-left:18px;margin:7px 0}.bubble.ai p{margin:0 0 7px}.bubble.ai p:last-child{margin-bottom:0}
+    .btn:disabled,.iconbtn:disabled{opacity:.55;cursor:not-allowed}.savehint{font-size:11px;color:var(--muted);margin-left:auto}
+    .installbtn{display:none}.installbtn.show{display:inline-flex;align-items:center;gap:6px}
+    .bubble.feedback{background:#fff7ed;border-color:#fed7aa;color:#7c2d12}
+    .chattyping{display:inline-flex;gap:4px;align-items:center}.chattyping i{width:5px;height:5px;border-radius:50%;background:var(--pink);animation:pulse 1s infinite}.chattyping i:nth-child(2){animation-delay:.15s}.chattyping i:nth-child(3){animation-delay:.3s}@keyframes pulse{0%,80%,100%{opacity:.3;transform:translateY(0)}40%{opacity:1;transform:translateY(-2px)}}
+    @media(max-width:760px){
+      .app{padding-left:10px;padding-right:10px;padding-bottom:112px}.top{padding:9px 0}.brand{width:40px;height:40px;border-radius:13px}.title{font-size:16px}.sub{font-size:11px}.iconbtn{width:42px;height:42px}
+      .hero{margin:12px 0 10px;padding:16px;border-radius:20px}.hero h1{font-size:21px}.hero p{font-size:13px}.card{padding:13px;border-radius:17px}.sectionhead{margin:15px 0 8px}.sectionhead h2{font-size:17px}
+      .span6,.span8{grid-column:span 12}.grid>.card.span4{grid-column:span 6}.metric{font-size:21px}.label{font-size:10px}.statusgrid{grid-template-columns:1fr 1fr;gap:8px}.statusbox{padding:10px}
+      .item{padding:11px;border-radius:14px}.item .name{font-size:14px}.item .meta{font-size:11px}.btn{min-height:44px;padding:10px 13px}.btn.sm{min-height:38px;padding:8px 10px}.tab,.pill{min-height:39px}
+      .tabs{margin:9px -2px}.sheet{width:100%;max-height:92dvh;border-radius:24px 24px 0 0;padding:17px 14px calc(18px + env(safe-area-inset-bottom))}.modal{padding:0;place-items:end center}.field input,.field select,.field textarea,.chatinput input{font-size:16px}
+      .chat{height:calc(100dvh - 300px);min-height:360px;border-radius:17px;padding:10px}.bubble{max-width:92%;font-size:14px}.chatinput{position:sticky;bottom:76px;background:var(--bg);padding:8px 0 calc(4px + env(safe-area-inset-bottom));z-index:12;margin-top:4px}.chatinput .btn{min-width:74px}
+      .nav{padding-top:6px}.navbtn{min-height:50px;padding:5px 2px}.navbtn b{font-size:18px}.fab{right:14px;bottom:84px;width:52px;height:52px;border-radius:17px}.connpill{padding:6px 8px}.pillbar{padding-bottom:3px}
+    }
+    @media(max-width:430px){.grid>.card.span4{grid-column:span 6}.statusgrid{grid-template-columns:1fr}.hero p{max-width:90%}.navbtn{font-size:10px}.card.span6{grid-column:span 12}}
     @media(prefers-color-scheme:dark){
       body[data-theme="system"]{--bg:#171116;--card:#211920;--ink:#fff7fb;--muted:#b8aab3;--line:#3a2d36;--pink-3:#452034;--pink-4:#2c1824}
       body[data-theme="system"] .top,body[data-theme="system"] .nav{background:rgba(23,17,22,.94)}
@@ -84,7 +101,7 @@
     <div id="endpointWarning" class="alert warn hidden"></div>
     <div id="loginPanel">
       <div class="field"><label>Email</label><input id="loginEmail" type="email" autocomplete="username" placeholder="nama@email.com"></div>
-      <div class="field"><label>Password</label><input id="loginPassword" type="password" autocomplete="current-password" placeholder="Minimal 8 karakter"></div>
+      <div class="field"><label>Password</label><input id="loginPassword" type="password" autocomplete="current-password" placeholder="Minimal 10 karakter + huruf & angka"></div>
       <button class="btn" style="width:100%" onclick="login()">Masuk</button>
       <button class="btn ghost" style="width:100%;margin-top:8px" onclick="checkBootstrap(true)">Cek koneksi backend</button>
     </div>
@@ -93,10 +110,10 @@
       <div class="field"><label>Setup Code</label><input id="setupCode" placeholder="Kode dari setupRuma()"></div>
       <div class="field"><label>Nama</label><input id="ownerName" placeholder="Nama pemilik"></div>
       <div class="field"><label>Email</label><input id="ownerEmail" type="email"></div>
-      <div class="field"><label>Password</label><input id="ownerPassword" type="password" placeholder="Minimal 8 karakter"></div>
+      <div class="field"><label>Password</label><input id="ownerPassword" type="password" placeholder="Minimal 10 karakter + huruf & angka"></div>
       <button class="btn" style="width:100%" onclick="createOwner()">Aktifkan RUMA</button>
     </div>
-    <div class="small muted" style="margin-top:16px">v<span id="gateVersion">2.0.0</span> · Pink Edition</div>
+    <div class="small muted" style="margin-top:16px">v<span id="gateVersion">2.2.0</span> · Pink Edition</div>
   </div>
 </section>
 
@@ -106,7 +123,8 @@
       <div class="topin">
         <div class="brand">R</div>
         <div class="grow"><div class="title">RUMA</div><div class="sub" id="userLine">Memuat...</div></div>
-        <button class="iconbtn" onclick="syncAll()" title="Sinkronkan">↻</button>
+        <div class="connpill" onclick="openSettings()" title="Status koneksi"><span id="topConnDot" class="conndot"></span><span id="topConnText">Cek...</span></div>
+        <button class="iconbtn" onclick="syncAll(false,{silent:false})" title="Sinkronkan">↻</button>
         <button class="iconbtn" onclick="openSettings()" title="Pengaturan">⚙</button>
       </div>
     </header>
@@ -146,8 +164,8 @@
         <button class="pill" onclick="askPreset('Apa saja yang harus saya perhatikan dalam 7 hari ke depan?')">📅 7 hari ke depan</button>
         <button class="pill" onclick="askPreset('Apakah pembagian task suami istri saat ini seimbang? Jelaskan netral.')">🏠 Pembagian task</button>
       </div>
-      <div id="chat" class="chat"><div class="bubble ai">Halo! Saya membaca data RUMA yang boleh Anda akses lalu memberi feedback. Data privat pasangan tetap mengikuti pengaturan rekening.</div></div>
-      <div class="chatinput"><input id="chatInput" placeholder="Tanya tentang keuangan, jadwal, tagihan, task..." onkeydown="if(event.key==='Enter')sendChat()"><button class="btn" onclick="sendChat()">Kirim</button></div>
+      <div id="chat" class="chat"><div class="bubble ai">Hai 👋 Mau cek apa? Saya bisa bantu soal uang, tagihan, jadwal, dan urusan rumah. Kalau informasinya belum cukup, saya akan bilang apa yang masih perlu dilengkapi.</div></div>
+      <div class="chatinput"><input id="chatInput" placeholder="Contoh: bulan ini boros nggak?" onkeydown="if(event.key==='Enter')sendChat()"><button class="btn" onclick="sendChat()">Kirim</button></div>
     </section>
 
     <section id="page-plan" class="page">
@@ -177,7 +195,30 @@
             <div class="field"><label>Tema</label><select id="setTheme"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></div>
             <button class="btn" onclick="saveSystemSettings()">Simpan Pengaturan</button>
           </div>
-          <div class="card span12"><div class="row between wrap"><div><b>Database</b><div id="dbInfo" class="small muted"></div></div><div class="row"><button class="btn ghost sm" onclick="syncAll()">Sinkronkan</button><button class="btn danger sm" onclick="logout()">Keluar</button></div></div></div>
+          <div class="card span12">
+            <div class="row between wrap"><div><h2 style="margin:0">Status Sistem</h2><div class="small muted">Koneksi, cache, session, database, dan AI.</div></div><button class="btn ghost sm" onclick="checkSystemStatus(true)">Periksa Semua</button></div>
+            <div class="statusgrid" style="margin-top:14px">
+              <div class="statusbox"><b>Internet</b><div id="stInternet" class="statusvalue">Memeriksa...</div></div>
+              <div class="statusbox"><b>Backend Apps Script</b><div id="stBackend" class="statusvalue">Belum diperiksa</div></div>
+              <div class="statusbox"><b>Database</b><div id="stDatabase" class="statusvalue">-</div></div>
+              <div class="statusbox"><b>Session</b><div id="stSession" class="statusvalue">Aktif · persisten</div></div>
+              <div class="statusbox"><b>Cache</b><div id="stCache" class="statusvalue">-</div></div>
+              <div class="statusbox"><b>AI</b><div id="stAI" class="statusvalue">-</div></div>
+              <div class="statusbox"><b>Sinkronisasi</b><div id="stSync" class="statusvalue">-</div></div>
+              <div class="statusbox"><b>Versi</b><div id="stVersion" class="statusvalue">-</div></div>
+              <div class="statusbox"><b>PWA</b><div id="stPWA" class="statusvalue">Memeriksa...</div></div>
+              <div class="statusbox"><b>Anti Duplikat</b><div id="stDedupe" class="statusvalue">Frontend + backend aktif</div></div>
+              <div class="statusbox"><b>API Endpoint</b><div id="stEndpoint" class="statusvalue">-</div></div>
+            </div>
+            <div class="row wrap" style="margin-top:14px">
+              <button class="btn secondary sm" onclick="syncAll(false,{silent:false})">Sinkronkan Sekarang</button>
+              <button id="installPwaBtn" class="btn secondary sm installbtn" onclick="installPWA()">Install RUMA</button>
+              <button class="btn ghost sm" onclick="clearAppCache()">Bersihkan Cache</button>
+              <button class="btn ghost sm" onclick="logoutAllDevices()">Keluar Semua Perangkat</button>
+              <button class="btn danger sm" onclick="logout()">Keluar Perangkat Ini</button>
+            </div>
+            <div id="dbInfo" class="small muted" style="margin-top:10px"></div>
+          </div>
         </div>
       </div>
     </section>
@@ -198,9 +239,21 @@
 <script>
 const C = window.RUMA_CONFIG || {};
 const API_URL = (C.API_URL || '').trim();
-const VERSION = C.APP_VERSION || '2.0.0';
+const VERSION = '2.2.0';
+const CACHE_TTL = Number(C.CACHE_TTL_MS || 300000);
+const BG_SYNC_MS = Number(C.BACKGROUND_SYNC_MS || 120000);
+const SNAP_KEY='ruma_snapshot_v2_2';
+const DEVICE_KEY='ruma_device_id';
+const DEVICE_ID=localStorage.getItem(DEVICE_KEY)||id('DEV');
+localStorage.setItem(DEVICE_KEY,DEVICE_ID);
+let CONN={online:navigator.onLine,backend:null,latency:null,lastSync:0,lastError:'',checking:false,pendingWrites:0,activeSessions:0};
+let syncTimer=null;
+const AI_CACHE=new Map();
+const PENDING_MUTATIONS=new Map();
+let deferredInstallPrompt=null;
+let PWA_STATE={supported:'serviceWorker' in navigator,registered:false,controlled:!!(navigator.serviceWorker&&navigator.serviceWorker.controller),installed:window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches,updateAvailable:false,error:''};
 const TIMEOUT = Number(C.REQUEST_TIMEOUT || 25000);
-let S = {session:localStorage.getItem('ruma_session')||'', user:null, users:[], accounts:[], transactions:[], budgets:[], bills:[], goals:[], tasks:[], events:[], shopping:[], notes:[], settings:{}};
+let S = {session:localStorage.getItem('ruma_session')||'', user:null, users:[], accounts:[], transactions:[], budgets:[], bills:[], goals:[], tasks:[], events:[], shopping:[], notes:[], summary:{}, settings:{}, revision:0, serverTime:''};
 document.getElementById('gateVersion').textContent=VERSION;
 
 function rupiah(n){return new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(Number(n||0))}
@@ -215,30 +268,30 @@ function checked(id){return !!document.getElementById(id)?.checked}
 
 function api(action,payload={},opts={}){
   if(!API_URL) return Promise.reject(new Error('API_URL belum diisi di config.js'));
+  const started=performance.now();
   return new Promise((resolve,reject)=>{
     const rid=id('RID'), frameName='bridge_'+rid;
     const iframe=document.createElement('iframe');iframe.name=frameName;iframe.style.display='none';document.body.appendChild(iframe);
     const form=document.createElement('form');form.method='POST';form.action=API_URL;form.target=frameName;form.style.display='none';
-    const fields={rid,action,payload:JSON.stringify(payload||{}),session:opts.noSession?'':S.session};
+    const fields={rid,action,payload:JSON.stringify(payload||{}),session:opts.noSession?'':S.session,deviceId:DEVICE_ID};
     Object.entries(fields).forEach(([k,v])=>{const i=document.createElement('input');i.name=k;i.value=v;form.appendChild(i)});document.body.appendChild(form);
     let done=false,tries=0,timer;
-    const cleanup=()=>{done=true;clearTimeout(timer);form.remove();setTimeout(()=>iframe.remove(),1000)};
+    const cleanup=()=>{done=true;clearTimeout(timer);form.remove();setTimeout(()=>iframe.remove(),800)};
+    const success=res=>{CONN.backend=true;CONN.latency=Math.round(performance.now()-started);CONN.lastError='';updateConnectionUI();resolve(res)};
+    const failure=err=>{CONN.backend=false;CONN.lastError=String(err.message||err);updateConnectionUI();reject(err)};
     const poll=()=>{
-      if(done)return; tries++;
-      const cb='__ruma_'+rid+'_'+tries;
-      const scr=document.createElement('script');
+      if(done)return;tries++;
+      const cb='__ruma_'+rid+'_'+tries,scr=document.createElement('script');
       const kill=()=>{try{delete window[cb]}catch(e){};scr.remove()};
-      window[cb]=(res)=>{kill(); if(res&&res.pending){return setTimeout(poll,300)} cleanup(); if(res&&res.ok)resolve(res.data); else reject(new Error((res&&res.error)||'Respons backend tidak valid'))};
-      scr.onerror=()=>{kill(); if(Date.now()-started>TIMEOUT){cleanup();reject(new Error('Backend tidak merespons. Pastikan Web App Apps Script = Anyone dan URL /exec benar.'))}else setTimeout(poll,450)};
+      window[cb]=(res)=>{kill();if(res&&res.pending)return setTimeout(poll,180);cleanup();if(res&&res.ok)success(res.data);else failure(new Error((res&&res.error)||'Respons backend tidak valid'))};
+      scr.onerror=()=>{kill();if(performance.now()-started>TIMEOUT){cleanup();failure(new Error('Backend tidak merespons. Periksa deployment Apps Script dan koneksi internet.'))}else setTimeout(poll,260)};
       scr.src=API_URL+'?action=poll&rid='+encodeURIComponent(rid)+'&callback='+encodeURIComponent(cb)+'&_='+Date.now();
       document.head.appendChild(scr);
     };
-    const started=Date.now();
-    timer=setTimeout(()=>{if(!done){cleanup();reject(new Error('Timeout koneksi Apps Script'))}},TIMEOUT+2500);
-    form.submit();setTimeout(poll,450);
+    timer=setTimeout(()=>{if(!done){cleanup();failure(new Error('Timeout koneksi Apps Script'))}},TIMEOUT+1500);
+    form.submit();setTimeout(poll,160);
   });
 }
-
 async function checkBootstrap(force=false){
   if(!API_URL){
     document.getElementById('endpointWarning').classList.remove('hidden');
@@ -268,26 +321,45 @@ async function createOwner(){
 }
 async function login(){
   try{
-    const r=await api('auth.login',{email:formVal('loginEmail'),password:formVal('loginPassword'),device:navigator.userAgent.slice(0,120)},{noSession:true});
+    const r=await api('auth.login',{email:formVal('loginEmail'),password:formVal('loginPassword'),device:navigator.userAgent.slice(0,120),deviceId:DEVICE_ID},{noSession:true});
     S.session=r.session;localStorage.setItem('ruma_session',S.session);
     await syncAll(true);
   }catch(e){toast(e.message,true)}
 }
 async function logout(){
   try{if(S.session)await api('auth.logout',{})}catch(e){}
-  localStorage.removeItem('ruma_session');S.session='';location.reload();
+  localStorage.removeItem('ruma_session');localStorage.removeItem(SNAP_KEY);S.session='';location.reload();
 }
-async function syncAll(first=false){
-  try{
-    const r=await api('app.snapshot',{});
-    Object.assign(S,r);
-    localStorage.setItem('ruma_snapshot',JSON.stringify({at:Date.now(),data:r}));
-    showApp();renderAll(); if(!first)toast('Data tersinkron ✓');
-  }catch(e){
-    if(e.message.toLowerCase().includes('session')){localStorage.removeItem('ruma_session');S.session='';document.getElementById('gate').classList.remove('hidden');document.getElementById('mainApp').classList.add('hidden')}
-    else toast(e.message,true);
-  }
+async function logoutAllDevices(){
+  if(!confirm('Keluar dari semua perangkat yang sedang login?'))return;
+  try{await api('auth.logoutAll',{})}catch(e){toast(e.message,true);return}
+  localStorage.removeItem('ruma_session');localStorage.removeItem(SNAP_KEY);S.session='';location.reload();
 }
+function isAuthError(msg){return /(session tidak valid|session tidak ditemukan|session sudah tidak berlaku|session tidak cocok|user tidak aktif)/i.test(String(msg||''))}
+function persistSnapshot(){
+  try{localStorage.setItem(SNAP_KEY,JSON.stringify({at:Date.now(),data:{user:S.user,users:S.users,accounts:S.accounts,transactions:S.transactions,budgets:S.budgets,bills:S.bills,goals:S.goals,tasks:S.tasks,events:S.events,shopping:S.shopping,notes:S.notes,summary:S.summary,settings:S.settings,revision:S.revision,serverTime:S.serverTime}}))}catch(e){}
+  updateConnectionUI();
+}
+async function syncAll(first=false,opts={}){
+  if(!S.session)return;
+  if(syncAll._running)return syncAll._running;
+  const job=(async()=>{
+    try{
+      const r=await api('app.snapshot',{});
+      Object.assign(S,r);CONN.lastSync=Date.now();persistSnapshot();showApp();renderAll();
+      if(!first&&!opts.silent)toast('Data sudah sinkron ✓');
+      return r;
+    }catch(e){
+      if(isAuthError(e.message)){
+        localStorage.removeItem('ruma_session');S.session='';
+        document.getElementById('gate').classList.remove('hidden');document.getElementById('mainApp').classList.add('hidden');toast('Session perlu login ulang.',true);
+      }else if(!opts.silent) toast(e.message,true);
+      throw e;
+    }finally{syncAll._running=null;updateConnectionUI()}
+  })();
+  syncAll._running=job;return job;
+}
+function scheduleSync(delay=700){clearTimeout(syncTimer);syncTimer=setTimeout(()=>{if(S.session&&navigator.onLine&&document.visibilityState==='visible')syncAll(false,{silent:true}).catch(()=>{})},delay)}
 function showApp(){document.getElementById('gate').classList.add('hidden');document.getElementById('mainApp').classList.remove('hidden')}
 function renderAll(){
   if(!S.user)return;
@@ -298,14 +370,13 @@ function renderAll(){
   document.getElementById('myBalance').textContent=rupiah(mine.reduce((x,a)=>x+Number(a.balance||0),0));
   document.getElementById('jointBalance').textContent=rupiah(joint.reduce((x,a)=>x+Number(a.balance||0),0));
   document.getElementById('myAccountsCount').textContent=mine.length+' rekening/wallet';
-  const month=todayISO().slice(0,7), txm=S.transactions.filter(t=>String(t.date).slice(0,7)===month);
-  const exp=txm.filter(t=>t.type==='EXPENSE').reduce((x,t)=>x+Number(t.amount||0),0), inc=txm.filter(t=>t.type==='INCOME').reduce((x,t)=>x+Number(t.amount||0),0);
+  const exp=Number((S.summary||{}).monthExpense||0),inc=Number((S.summary||{}).monthIncome||0);
   document.getElementById('monthExpense').textContent=rupiah(exp);document.getElementById('monthIncome').textContent='Pemasukan '+rupiah(inc);
   const tev=S.events.filter(e=>String(e.startAt).slice(0,10)===todayISO());document.getElementById('todayEventCount').textContent=tev.length;renderSmallList('todayEvents',tev.slice(0,4),e=>({name:e.title,meta:localDT(e.startAt)}));
   const ot=S.tasks.filter(t=>t.status!=='DONE');document.getElementById('openTaskCount').textContent=ot.length;renderSmallList('todayTasks',ot.slice(0,4),t=>({name:t.title,meta:(t.dueDate?fmtDate(t.dueDate):'Tanpa jatuh tempo')+' · '+userName(t.assignedTo)}));
   document.getElementById('aiStatus').textContent=S.settings.aiConfigured?(S.settings.aiProvider+' · '+S.settings.aiModel):'Belum dikonfigurasi';
   document.getElementById('setAiProvider').value=S.settings.aiProvider||'GEMINI';document.getElementById('setAiModel').value=S.settings.aiModel||'gemini-3.6-flash';document.getElementById('setTheme').value=S.settings.theme||'system';applyTheme(S.settings.theme||'system');
-  document.getElementById('dbInfo').textContent=(S.settings.databaseName||'RUMA Database')+' · '+(S.settings.spreadsheetId||'');
+  document.getElementById('dbInfo').textContent=(S.settings.databaseName||'RUMA Database')+' · '+(S.settings.spreadsheetId||'');updateConnectionUI();
   renderAccounts();renderTransactions();renderBudgets();renderBills();renderGoals();renderTasks();renderEvents();renderShopping();renderNotes();renderUsers();
 }
 function renderSmallList(el,data,map){
@@ -361,11 +432,105 @@ function goPage(p,b){document.querySelectorAll('.page').forEach(x=>x.classList.r
 function moneyTab(p,b){['transactions','accounts','budgets','bills','goals'].forEach(x=>document.getElementById('money-'+x).classList.toggle('hidden',x!==p));b.parentElement.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active')}
 function planTab(p,b){['tasks','events'].forEach(x=>document.getElementById('plan-'+x).classList.toggle('hidden',x!==p));b.parentElement.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active')}
 function moreTab(p,b){['shopping','notes','settings'].forEach(x=>document.getElementById('more-'+x).classList.toggle('hidden',x!==p));b.parentElement.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active')}
-function openSettings(){goPage('more',document.querySelector('.navbtn[data-page="more"]'));const btn=[...document.querySelectorAll('#page-more .tab')].find(x=>x.textContent.includes('Pengaturan'));moreTab('settings',btn)}
+function openSettings(){goPage('more',document.querySelector('.navbtn[data-page="more"]'));const btn=[...document.querySelectorAll('#page-more .tab')].find(x=>x.textContent.includes('Pengaturan'));moreTab('settings',btn);setTimeout(()=>checkSystemStatus(false),80)}
 function closeModal(){document.getElementById('modal').classList.add('hidden')}
 function modal(title,html){document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').innerHTML=html;document.getElementById('modal').classList.remove('hidden')}
 function accountOptions(sel=''){return S.accounts.filter(a=>a.canEdit||a.scope==='JOINT'||a.ownerId===S.user.id).map(a=>`<option value="${a.id}" ${a.id===sel?'selected':''}>${esc(a.name)} · ${esc(a.scope)}</option>`).join('')}
 function userOptions(sel=''){return S.users.map(u=>`<option value="${u.id}" ${u.id===sel?'selected':''}>${esc(u.name)}</option>`).join('')}
+
+function cloneState(){return JSON.parse(JSON.stringify({users:S.users,accounts:S.accounts,transactions:S.transactions,budgets:S.budgets,bills:S.bills,goals:S.goals,tasks:S.tasks,events:S.events,shopping:S.shopping,notes:S.notes,summary:S.summary}))}
+function restoreState(b){Object.assign(S,b);persistSnapshot();renderAll()}
+function replaceTempId(tempId,newId){if(!tempId||!newId)return;['accounts','transactions','budgets','bills','goals','tasks','events','shopping','notes','users'].forEach(k=>{const x=S[k]?.find(v=>v.id===tempId);if(x)x.id=newId})}
+function stableStringify(v){
+  if(v===null||typeof v!=='object')return JSON.stringify(v);
+  if(Array.isArray(v))return '['+v.map(stableStringify).join(',')+']';
+  return '{'+Object.keys(v).sort().map(k=>JSON.stringify(k)+':'+stableStringify(v[k])).join(',')+'}';
+}
+function mutationFingerprint(action,payload){const clean={...payload};delete clean.clientMutationId;return action+'|'+stableStringify(clean)}
+function isDuplicatePending(action,payload){const key=mutationFingerprint(action,payload),now=Date.now(),last=PENDING_MUTATIONS.get(key)||0;if(now-last<2200)return true;PENDING_MUTATIONS.set(key,now);setTimeout(()=>{if(PENDING_MUTATIONS.get(key)===now)PENDING_MUTATIONS.delete(key)},6000);return false}
+function optimistic(action,payload,applyLocal,opts={}){
+  if(isDuplicatePending(action,payload)){toast('Input yang sama baru saja diproses. Duplikat dicegah.');return}
+  payload={...payload,clientMutationId:id('MUT')};
+  const backup=cloneState();let meta={};
+  try{meta=applyLocal()||{};closeModal();persistSnapshot();renderAll();toast(opts.message||'Sudah tampil. Saya sinkronkan di belakang…')}
+  catch(e){restoreState(backup);toast(e.message,true);return}
+  CONN.pendingWrites++;updateConnectionUI();
+  api(action,payload).then(r=>{if(r&&r.duplicatePrevented){restoreState(backup);toast('Data yang sama sudah ada. Duplikat tidak ditambahkan.');scheduleSync(120);return}replaceTempId(meta.tempId,r&&r.id);persistSnapshot();renderAll();scheduleSync(350)}).catch(e=>{restoreState(backup);toast('Belum tersimpan: '+e.message,true)}).finally(()=>{CONN.pendingWrites=Math.max(0,CONN.pendingWrites-1);updateConnectionUI()})
+}
+function adjustTx(tx,sign){
+  if(!tx)return;const n=Number(tx.amount||0)*sign,find=id=>S.accounts.find(a=>a.id===id);
+  if(tx.type==='INCOME'){const a=find(tx.accountId);if(a)a.balance=Number(a.balance||0)+n}
+  if(tx.type==='EXPENSE'){const a=find(tx.accountId);if(a)a.balance=Number(a.balance||0)-n}
+  if(tx.type==='TRANSFER'){const a=find(tx.accountId),b=find(tx.toAccountId);if(a)a.balance=Number(a.balance||0)-n;if(b)b.balance=Number(b.balance||0)+n}
+  if(String(tx.date||'').slice(0,7)===todayISO().slice(0,7)){
+    S.summary=S.summary||{};
+    if(tx.type==='INCOME')S.summary.monthIncome=Number(S.summary.monthIncome||0)+n;
+    if(tx.type==='EXPENSE'){
+      S.summary.monthExpense=Number(S.summary.monthExpense||0)+n;
+      S.summary.expenseByCategory=S.summary.expenseByCategory||{};const c=tx.category||'Lainnya';S.summary.expenseByCategory[c]=Number(S.summary.expenseByCategory[c]||0)+n;
+      S.budgets.forEach(b=>{if(b.month===todayISO().slice(0,7)&&b.category===tx.category&&b.scope===tx.scope)b.spent=Math.max(0,Number(b.spent||0)+n)})
+    }
+  }
+}
+function upsert(list,item,idValue){const i=list.findIndex(x=>x.id===idValue);if(i>=0)list[i]={...list[i],...item};else list.unshift(item)}
+function updateConnectionUI(){
+  CONN.online=navigator.onLine;
+  const dot=document.getElementById('topConnDot'),text=document.getElementById('topConnText'),versionMismatch=!!(S.settings.version&&S.settings.version!==VERSION);
+  if(dot&&text){dot.className='conndot '+(!CONN.online?'bad':CONN.backend===false?'bad':(CONN.pendingWrites||versionMismatch)?'warn':CONN.backend===true?'ok':'warn');text.textContent=!CONN.online?'Offline':CONN.backend===false?'Backend error':CONN.pendingWrites?'Menyimpan…':versionMismatch?'Update backend':CONN.backend===true?'Online':'Online'}
+  const cacheRaw=localStorage.getItem(SNAP_KEY),cache=(()=>{try{return JSON.parse(cacheRaw||'{}')}catch(e){return{}}})();
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};
+  set('stInternet',CONN.online?'Online':'Offline');
+  set('stBackend',CONN.backend===true?'Terhubung'+(CONN.latency?' · '+CONN.latency+' ms':''):CONN.backend===false?'Tidak terhubung'+(CONN.lastError?' · '+CONN.lastError:''):'Belum diperiksa');
+  set('stDatabase',(S.settings.databaseName||'-')+(S.settings.spreadsheetId?' · '+S.settings.spreadsheetId.slice(0,12)+'…':''));
+  set('stSession',S.session?'Aktif · tetap login sampai logout'+(CONN.activeSessions?' · '+CONN.activeSessions+' perangkat':''):'Tidak aktif');
+  set('stCache',cache.at?((Date.now()-cache.at<=CACHE_TTL?'Fresh':'Stale')+' · '+Math.max(0,Math.round((Date.now()-cache.at)/1000))+' dtk · rev '+(S.revision||'-')):'Belum ada snapshot');
+  set('stAI',S.settings.aiConfigured?(S.settings.aiProvider+' · '+S.settings.aiModel):'Belum dikonfigurasi');
+  set('stSync',(CONN.pendingWrites?CONN.pendingWrites+' perubahan sedang disimpan · ':'')+(CONN.lastSync?new Date(CONN.lastSync).toLocaleTimeString('id-ID'):'Belum sinkron'));
+  set('stVersion','App '+VERSION+' · Backend '+(S.settings.version||'-')+(versionMismatch?' · ⚠ versi berbeda':''));
+  const pwaText=!C.PWA_ENABLED?'Dinonaktifkan di config':!PWA_STATE.supported?'Tidak didukung browser':PWA_STATE.installed?'Terpasang · standalone':PWA_STATE.controlled?'Aktif · service worker mengontrol':PWA_STATE.registered?'Terdaftar · siap offline':PWA_STATE.error?'Error · '+PWA_STATE.error:'Menunggu registrasi';
+  set('stPWA',pwaText);set('stDedupe','Aktif · '+PENDING_MUTATIONS.size+' request dijaga');
+  const ib=document.getElementById('installPwaBtn');if(ib)ib.classList.toggle('show',!!deferredInstallPrompt&&!PWA_STATE.installed);
+  set('stEndpoint',API_URL?API_URL.replace(/\/s\/[^/]+\/exec/,'/s/••••/exec'):'Belum diisi');
+}
+async function checkSystemStatus(showToast=false){
+  if(!S.session)return checkBootstrap(showToast);if(CONN.checking)return;CONN.checking=true;updateConnectionUI();
+  try{const t=performance.now(),r=await api('system.status',{});CONN.backend=true;CONN.latency=Math.round(performance.now()-t);if(r){CONN.activeSessions=Number(r.activeSessions||0);S.settings={...S.settings,version:r.version,databaseName:r.databaseName,spreadsheetId:r.spreadsheetId,aiProvider:r.aiProvider,aiModel:r.aiModel,aiConfigured:r.aiConfigured};}updateConnectionUI();if(showToast)toast((r&&r.version!==VERSION)?'Koneksi aktif, tetapi versi backend berbeda. Deploy backend.gs terbaru.':'Semua koneksi utama terdeteksi ✓',!!(r&&r.version!==VERSION))}
+  catch(e){CONN.backend=false;CONN.lastError=e.message;updateConnectionUI();if(showToast)toast(e.message,true)}finally{CONN.checking=false}
+}
+async function clearAppCache(){
+  localStorage.removeItem(SNAP_KEY);localStorage.removeItem('ruma_snapshot_v2_1');localStorage.removeItem('ruma_snapshot');AI_CACHE.clear();
+  if('caches'in window){try{for(const k of await caches.keys())if(k.startsWith('ruma-'))await caches.delete(k)}catch(e){}}
+  toast('Cache aplikasi dibersihkan. Login tetap aktif.');updateConnectionUI();scheduleSync(100)
+}
+function chatClarification(q){
+  const x=String(q||'').trim(),l=x.toLowerCase();
+  if(x.length<3)return 'Boleh diperjelas sedikit? Contohnya: **“berapa pengeluaran bulan ini?”** atau **“apa tagihan minggu ini?”**';
+  if(/^(cek|gimana|bagaimana|aman|analisis|tolong cek|menurutmu)[?!. ]*$/i.test(x))return 'Bisa. Tapi saya perlu tahu yang mau dicek: **keuangan, tagihan, jadwal, task, atau rekening?**';
+  if(/(aman|boleh|bisa).*(beli|ambil|keluar|pakai)/i.test(l)&&!/(\d|ribu|juta|rb)/i.test(l))return 'Bisa saya nilai, tapi nominalnya belum ada. Tulis misalnya: **“aman beli laptop 8 juta bulan ini?”**';
+  if(/(rekening|wallet).*(ini|itu|tersebut)/i.test(l)&&S.accounts.length>1&&!S.accounts.some(a=>l.includes(String(a.name||'').toLowerCase())))return 'Rekeningnya belum jelas. Sebutkan nama rekening/wallet yang dimaksud agar saya tidak salah membaca data.';
+  return null;
+}
+function fastLocalAnswer(q){
+  const x=String(q||'').toLowerCase(),mine=S.accounts.filter(a=>a.ownerId===S.user.id&&a.scope==='PERSONAL').reduce((n,a)=>n+Number(a.balance||0),0),joint=S.accounts.filter(a=>a.scope==='JOINT').reduce((n,a)=>n+Number(a.balance||0),0);
+  const sum=S.summary||{},exp=Number(sum.monthExpense||0),inc=Number(sum.monthIncome||0);
+  if(/\b(saldo|uang tersedia|uang saya)\b/.test(x)&&!/(boros|analisis|aman beli|budget)/.test(x))return `Saldo yang terlihat sekarang:
+- Pribadi: **${rupiah(mine)}**
+- Bersama: **${rupiah(joint)}**
+
+Kalau mau, saya bisa lanjut cek arus kas bulan ini.`;
+  if(/(pengeluaran|belanja).*(bulan ini)|bulan ini.*(pengeluaran|belanja)/.test(x)&&!/(boros|kategori|terbesar|analisis)/.test(x))return `Pengeluaran bulan ini **${rupiah(exp)}**. Pemasukan yang tercatat **${rupiah(inc)}**. Selisih sementara **${rupiah(inc-exp)}**.`;
+  if(/(pemasukan|income).*(bulan ini)|bulan ini.*(pemasukan|income)/.test(x))return `Pemasukan bulan ini yang tercatat **${rupiah(inc)}**.`;
+  if(/(boros|kategori.*terbesar|paling banyak)/.test(x)){const arr=Object.entries(sum.expenseByCategory||{}).sort((a,b)=>b[1]-a[1]);if(!arr.length)return 'Belum ada cukup transaksi pengeluaran bulan ini untuk menilai kategori terbesar.';const [cat,val]=arr[0];return `Pengeluaran terbesar bulan ini ada di **${cat}** sebesar **${rupiah(val)}**${exp?` atau sekitar ${Math.round(val/exp*100)}% dari total pengeluaran.`:'.'}`;}
+  if(/(budget|anggaran).*(status|aman|bulan|bagaimana)|sisa budget/.test(x)){const active=S.budgets.filter(b=>b.month===todayISO().slice(0,7));if(!active.length)return 'Budget bulan ini belum tercatat. Tambahkan budget dulu supaya saya bisa memberi feedback yang lebih akurat.';const risky=active.filter(b=>Number(b.amount)>0&&Number(b.spent)/Number(b.amount)>=.8).sort((a,b)=>b.spent/b.amount-a.spent/a.amount);return risky.length?`Yang perlu diperhatikan:\n${risky.slice(0,4).map(b=>`- **${b.category}**: ${Math.round(Number(b.spent)/Number(b.amount)*100)}% · ${rupiah(b.spent)} / ${rupiah(b.amount)}`).join('\n')}`:'Budget yang tercatat masih di bawah 80% pemakaian. Sejauh ini belum ada kategori yang mendekati batas.';}
+  if(/(tagihan).*(hari|minggu|dekat|apa)|tagihan apa/.test(x)){const a=S.bills.filter(b=>b.status!=='PAID').slice(0,5);return a.length?`Tagihan terdekat:\n${a.map(b=>`- **${b.name}** · ${rupiah(b.amount)} · ${fmtDate(b.dueDate)}`).join('\n')}`:'Tidak ada tagihan aktif yang tercatat.'}
+  if(/(task|tugas).*(apa|aktif|belum|hari)|tugas apa/.test(x)){const a=S.tasks.filter(t=>t.status!=='DONE').slice(0,6);return a.length?`Task yang masih aktif:\n${a.map(t=>`- **${t.title}** · ${userName(t.assignedTo)}${t.dueDate?' · '+fmtDate(t.dueDate):''}`).join('\n')}`:'Semua task yang tercatat sudah selesai.'}
+  if(/(agenda|jadwal).*(hari ini)/.test(x)){const a=S.events.filter(e=>String(e.startAt).slice(0,10)===todayISO());return a.length?`Agenda hari ini:\n${a.map(e=>`- **${e.title}** · ${localDT(e.startAt)}`).join('\n')}`:'Tidak ada agenda hari ini yang tercatat.'}
+  if(/(agenda|jadwal).*(besok)/.test(x)){const d=new Date();d.setDate(d.getDate()+1);const iso=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'),a=S.events.filter(e=>String(e.startAt).slice(0,10)===iso);return a.length?`Agenda besok:\n${a.map(e=>`- **${e.title}** · ${localDT(e.startAt)}`).join('\n')}`:'Belum ada agenda besok yang tercatat.'}
+  return null;
+}
+function chatHtml(text){
+  const safe=esc(text);return safe.split(/\n{2,}/).map(block=>{const lines=block.split('\n');if(lines.every(l=>/^[-•] /.test(l.trim())))return '<ul>'+lines.map(l=>'<li>'+l.trim().replace(/^[-•] /,'').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')+'</li>').join('')+'</ul>';return '<p>'+block.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>')+'</p>'}).join('')
+}
 
 function openQuick(){modal('Tambah cepat',`<div class="grid" style="margin-top:14px"><button class="btn secondary span6" onclick="closeModal();openTransactionModal()">💸 Transaksi</button><button class="btn secondary span6" onclick="closeModal();openTaskModal()">✅ Task</button><button class="btn secondary span6" onclick="closeModal();openEventModal()">📅 Agenda</button><button class="btn secondary span6" onclick="closeModal();openShoppingModal()">🛒 Belanja</button></div>`)}
 function openAccountModal(i=''){const a=S.accounts.find(x=>x.id===i)||{};modal(i?'Edit Rekening':'Tambah Rekening',`
@@ -376,7 +541,7 @@ function openAccountModal(i=''){const a=S.accounts.find(x=>x.id===i)||{};modal(i
 <div class="field"><label>Visibility</label><select id="mAccVis">${['PRIVATE','SUMMARY','SHARED'].map(x=>`<option ${a.visibility===x?'selected':''}>${x}</option>`).join('')}</select></div>
 <div class="field"><label>Saldo awal</label><input id="mAccStart" type="number" value="${Number(a.startBalance||0)}"></div>
 <button class="btn" onclick="saveAccount('${i}')">Simpan</button>`)}
-async function saveAccount(i){try{await api('account.save',{id:i,name:formVal('mAccName'),type:formVal('mAccType'),scope:formVal('mAccScope'),ownerId:formVal('mAccOwner'),visibility:formVal('mAccVis'),startBalance:Number(formVal('mAccStart')||0)});closeModal();await syncAll()}catch(e){toast(e.message,true)}}
+function saveAccount(i){const p={id:i,name:formVal('mAccName'),type:formVal('mAccType'),scope:formVal('mAccScope'),ownerId:formVal('mAccOwner'),visibility:formVal('mAccVis'),startBalance:Number(formVal('mAccStart')||0)};if(!p.name)return toast('Nama rekening wajib diisi.',true);optimistic('account.save',p,()=>{const old=S.accounts.find(x=>x.id===i),tid=i||id('TMPACC'),item={id:tid,name:p.name,type:p.type,scope:p.scope,ownerId:p.ownerId,ownerName:userName(p.ownerId),visibility:p.scope==='JOINT'?'SHARED':p.visibility,startBalance:p.startBalance,balance:old?Number(old.balance||0)+(p.startBalance-Number(old.startBalance||0)):p.startBalance,canEdit:true};upsert(S.accounts,item,i||tid);return{tempId:i?'':tid}})}
 
 function openTransactionModal(i=''){const t=S.transactions.find(x=>x.id===i)||{};modal(i?'Edit Transaksi':'Tambah Transaksi',`
 <div class="field"><label>Tipe</label><select id="mTxType" onchange="document.getElementById('toAccWrap').classList.toggle('hidden',this.value!=='TRANSFER')">${['EXPENSE','INCOME','TRANSFER'].map(x=>`<option ${t.type===x?'selected':''}>${x}</option>`).join('')}</select></div>
@@ -388,62 +553,81 @@ function openTransactionModal(i=''){const t=S.transactions.find(x=>x.id===i)||{}
 <div class="field"><label>Keterangan</label><input id="mTxDesc" value="${esc(t.description||'')}"></div>
 <div class="field"><label>Scope transaksi</label><select id="mTxScope"><option ${t.scope!=='JOINT'?'selected':''}>PERSONAL</option><option ${t.scope==='JOINT'?'selected':''}>JOINT</option></select></div>
 <div class="row"><button class="btn" onclick="saveTransaction('${i}')">Simpan</button>${i?`<button class="btn danger" onclick="removeItem('transaction','${i}')">Hapus</button>`:''}</div>`)}
-async function saveTransaction(i){try{await api('transaction.save',{id:i,type:formVal('mTxType'),date:formVal('mTxDate'),amount:Number(formVal('mTxAmount')),accountId:formVal('mTxAcc'),toAccountId:formVal('mTxTo'),category:formVal('mTxCat'),description:formVal('mTxDesc'),scope:formVal('mTxScope')});closeModal();await syncAll()}catch(e){toast(e.message,true)}}
+function saveTransaction(i){const p={id:i,type:formVal('mTxType'),date:formVal('mTxDate'),amount:Number(formVal('mTxAmount')),accountId:formVal('mTxAcc'),toAccountId:formVal('mTxTo'),category:formVal('mTxCat'),description:formVal('mTxDesc'),scope:formVal('mTxScope')};if(!p.amount||p.amount<=0)return toast('Nominal harus lebih dari 0.',true);optimistic('transaction.save',p,()=>{const old=S.transactions.find(x=>x.id===i);if(old)adjustTx(old,-1);const tid=i||id('TMPTX'),item={...p,id:tid,canEdit:true};upsert(S.transactions,item,i||tid);adjustTx(item,1);return{tempId:i?'':tid}})}
 
 function openBudgetModal(i=''){const b=S.budgets.find(x=>x.id===i)||{};modal(i?'Edit Budget':'Tambah Budget',`
 <div class="field"><label>Bulan</label><input id="mBudMonth" type="month" value="${b.month||todayISO().slice(0,7)}"></div><div class="field"><label>Kategori</label><input id="mBudCat" value="${esc(b.category||'Makan')}"></div><div class="field"><label>Nominal</label><input id="mBudAmount" type="number" value="${Number(b.amount||0)}"></div><div class="field"><label>Scope</label><select id="mBudScope"><option ${b.scope!=='JOINT'?'selected':''}>PERSONAL</option><option ${b.scope==='JOINT'?'selected':''}>JOINT</option></select></div><div class="row"><button class="btn" onclick="saveBudget('${i}')">Simpan</button>${i?`<button class="btn danger" onclick="removeItem('budget','${i}')">Hapus</button>`:''}</div>`)}
-async function saveBudget(i){try{await api('budget.save',{id:i,month:formVal('mBudMonth'),category:formVal('mBudCat'),amount:Number(formVal('mBudAmount')),scope:formVal('mBudScope')});closeModal();await syncAll()}catch(e){toast(e.message,true)}}
+function saveBudget(i){const p={id:i,month:formVal('mBudMonth'),category:formVal('mBudCat'),amount:Number(formVal('mBudAmount')),scope:formVal('mBudScope')};optimistic('budget.save',p,()=>{const old=S.budgets.find(x=>x.id===i),tid=i||id('TMPBUD');upsert(S.budgets,{...p,id:tid,ownerId:S.user.id,spent:old?old.spent:0},i||tid);return{tempId:i?'':tid}})}
 
 function openBillModal(i=''){const b=S.bills.find(x=>x.id===i)||{};modal(i?'Edit Tagihan':'Tambah Tagihan',`
 <div class="field"><label>Nama tagihan</label><input id="mBillName" value="${esc(b.name||'')}"></div><div class="field"><label>Nominal</label><input id="mBillAmount" type="number" value="${Number(b.amount||0)}"></div><div class="field"><label>Jatuh tempo</label><input id="mBillDate" type="date" value="${b.dueDate||todayISO()}"></div><div class="field"><label>Rekening</label><select id="mBillAcc">${accountOptions(b.accountId)}</select></div><div class="field"><label>Berulang bulanan</label><select id="mBillRec"><option value="NO" ${b.recurring!=='YES'?'selected':''}>Tidak</option><option value="YES" ${b.recurring==='YES'?'selected':''}>Ya</option></select></div><div class="field"><label>Scope</label><select id="mBillScope"><option ${b.scope!=='JOINT'?'selected':''}>PERSONAL</option><option ${b.scope==='JOINT'?'selected':''}>JOINT</option></select></div><div class="row"><button class="btn" onclick="saveBill('${i}')">Simpan</button>${i?`<button class="btn danger" onclick="removeItem('bill','${i}')">Hapus</button>`:''}</div>`)}
-async function saveBill(i){try{await api('bill.save',{id:i,name:formVal('mBillName'),amount:Number(formVal('mBillAmount')),dueDate:formVal('mBillDate'),accountId:formVal('mBillAcc'),recurring:formVal('mBillRec'),scope:formVal('mBillScope')});closeModal();await syncAll()}catch(e){toast(e.message,true)}}
-async function toggleBill(i){try{await api('bill.toggle',{id:i});await syncAll()}catch(e){toast(e.message,true)}}
+function saveBill(i){const p={id:i,name:formVal('mBillName'),amount:Number(formVal('mBillAmount')),dueDate:formVal('mBillDate'),accountId:formVal('mBillAcc'),recurring:formVal('mBillRec'),scope:formVal('mBillScope')};optimistic('bill.save',p,()=>{const old=S.bills.find(x=>x.id===i),tid=i||id('TMPBILL');upsert(S.bills,{...p,id:tid,status:old?old.status:'UPCOMING'},i||tid);return{tempId:i?'':tid}})}
+function toggleBill(i){optimistic('bill.toggle',{id:i},()=>{const b=S.bills.find(x=>x.id===i);if(b)b.status=b.status==='PAID'?'UPCOMING':'PAID'})}
 
 function openGoalModal(i=''){const g=S.goals.find(x=>x.id===i)||{};modal(i?'Edit Goal':'Tambah Goal',`
 <div class="field"><label>Nama goal</label><input id="mGoalName" value="${esc(g.name||'')}"></div><div class="field"><label>Target</label><input id="mGoalTarget" type="number" value="${Number(g.target||0)}"></div><div class="field"><label>Saat ini</label><input id="mGoalCurrent" type="number" value="${Number(g.current||0)}"></div><div class="field"><label>Target tanggal</label><input id="mGoalDate" type="date" value="${g.dueDate||''}"></div><div class="field"><label>Scope</label><select id="mGoalScope"><option ${g.scope!=='JOINT'?'selected':''}>PERSONAL</option><option ${g.scope==='JOINT'?'selected':''}>JOINT</option></select></div><div class="row"><button class="btn" onclick="saveGoal('${i}')">Simpan</button>${i?`<button class="btn danger" onclick="removeItem('goal','${i}')">Hapus</button>`:''}</div>`)}
-async function saveGoal(i){try{await api('goal.save',{id:i,name:formVal('mGoalName'),target:Number(formVal('mGoalTarget')),current:Number(formVal('mGoalCurrent')),dueDate:formVal('mGoalDate'),scope:formVal('mGoalScope')});closeModal();await syncAll()}catch(e){toast(e.message,true)}}
+function saveGoal(i){const p={id:i,name:formVal('mGoalName'),target:Number(formVal('mGoalTarget')),current:Number(formVal('mGoalCurrent')),dueDate:formVal('mGoalDate'),scope:formVal('mGoalScope')};optimistic('goal.save',p,()=>{const tid=i||id('TMPGOAL');upsert(S.goals,{...p,id:tid},i||tid);return{tempId:i?'':tid}})}
 
 function openTaskModal(i=''){const t=S.tasks.find(x=>x.id===i)||{};modal(i?'Edit Task':'Tambah Task',`
 <div class="field"><label>Task</label><input id="mTaskTitle" value="${esc(t.title||'')}"></div><div class="field"><label>Jatuh tempo</label><input id="mTaskDate" type="date" value="${t.dueDate||''}"></div><div class="field"><label>Ditugaskan ke</label><select id="mTaskUser">${userOptions(t.assignedTo||S.user.id)}</select></div><div class="field"><label>Prioritas</label><select id="mTaskPri">${['LOW','NORMAL','HIGH'].map(x=>`<option ${t.priority===x?'selected':''}>${x}</option>`).join('')}</select></div><div class="field"><label>Scope</label><select id="mTaskScope"><option ${t.scope!=='JOINT'?'selected':''}>PERSONAL</option><option ${t.scope==='JOINT'?'selected':''}>JOINT</option></select></div><div class="row"><button class="btn" onclick="saveTask('${i}')">Simpan</button>${i?`<button class="btn danger" onclick="removeItem('task','${i}')">Hapus</button>`:''}</div>`)}
-async function saveTask(i){try{await api('task.save',{id:i,title:formVal('mTaskTitle'),dueDate:formVal('mTaskDate'),assignedTo:formVal('mTaskUser'),priority:formVal('mTaskPri'),scope:formVal('mTaskScope')});closeModal();await syncAll()}catch(e){toast(e.message,true)}}
-async function toggleTask(i){try{await api('task.toggle',{id:i});await syncAll()}catch(e){toast(e.message,true)}}
+function saveTask(i){const p={id:i,title:formVal('mTaskTitle'),dueDate:formVal('mTaskDate'),assignedTo:formVal('mTaskUser'),priority:formVal('mTaskPri'),scope:formVal('mTaskScope')};optimistic('task.save',p,()=>{const old=S.tasks.find(x=>x.id===i),tid=i||id('TMPTASK');upsert(S.tasks,{...p,id:tid,status:old?old.status:'OPEN'},i||tid);return{tempId:i?'':tid}})}
+function toggleTask(i){optimistic('task.toggle',{id:i},()=>{const t=S.tasks.find(x=>x.id===i);if(t)t.status=t.status==='DONE'?'OPEN':'DONE'})}
 
 function openEventModal(i=''){const e=S.events.find(x=>x.id===i)||{};const dt=x=>x?String(x).slice(0,16):'';modal(i?'Edit Agenda':'Tambah Agenda',`
 <div class="field"><label>Judul</label><input id="mEventTitle" value="${esc(e.title||'')}"></div><div class="field"><label>Mulai</label><input id="mEventStart" type="datetime-local" value="${dt(e.startAt)}"></div><div class="field"><label>Selesai</label><input id="mEventEnd" type="datetime-local" value="${dt(e.endAt)}"></div><div class="field"><label>Lokasi</label><input id="mEventLoc" value="${esc(e.location||'')}"></div><div class="field"><label>Scope</label><select id="mEventScope"><option ${e.scope!=='JOINT'?'selected':''}>PERSONAL</option><option ${e.scope==='JOINT'?'selected':''}>JOINT</option></select></div><div class="row"><button class="btn" onclick="saveEvent('${i}')">Simpan</button>${i?`<button class="btn danger" onclick="removeItem('event','${i}')">Hapus</button>`:''}</div>`)}
-async function saveEvent(i){try{await api('event.save',{id:i,title:formVal('mEventTitle'),startAt:formVal('mEventStart'),endAt:formVal('mEventEnd'),location:formVal('mEventLoc'),scope:formVal('mEventScope')});closeModal();await syncAll()}catch(e){toast(e.message,true)}}
+function saveEvent(i){const p={id:i,title:formVal('mEventTitle'),startAt:formVal('mEventStart'),endAt:formVal('mEventEnd'),location:formVal('mEventLoc'),scope:formVal('mEventScope')};optimistic('event.save',p,()=>{const tid=i||id('TMPEVT');upsert(S.events,{...p,id:tid},i||tid);return{tempId:i?'':tid}})}
 
 function openShoppingModal(){modal('Tambah Belanja',`<div class="field"><label>Item</label><input id="mShopItem"></div><div class="field"><label>Jumlah/catatan</label><input id="mShopQty" placeholder="2 pcs / 1 kg"></div><button class="btn" onclick="saveShopping()">Tambah</button>`)}
-async function saveShopping(){try{await api('shopping.save',{item:formVal('mShopItem'),qty:formVal('mShopQty')});closeModal();await syncAll()}catch(e){toast(e.message,true)}}
-async function toggleShopping(i){try{await api('shopping.toggle',{id:i});await syncAll()}catch(e){toast(e.message,true)}}
+function saveShopping(){const p={item:formVal('mShopItem'),qty:formVal('mShopQty')};optimistic('shopping.save',p,()=>{const tid=id('TMPSHP');S.shopping.unshift({id:tid,item:p.item,qty:p.qty,status:'OPEN',addedBy:S.user.id});return{tempId:tid}})}
+function toggleShopping(i){optimistic('shopping.toggle',{id:i},()=>{const t=S.shopping.find(x=>x.id===i);if(t)t.status=t.status==='DONE'?'OPEN':'DONE'})}
 
 function openNoteModal(i=''){const n=S.notes.find(x=>x.id===i)||{};modal(i?'Edit Catatan':'Tambah Catatan',`
 <div class="field"><label>Judul</label><input id="mNoteTitle" value="${esc(n.title||'')}"></div><div class="field"><label>Catatan</label><textarea id="mNoteBody">${esc(n.body||'')}</textarea></div><div class="field"><label>Scope</label><select id="mNoteScope"><option ${n.scope!=='JOINT'?'selected':''}>PERSONAL</option><option ${n.scope==='JOINT'?'selected':''}>JOINT</option></select></div><div class="row"><button class="btn" onclick="saveNote('${i}')">Simpan</button>${i?`<button class="btn danger" onclick="removeItem('note','${i}')">Hapus</button>`:''}</div>`)}
-async function saveNote(i){try{await api('note.save',{id:i,title:formVal('mNoteTitle'),body:formVal('mNoteBody'),scope:formVal('mNoteScope')});closeModal();await syncAll()}catch(e){toast(e.message,true)}}
+function saveNote(i){const p={id:i,title:formVal('mNoteTitle'),body:formVal('mNoteBody'),scope:formVal('mNoteScope')};optimistic('note.save',p,()=>{const tid=i||id('TMPNOTE');upsert(S.notes,{...p,id:tid,ownerId:S.user.id},i||tid);return{tempId:i?'':tid}})}
 
 function openUserModal(i=''){if(S.user.role!=='OWNER'){toast('Hanya owner yang dapat mengelola user.',true);return}const u=S.users.find(x=>x.id===i)||{};modal(i?'Edit User':'Tambah User',`
 <div class="field"><label>Nama</label><input id="mUserName" value="${esc(u.name||'')}"></div><div class="field"><label>Email</label><input id="mUserEmail" type="email" value="${esc(u.email||'')}"></div><div class="field"><label>Role</label><select id="mUserRole"><option value="PARTNER" ${u.role!=='OWNER'?'selected':''}>PARTNER</option><option value="OWNER" ${u.role==='OWNER'?'selected':''}>OWNER</option></select></div><div class="field"><label>${i?'Password baru (kosong = tetap)':'Password sementara'}</label><input id="mUserPass" type="password"></div><button class="btn" onclick="saveUser('${i}')">Simpan User</button>`)}
-async function saveUser(i){try{await api('user.save',{id:i,name:formVal('mUserName'),email:formVal('mUserEmail'),role:formVal('mUserRole'),password:formVal('mUserPass')});closeModal();await syncAll()}catch(e){toast(e.message,true)}}
+function saveUser(i){const p={id:i,name:formVal('mUserName'),email:formVal('mUserEmail'),role:formVal('mUserRole'),password:formVal('mUserPass')};if(!i&&p.password.length<10)return toast('Password user baru minimal 10 karakter dan mengandung huruf & angka.',true);optimistic('user.save',p,()=>{const tid=i||id('TMPUSR');upsert(S.users,{id:tid,name:p.name,email:p.email,role:p.role},i||tid);return{tempId:i?'':tid}})}
 
-async function saveSystemSettings(){try{
-  const r=await api('settings.save',{aiProvider:formVal('setAiProvider'),aiModel:formVal('setAiModel'),aiKey:formVal('setAiKey'),theme:formVal('setTheme')});
-  document.getElementById('setAiKey').value='';await syncAll();toast('Pengaturan disimpan');
-}catch(e){toast(e.message,true)}}
+function saveSystemSettings(){const p={aiProvider:formVal('setAiProvider'),aiModel:formVal('setAiModel'),aiKey:formVal('setAiKey'),theme:formVal('setTheme')};S.settings={...S.settings,aiProvider:p.aiProvider,aiModel:p.aiModel,theme:p.theme};applyTheme(p.theme);document.getElementById('setAiKey').value='';persistSnapshot();renderAll();api('settings.save',p).then(()=>{toast('Pengaturan disimpan');scheduleSync(300)}).catch(e=>toast(e.message,true))}
 function applyTheme(t){document.body.dataset.theme=t||'system'}
 
-async function removeItem(type,i){if(!confirm('Yakin menghapus/mengarsipkan data ini?'))return;try{await api(type+'.delete',{id:i});closeModal();await syncAll()}catch(e){toast(e.message,true)}}
+function removeItem(type,i){if(!confirm('Yakin menghapus/mengarsipkan data ini?'))return;const map={account:'accounts',transaction:'transactions',budget:'budgets',bill:'bills',goal:'goals',task:'tasks',event:'events',shopping:'shopping',note:'notes'};const k=map[type];if(!k)return;optimistic(type+'.delete',{id:i},()=>{if(type==='transaction'){const old=S.transactions.find(x=>x.id===i);if(old)adjustTx(old,-1)}S[k]=S[k].filter(x=>x.id!==i)})}
 
-async function sendChat(){const q=formVal('chatInput').trim();if(!q)return;document.getElementById('chatInput').value='';await askPreset(q)}
-async function askPreset(q){
+function sendChat(){const q=formVal('chatInput').trim();if(!q)return;document.getElementById('chatInput').value='';askPreset(q)}
+function askPreset(q){
   goPage('ai',document.querySelector('.navbtn[data-page="ai"]'));
-  const ch=document.getElementById('chat');ch.insertAdjacentHTML('beforeend',`<div class="bubble user">${esc(q)}</div><div id="thinking" class="bubble ai">Menganalisis data RUMA…</div>`);ch.scrollTop=ch.scrollHeight;
-  try{const r=await api('ai.chat',{message:q});document.getElementById('thinking')?.remove();ch.insertAdjacentHTML('beforeend',`<div class="bubble ai">${esc(r.text)}</div>`);document.getElementById('aiInsight').textContent=r.text;ch.scrollTop=ch.scrollHeight}
-  catch(e){document.getElementById('thinking')?.remove();ch.insertAdjacentHTML('beforeend',`<div class="bubble ai">⚠ ${esc(e.message)}</div>`);toast(e.message,true)}
+  const ch=document.getElementById('chat'),qid=id('THINK');ch.insertAdjacentHTML('beforeend',`<div class="bubble user">${esc(q)}</div>`);ch.scrollTop=ch.scrollHeight;
+  const feedback=chatClarification(q);if(feedback){ch.insertAdjacentHTML('beforeend',`<div class="bubble ai feedback">${chatHtml(feedback)}</div>`);ch.scrollTop=ch.scrollHeight;return}
+  const fast=fastLocalAnswer(q);if(fast){ch.insertAdjacentHTML('beforeend',`<div class="bubble ai">${chatHtml(fast)}</div>`);ch.scrollTop=ch.scrollHeight;return}
+  const ck=(S.revision||0)+'|'+q.trim().toLowerCase(),cached=AI_CACHE.get(ck);if(cached&&Date.now()-cached.at<180000){ch.insertAdjacentHTML('beforeend',`<div class="bubble ai">${chatHtml(cached.text)}</div>`);ch.scrollTop=ch.scrollHeight;return}
+  ch.insertAdjacentHTML('beforeend',`<div id="${qid}" class="bubble ai"><span class="chattyping">Saya cek <i></i><i></i><i></i></span></div>`);ch.scrollTop=ch.scrollHeight;
+  api('ai.chat',{message:q}).then(r=>{document.getElementById(qid)?.remove();AI_CACHE.set(ck,{at:Date.now(),text:r.text});ch.insertAdjacentHTML('beforeend',`<div class="bubble ai">${chatHtml(r.text)}</div>`);document.getElementById('aiInsight').textContent=r.text;ch.scrollTop=ch.scrollHeight}).catch(e=>{document.getElementById(qid)?.remove();ch.insertAdjacentHTML('beforeend',`<div class="bubble ai">${chatHtml('Saya belum bisa menyelesaikan pengecekan ini. '+e.message+' Coba ulangi sebentar lagi, atau tanyakan bagian yang lebih spesifik.')}</div>`);toast(e.message,true)})
+}
+
+async function installPWA(){
+  if(PWA_STATE.installed){toast('RUMA sudah terpasang sebagai aplikasi.');return}
+  if(!deferredInstallPrompt){toast('Opsi install belum tersedia. Pastikan situs dibuka lewat HTTPS dan file manifest + sw.js sudah ada.',true);return}
+  deferredInstallPrompt.prompt();const choice=await deferredInstallPrompt.userChoice;deferredInstallPrompt=null;if(choice&&choice.outcome==='accepted'){PWA_STATE.installed=true;toast('RUMA berhasil dipasang ✓')}updateConnectionUI();
+}
+function initPWA(){
+  if(!C.PWA_ENABLED||!('serviceWorker'in navigator)){updateConnectionUI();return}
+  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;updateConnectionUI()});
+  window.addEventListener('appinstalled',()=>{PWA_STATE.installed=true;deferredInstallPrompt=null;updateConnectionUI();toast('RUMA terpasang sebagai aplikasi ✓')});
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{PWA_STATE.controlled=true;updateConnectionUI()});
+  navigator.serviceWorker.register('./sw.js',{scope:'./'}).then(reg=>{PWA_STATE.registered=true;PWA_STATE.controlled=!!navigator.serviceWorker.controller;reg.update().catch(()=>{});reg.addEventListener('updatefound',()=>{const w=reg.installing;if(w)w.addEventListener('statechange',()=>{if(w.state==='installed'&&navigator.serviceWorker.controller){PWA_STATE.updateAvailable=true;toast('Versi RUMA baru siap. Buka ulang aplikasi untuk memakai update.')}})});updateConnectionUI()}).catch(e=>{PWA_STATE.error=e.message;updateConnectionUI()});
 }
 
 (async function init(){
-  const cached=localStorage.getItem('ruma_snapshot');if(S.session&&cached){try{Object.assign(S,JSON.parse(cached).data);showApp();renderAll()}catch(e){}}
-  if(S.session) await syncAll(true); else await checkBootstrap(false);
-  if(C.PWA_ENABLED && 'serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}
+  initPWA();
+  updateConnectionUI();
+  const cachedRaw=localStorage.getItem(SNAP_KEY)||localStorage.getItem('ruma_snapshot_v2_1')||localStorage.getItem('ruma_snapshot');
+  if(S.session&&cachedRaw){try{const c=JSON.parse(cachedRaw);Object.assign(S,c.data);showApp();renderAll();CONN.lastSync=Number(c.at||0)}catch(e){}}
+  if(S.session){syncAll(true,{silent:true}).catch(()=>{});setTimeout(()=>checkSystemStatus(false),900)}else await checkBootstrap(false);
+  window.addEventListener('online',()=>{CONN.online=true;updateConnectionUI();if(S.session)scheduleSync(150)});
+  window.addEventListener('offline',()=>{CONN.online=false;CONN.backend=null;updateConnectionUI()});
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&S.session&&Date.now()-CONN.lastSync>60000)scheduleSync(200)});
+  setInterval(()=>{if(S.session&&navigator.onLine&&document.visibilityState==='visible'&&Date.now()-CONN.lastSync>BG_SYNC_MS)syncAll(false,{silent:true}).catch(()=>{})},Math.max(60000,BG_SYNC_MS));
 })();
 </script>
 </body>
