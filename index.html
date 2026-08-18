@@ -90,6 +90,17 @@
     body[data-theme="dark"]{--bg:#171116;--card:#211920;--ink:#fff7fb;--muted:#b8aab3;--line:#3a2d36;--pink-3:#452034;--pink-4:#2c1824}
     body[data-theme="dark"] .top,body[data-theme="dark"] .nav{background:rgba(23,17,22,.94)}
     body[data-theme="dark"] .item,body[data-theme="dark"] .field input,body[data-theme="dark"] .field select,body[data-theme="dark"] .field textarea,body[data-theme="dark"] .tab,body[data-theme="dark"] .pill,body[data-theme="dark"] .iconbtn,body[data-theme="dark"] .chat{background:#211920;color:var(--ink)}
+
+    /* v2.5.0: Aktivitas, Kalender, AI Full Chat, Scan Struk */
+    .activity-time{width:54px;min-width:54px;font-weight:900;color:#be185d;font-size:12px;text-align:center}.repeatmark{font-size:11px;color:#be185d;font-weight:800}.overdue-text{color:var(--danger);font-weight:800}
+    .calendar-toolbar{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.cal-head{text-align:center;font-size:11px;font-weight:900;color:var(--muted);padding:6px 0}.cal-day{min-height:78px;border:1px solid var(--line);border-radius:14px;background:var(--card);padding:8px;text-align:left;position:relative}.cal-day.out{opacity:.35}.cal-day.today{border-color:var(--pink);box-shadow:0 0 0 2px var(--pink-3)}.cal-day.selected{background:var(--pink-4)}.cal-num{font-weight:900}.cal-dots{display:flex;gap:3px;position:absolute;left:8px;bottom:7px}.cal-dot{width:6px;height:6px;border-radius:50%;background:var(--pink)}.cal-dot.bill{background:var(--danger)}.cal-dot.done{background:var(--ok)}
+    .week-list,.agenda-list{display:flex;flex-direction:column;gap:10px}.daygroup{border:1px solid var(--line);border-radius:16px;background:var(--card);padding:12px}.daygroup h3{margin:0 0 8px;font-size:14px}
+    .ai-page{position:relative}.ai-shell{display:flex;flex-direction:column;height:calc(100dvh - 155px);min-height:570px;margin:8px -2px 0}.ai-chathead{display:flex;align-items:center;gap:10px;padding:8px 2px}.ai-chathead .grow{min-width:0}.ai-chathead .title{font-size:17px}.ai-chathead .sub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ai-page .pillbar{padding:2px 0 7px}.ai-page .chat{flex:1;height:auto;min-height:0;border-radius:18px;padding:12px;scroll-behavior:smooth}.chatcomposer{display:flex;align-items:flex-end;gap:8px;padding:8px 0 calc(6px + env(safe-area-inset-bottom));background:var(--bg);position:sticky;bottom:0;z-index:15}.chatcomposer textarea{flex:1;min-height:46px;max-height:132px;resize:none;border:1px solid var(--line);border-radius:17px;padding:12px 13px;background:var(--card);color:var(--ink);outline:none;font-size:16px;line-height:1.35}.chatcomposer textarea:focus{border-color:var(--pink-2);box-shadow:0 0 0 3px var(--pink-3)}.chatround{width:46px;height:46px;min-width:46px;border-radius:15px;border:1px solid var(--line);background:var(--card);font-weight:900;font-size:20px;color:var(--ink)}.chatround.send{background:var(--pink);color:#fff;border-color:var(--pink)}
+    body.ai-focus{overflow:hidden}body.ai-focus .top,body.ai-focus .nav,body.ai-focus .fab{display:none!important}body.ai-focus .app{max-width:none;padding:0 12px}body.ai-focus #page-ai{display:block!important}body.ai-focus .ai-shell{height:100dvh;margin:0}body.ai-focus .ai-chathead{padding-top:calc(8px + env(safe-area-inset-top))}body.ai-focus .ai-page .chat{border-radius:16px}
+    .receipt-preview{width:100%;max-height:48vh;object-fit:contain;border-radius:16px;border:1px solid var(--line);background:#f8f4f7}.receipt-card{border:1px solid var(--pink-3);background:var(--pink-4);border-radius:16px;padding:12px;margin-top:8px}.uploadstatus{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}.spinner{width:16px;height:16px;border:2px solid var(--pink-3);border-top-color:var(--pink);border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+    .settings-toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--line)}.settings-toggle:last-child{border-bottom:0}.settings-toggle input[type=checkbox]{width:20px;height:20px;accent-color:var(--pink)}
+    .choice-days{display:flex;gap:6px;flex-wrap:wrap}.choice-days label{border:1px solid var(--line);padding:7px 9px;border-radius:10px;font-size:11px;font-weight:800}.choice-days input{accent-color:var(--pink)}
+    @media(max-width:720px){.ai-shell{height:calc(100dvh - 118px);min-height:0;margin:0 -4px}.ai-chathead{padding:5px 0}.ai-page .pillbar{margin:0 -2px}.ai-page .chat{border-left:0;border-right:0;border-radius:14px}.calendar-grid{gap:4px}.cal-day{min-height:65px;padding:6px;border-radius:11px}.cal-dots{left:6px;bottom:5px}.activity-time{width:46px;min-width:46px}}
   </style>
 </head>
 <body data-theme="system">
@@ -115,7 +126,7 @@
       <div class="field"><label>Password</label><input id="ownerPassword" type="password" placeholder="Minimal 10 karakter + huruf & angka"></div>
       <button class="btn" style="width:100%" onclick="createOwner()">Aktifkan RUMA</button>
     </div>
-    <div class="small muted" style="margin-top:16px">v<span id="gateVersion">2.2.0</span> · Pink Edition</div>
+    <div class="small muted" style="margin-top:16px">v<span id="gateVersion">2.5.0</span> · Pink Edition</div>
   </div>
 </section>
 
@@ -137,10 +148,9 @@
         <div class="card span4"><div class="label">Saldo saya</div><div class="metric" id="myBalance">Rp0</div><div class="small muted" id="myAccountsCount">0 rekening</div></div>
         <div class="card span4"><div class="label">Saldo bersama</div><div class="metric" id="jointBalance">Rp0</div><div class="small muted">Rekening household</div></div>
         <div class="card span4"><div class="label">Pengeluaran bulan ini</div><div class="metric" id="monthExpense">Rp0</div><div class="small muted" id="monthIncome">Pemasukan Rp0</div></div>
-        <div class="card span6"><div class="row between"><div><div class="label">Agenda hari ini</div><div class="metric" id="todayEventCount">0</div></div><span class="badge">PLAN</span></div><div id="todayEvents" class="list"></div></div>
-        <div class="card span6"><div class="row between"><div><div class="label">Task aktif</div><div class="metric" id="openTaskCount">0</div></div><span class="badge">HOME</span></div><div id="todayTasks" class="list"></div></div>
-        <div class="card span12"><div class="row between"><div><div class="label">Reminder tagihan</div><div style="font-weight:900;font-size:18px;margin-top:5px">Jatuh tempo H-2 & H-1</div></div><span class="badge warn" id="billReminderCount">0 tagihan</span></div><div id="todayBills" class="list"></div></div>
-        <div class="card span12"><div class="row between"><div><div class="label">AI Feedback</div><div style="font-weight:900;font-size:18px;margin-top:5px">Ringkasan kondisi rumah tangga</div></div><button class="btn secondary sm" onclick="askPreset('Berikan feedback singkat kondisi keuangan, agenda, tagihan, dan task rumah tangga saya. Fokus pada hal yang perlu diperhatikan hari ini.')">Analisis</button></div><div id="aiInsight" class="alert" style="margin-top:12px">Tekan Analisis untuk mendapatkan feedback berdasarkan data terbaru.</div></div>
+        <div class="card span6"><div class="row between"><div><div class="label">Aktivitas hari ini</div><div class="metric" id="todayActivityCount">0</div></div><span class="badge">PLAN</span></div><div id="todayActivities" class="list"></div><button class="btn ghost sm" style="margin-top:10px" onclick="goPage('plan',document.querySelector('.navbtn[data-page=plan]'))">Lihat semua →</button></div>
+        <div class="card span6"><div class="row between"><div><div class="label">Reminder tagihan</div><div style="font-weight:900;font-size:18px;margin-top:5px">H-2 · H-1 · Hari H</div></div><span class="badge warn" id="billReminderCount">0 tagihan</span></div><div id="todayBills" class="list"></div></div>
+        <div class="card span12"><div class="row between"><div><div class="label">AI Feedback</div><div style="font-weight:900;font-size:18px;margin-top:5px">Ringkasan kondisi rumah tangga</div></div><button class="btn secondary sm" onclick="askPreset('Berikan feedback singkat kondisi keuangan, aktivitas, dan tagihan rumah tangga saya. Fokus pada hal yang perlu diperhatikan hari ini.')">Analisis</button></div><div id="aiInsight" class="alert" style="margin-top:12px">Tekan Analisis untuk mendapatkan feedback berdasarkan data terbaru.</div></div>
       </div>
     </section>
 
@@ -160,24 +170,48 @@
       <div id="money-goals" class="hidden"><div class="sectionhead"><h2>Goals</h2><button class="btn sm" onclick="openGoalModal()">+ Goal</button></div><div id="goalsList" class="grid"></div></div>
     </section>
 
-    <section id="page-ai" class="page" data-chat-page="1">
-      <div class="sectionhead"><h2>RUMA AI ✨</h2><span class="badge" id="aiStatus">Belum dikonfigurasi</span></div>
-      <div class="pillbar" style="margin-bottom:10px">
-        <button class="pill" onclick="askPreset('Bulan ini saya paling boros di kategori apa? Berikan saran konkret.')">💸 Analisis bulan ini</button>
-        <button class="pill" onclick="askPreset('Apa saja yang harus saya perhatikan dalam 7 hari ke depan?')">📅 7 hari ke depan</button>
-        <button class="pill" onclick="askPreset('Apakah pembagian task suami istri saat ini seimbang? Jelaskan netral.')">🏠 Pembagian task</button>
+    <section id="page-ai" class="page ai-page" data-chat-page="1">
+      <div class="ai-shell">
+        <div class="ai-chathead">
+          <div class="brand" style="width:40px;height:40px;border-radius:13px">✦</div>
+          <div class="grow"><div class="title">RUMA AI</div><div class="sub"><span id="aiStatus">Belum dikonfigurasi</span> · chat tersimpan otomatis</div></div>
+          <button class="iconbtn" onclick="searchChatHistory()" title="Cari chat">⌕</button>
+          <button class="iconbtn" onclick="toggleAiFocus()" title="Mode fokus">⛶</button>
+        </div>
+        <div class="pillbar">
+          <button class="pill" onclick="askPreset('Bulan ini saya paling boros di kategori apa? Berikan saran konkret.')">💸 Keuangan</button>
+          <button class="pill" onclick="askPreset('Apa aktivitas dan tagihan penting hari ini?')">📌 Hari Ini</button>
+          <button class="pill" onclick="askPreset('Apa tagihan terdekat yang belum lunas?')">💳 Tagihan</button>
+          <button class="pill" onclick="askPreset('Aktivitas apa saja yang belum selesai?')">✅ Aktivitas</button>
+          <button class="pill" onclick="openAiAttachMenu()">📷 Foto Struk</button>
+        </div>
+        <div id="chat" class="chat"><div class="bubble ai">Hai 👋 Tulis seperti ngobrol biasa. Saya bisa mencatat transaksi, aktivitas, tagihan, belanja, membaca foto struk, atau memberi feedback dari data RUMA.</div></div>
+        <div class="chatcomposer">
+          <button class="chatround" onclick="openAiAttachMenu()" title="Tambah">＋</button>
+          <textarea id="chatInput" rows="1" placeholder="Ketik pesan…" oninput="chatAutoResize(this)" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat()}"></textarea>
+          <button class="chatround send" onclick="sendChat()" title="Kirim">➤</button>
+        </div>
       </div>
-      <div id="chat" class="chat"><div class="bubble ai">Hai 👋 Mau cek apa? Saya bisa bantu mencatat transaksi, task, agenda, tagihan, belanja, sekaligus menganalisis data RUMA. Riwayat chat tersimpan otomatis.</div></div>
-      <div class="chatinput"><input id="chatInput" placeholder="Tulis bebas: catat belanja, buat tugas, jadwalkan agenda, atau tanya AI…" onkeydown="if(event.key==='Enter')sendChat()"><button class="btn" onclick="sendChat()">Kirim</button></div>
     </section>
 
     <section id="page-plan" class="page">
+      <div class="sectionhead"><h2>Plan</h2><button class="btn sm" onclick="openActivityModal()">+ Aktivitas</button></div>
       <div class="tabs">
-        <button class="tab active" onclick="planTab('tasks',this)">Task</button>
-        <button class="tab" onclick="planTab('events',this)">Kalender</button>
+        <button class="tab active" onclick="planTab('today',this)">Hari Ini</button>
+        <button class="tab" onclick="planTab('calendar',this)">Kalender</button>
+        <button class="tab" onclick="planTab('routines',this)">Rutinitas</button>
+        <button class="tab" onclick="planTab('done',this)">Selesai</button>
       </div>
-      <div id="plan-tasks"><div class="sectionhead"><h2>Task</h2><button class="btn sm" onclick="openTaskModal()">+ Task</button></div><div id="tasksList" class="list"></div></div>
-      <div id="plan-events" class="hidden"><div class="sectionhead"><h2>Agenda</h2><button class="btn sm" onclick="openEventModal()">+ Agenda</button></div><div id="eventsList" class="list"></div></div>
+      <div id="plan-today"><div id="activitiesTodayList" class="list"></div></div>
+      <div id="plan-calendar" class="hidden">
+        <div class="card">
+          <div class="calendar-toolbar"><div class="row"><button class="btn ghost sm" onclick="calendarMove(-1)">‹</button><b id="calendarTitle">Kalender</b><button class="btn ghost sm" onclick="calendarMove(1)">›</button></div><div class="tabs" style="margin:0"><button class="tab active" data-calmode="month" onclick="calendarSetMode('month',this)">Bulan</button><button class="tab" data-calmode="week" onclick="calendarSetMode('week',this)">Minggu</button><button class="tab" data-calmode="agenda" onclick="calendarSetMode('agenda',this)">Agenda</button></div></div>
+          <div id="calendarView" style="margin-top:12px"></div>
+          <div id="calendarDayDetail" class="list" style="margin-top:14px"></div>
+        </div>
+      </div>
+      <div id="plan-routines" class="hidden"><div id="routinesList" class="list"></div></div>
+      <div id="plan-done" class="hidden"><div id="completedActivitiesList" class="list"></div></div>
     </section>
 
     <section id="page-more" class="page">
@@ -193,10 +227,23 @@
           <div class="card span6"><div class="sectionhead" style="margin-top:0"><h2>User</h2><button class="btn sm" onclick="openUserModal()">+ User</button></div><div id="usersList" class="list"></div></div>
           <div class="card span6"><h2 style="margin-top:0">AI & Tampilan</h2>
             <div class="field"><label>AI Provider</label><select id="setAiProvider"><option value="GEMINI">Gemini</option><option value="GROQ">Groq</option></select></div>
-            <div class="field"><label>Model</label><input id="setAiModel"></div>
-            <div class="field"><label>API Key baru (opsional)</label><input id="setAiKey" type="password" placeholder="Tidak pernah ditampilkan kembali"></div>
+            <div class="field"><label>Model chat</label><input id="setAiModel"></div>
+            <div class="field"><label>API Key chat baru (opsional)</label><input id="setAiKey" type="password" placeholder="Tidak pernah ditampilkan kembali"></div>
+            <div class="field"><label>Gemini Key khusus scan struk (opsional bila AI utama Groq)</label><input id="setReceiptGeminiKey" type="password" placeholder="Untuk membaca foto struk"></div>
+            <div class="field"><label>Model scan struk</label><input id="setReceiptVisionModel" value="gemini-3.6-flash"></div>
             <div class="field"><label>Tema</label><select id="setTheme"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></div>
-            <button class="btn" onclick="saveSystemSettings()">Simpan Pengaturan</button>
+          </div>
+          <div class="card span6"><h2 style="margin-top:0">Notifikasi Email</h2>
+            <div class="field"><label>URL aplikasi untuk tombol email</label><input id="setAppUrl" placeholder="https://username.github.io/ruma/"></div>
+            <div class="settings-toggle"><span><b>Aktivitas belum selesai</b><div class="small muted">Evaluasi malam</div></span><input id="setActivityEmail" type="checkbox" checked></div>
+            <div class="field"><label>Jam evaluasi aktivitas</label><input id="setActivityHour" type="number" min="0" max="23" value="19"></div>
+            <div class="settings-toggle"><span>Tagihan H-2</span><input id="setBillH2" type="checkbox" checked></div>
+            <div class="settings-toggle"><span>Tagihan H-1</span><input id="setBillH1" type="checkbox" checked></div>
+            <div class="settings-toggle"><span>Tagihan Hari H</span><input id="setBillDue" type="checkbox" checked></div>
+            <div class="settings-toggle"><span>Tagihan terlambat</span><input id="setBillOverdue" type="checkbox" checked></div>
+            <div class="settings-toggle"><span>Follow-up Hari H malam</span><input id="setBillFollowup" type="checkbox" checked></div>
+            <div class="row"><div class="field grow"><label>Email pagi jam</label><input id="setBillMorningHour" type="number" min="0" max="23" value="8"></div><div class="field grow"><label>Follow-up jam</label><input id="setBillEveningHour" type="number" min="0" max="23" value="19"></div></div>
+            <div class="row wrap"><button class="btn" onclick="saveSystemSettings()">Simpan Pengaturan</button><button class="btn ghost" onclick="testNotification()">Tes Email</button></div>
           </div>
           <div class="card span12">
             <div class="row between wrap"><div><h2 style="margin:0">Status Sistem</h2><div class="small muted">Koneksi, cache, session, database, dan AI.</div></div><button class="btn ghost sm" onclick="checkSystemStatus(true)">Periksa Semua</button></div>
@@ -210,6 +257,8 @@
               <div class="statusbox"><b>Sinkronisasi</b><div id="stSync" class="statusvalue">-</div></div>
               <div class="statusbox"><b>Versi</b><div id="stVersion" class="statusvalue">-</div></div>
               <div class="statusbox"><b>PWA</b><div id="stPWA" class="statusvalue">Memeriksa...</div></div>
+              <div class="statusbox"><b>Google Drive</b><div id="stDrive" class="statusvalue">Memeriksa...</div></div>
+              <div class="statusbox"><b>Email Reminder</b><div id="stEmail" class="statusvalue">Memeriksa...</div></div>
               <div class="statusbox"><b>Anti Duplikat</b><div id="stDedupe" class="statusvalue">Frontend + backend aktif</div></div>
               <div class="statusbox"><b>API Endpoint</b><div id="stEndpoint" class="statusvalue">-</div></div>
             </div>
@@ -237,16 +286,19 @@
   </nav>
 </main>
 
+<input id="receiptCamera" class="hidden" type="file" accept="image/*" capture="environment" onchange="handleReceiptInput(this)">
+<input id="receiptGallery" class="hidden" type="file" accept="image/*" onchange="handleReceiptInput(this)">
+
 <div id="modal" class="modal hidden" onclick="if(event.target===this)closeModal()"><div class="sheet"><div class="row between"><h2 id="modalTitle" style="margin:0"></h2><button class="iconbtn" onclick="closeModal()">×</button></div><div id="modalBody"></div></div></div>
 
 <script>
 const C = window.RUMA_CONFIG || {};
 const API_URL = (C.API_URL || '').trim();
-const VERSION = '2.4.0';
+const VERSION = '2.5.0';
 const CACHE_TTL = Number(C.CACHE_TTL_MS || 300000);
 const BG_SYNC_MS = Number(C.BACKGROUND_SYNC_MS || 120000);
-const SNAP_KEY='ruma_snapshot_v2_4';
-const CHAT_QUEUE_KEY='ruma_chat_queue_v2_4';
+const SNAP_KEY='ruma_snapshot_v2_5';
+const CHAT_QUEUE_KEY='ruma_chat_queue_v2_5';
 const DEVICE_KEY='ruma_device_id';
 const DEVICE_ID=localStorage.getItem(DEVICE_KEY)||id('DEV');
 localStorage.setItem(DEVICE_KEY,DEVICE_ID);
@@ -258,7 +310,9 @@ let CHAT_BUSY=false;
 let deferredInstallPrompt=null;
 let PWA_STATE={supported:'serviceWorker' in navigator,registered:false,controlled:!!(navigator.serviceWorker&&navigator.serviceWorker.controller),installed:window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches,updateAvailable:false,error:''};
 const TIMEOUT = Number(C.REQUEST_TIMEOUT || 25000);
-let S = {session:localStorage.getItem('ruma_session')||'', user:null, users:[], accounts:[], transactions:[], budgets:[], bills:[], goals:[], tasks:[], events:[], shopping:[], notes:[], chatHistory:[], summary:{}, settings:{}, revision:0, serverTime:''};
+let S = {session:localStorage.getItem('ruma_session')||'', user:null, users:[], accounts:[], transactions:[], budgets:[], bills:[], goals:[], activities:[], activityHistory:[], receipts:[], shopping:[], notes:[], chatHistory:[], summary:{}, settings:{}, revision:0, serverTime:''};
+let CAL={mode:'month',cursor:new Date(),selected:todayISO()};
+let RECEIPT_WORK=null;
 document.getElementById('gateVersion').textContent=VERSION;
 
 function rupiah(n){return new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(Number(n||0))}
@@ -342,7 +396,7 @@ async function logoutAllDevices(){
 }
 function isAuthError(msg){return /(session tidak valid|session tidak ditemukan|session sudah tidak berlaku|session tidak cocok|user tidak aktif)/i.test(String(msg||''))}
 function persistSnapshot(){
-  try{localStorage.setItem(SNAP_KEY,JSON.stringify({at:Date.now(),data:{user:S.user,users:S.users,accounts:S.accounts,transactions:S.transactions,budgets:S.budgets,bills:S.bills,goals:S.goals,tasks:S.tasks,events:S.events,shopping:S.shopping,notes:S.notes,chatHistory:S.chatHistory,summary:S.summary,settings:S.settings,revision:S.revision,serverTime:S.serverTime}}))}catch(e){}
+  try{localStorage.setItem(SNAP_KEY,JSON.stringify({at:Date.now(),data:{user:S.user,users:S.users,accounts:S.accounts,transactions:S.transactions,budgets:S.budgets,bills:S.bills,goals:S.goals,activities:S.activities,activityHistory:S.activityHistory,receipts:S.receipts,shopping:S.shopping,notes:S.notes,chatHistory:S.chatHistory,summary:S.summary,settings:S.settings,revision:S.revision,serverTime:S.serverTime}}))}catch(e){}
   updateConnectionUI();
 }
 async function syncAll(first=false,opts={}){
@@ -368,28 +422,38 @@ function scheduleSync(delay=700){clearTimeout(syncTimer);syncTimer=setTimeout(()
 function showApp(){document.getElementById('gate').classList.add('hidden');document.getElementById('mainApp').classList.remove('hidden')}
 function renderAll(){
   if(!S.user)return;
-  document.getElementById('userLine').textContent=S.user.name+' · '+(S.user.role==='OWNER'?'Owner':'Partner');
-  document.getElementById('hello').textContent='Halo, '+S.user.name.split(' ')[0]+' 👋';
-  document.getElementById('todayDate').textContent=new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-  const mine=S.accounts.filter(a=>a.ownerId===S.user.id && a.scope==='PERSONAL'), joint=S.accounts.filter(a=>a.scope==='JOINT');
-  document.getElementById('myBalance').textContent=rupiah(mine.reduce((x,a)=>x+Number(a.balance||0),0));
-  document.getElementById('jointBalance').textContent=rupiah(joint.reduce((x,a)=>x+Number(a.balance||0),0));
-  document.getElementById('myAccountsCount').textContent=mine.length+' rekening/wallet';
-  const exp=Number((S.summary||{}).monthExpense||0),inc=Number((S.summary||{}).monthIncome||0);
-  document.getElementById('monthExpense').textContent=rupiah(exp);document.getElementById('monthIncome').textContent='Pemasukan '+rupiah(inc);
-  const tev=S.events.filter(e=>String(e.startAt).slice(0,10)===todayISO());document.getElementById('todayEventCount').textContent=tev.filter(e=>e.status!=='DONE').length;renderTodayEvents(tev.slice(0,5));
-  const ot=S.tasks.filter(t=>t.status!=='DONE');document.getElementById('openTaskCount').textContent=ot.length;renderTodayTasks(ot.slice(0,5));
-  renderTodayBills();
-  document.getElementById('aiStatus').textContent=S.settings.aiConfigured?(S.settings.aiProvider+' · '+S.settings.aiModel):'Belum dikonfigurasi';
-  document.getElementById('setAiProvider').value=S.settings.aiProvider||'GEMINI';document.getElementById('setAiModel').value=S.settings.aiModel||'gemini-3.6-flash';document.getElementById('setTheme').value=S.settings.theme||'system';applyTheme(S.settings.theme||'system');
+  document.getElementById('userLine').textContent=S.user.name+' · '+(S.user.role==='OWNER'?'Owner':'Partner');document.getElementById('hello').textContent='Halo, '+S.user.name.split(' ')[0]+' 👋';document.getElementById('todayDate').textContent=new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const mine=S.accounts.filter(a=>a.ownerId===S.user.id&&a.scope==='PERSONAL'),joint=S.accounts.filter(a=>a.scope==='JOINT');document.getElementById('myBalance').textContent=rupiah(mine.reduce((x,a)=>x+Number(a.balance||0),0));document.getElementById('jointBalance').textContent=rupiah(joint.reduce((x,a)=>x+Number(a.balance||0),0));document.getElementById('myAccountsCount').textContent=mine.length+' rekening/wallet';
+  const exp=Number((S.summary||{}).monthExpense||0),inc=Number((S.summary||{}).monthIncome||0);document.getElementById('monthExpense').textContent=rupiah(exp);document.getElementById('monthIncome').textContent='Pemasukan '+rupiah(inc);
+  renderTodayActivities();renderTodayBills();renderPlan();
+  document.getElementById('aiStatus').textContent=S.settings.aiConfigured?(S.settings.aiProvider+' · '+S.settings.aiModel):'AI belum dikonfigurasi';
+  document.getElementById('setAiProvider').value=S.settings.aiProvider||'GEMINI';document.getElementById('setAiModel').value=S.settings.aiModel||'gemini-3.6-flash';document.getElementById('setReceiptVisionModel').value=S.settings.receiptVisionModel||'gemini-3.6-flash';document.getElementById('setTheme').value=S.settings.theme||'system';document.getElementById('setAppUrl').value=S.settings.appUrl||'';
+  document.getElementById('setActivityEmail').checked=S.settings.activityEmail!==false;document.getElementById('setActivityHour').value=Number(S.settings.activityEveningHour||19);document.getElementById('setBillH2').checked=S.settings.billH2!==false;document.getElementById('setBillH1').checked=S.settings.billH1!==false;document.getElementById('setBillDue').checked=S.settings.billDue!==false;document.getElementById('setBillOverdue').checked=S.settings.billOverdue!==false;document.getElementById('setBillFollowup').checked=S.settings.billFollowup!==false;document.getElementById('setBillMorningHour').value=Number(S.settings.billMorningHour||8);document.getElementById('setBillEveningHour').value=Number(S.settings.billEveningHour||19);applyTheme(S.settings.theme||'system');
   document.getElementById('dbInfo').textContent=(S.settings.databaseName||'RUMA Database')+' · '+(S.settings.spreadsheetId||'');updateConnectionUI();
-  renderAccounts();renderTransactions();renderBudgets();renderBills();renderGoals();renderTasks();renderEvents();renderShopping();renderNotes();renderUsers();if(!CHAT_BUSY)renderChatHistory();
+  renderAccounts();renderTransactions();renderBudgets();renderBills();renderGoals();renderShopping();renderNotes();renderUsers();if(!CHAT_BUSY)renderChatHistory();
 }
+function activityHistoryFor(id,date){return (S.activityHistory||[]).find(h=>h.activityId===id&&h.scheduledDate===date&&(h.status==='DONE'||h.status==='SKIPPED'))||null}
+function nextActivityDateLocal(a,fromDate){
+  const type=String(a.repeatType||'NONE').toUpperCase(),interval=Math.max(1,Number(a.repeatInterval||1)),d=new Date(fromDate+'T12:00:00'),base=new Date((a.date||fromDate)+'T12:00:00');if(type==='NONE')return'';
+  if(type==='DAILY'){d.setDate(d.getDate()+interval);return isoDateFrom(d)}
+  if(type==='WEEKLY'){const days=String(a.repeatDays||'').split(',').filter(Boolean),codes=['SUN','MON','TUE','WED','THU','FRI','SAT'];for(let i=1;i<=370;i++){d.setDate(d.getDate()+1);const weeks=Math.floor((new Date(isoDateFrom(d)+'T12:00:00')-base)/(7*86400000));if((!days.length||days.includes(codes[d.getDay()]))&&weeks>=0&&weeks%interval===0)return isoDateFrom(d)}return''}
+  if(type==='MONTHLY'||(type==='CUSTOM'&&a.repeatUnit==='MONTH')){const day=base.getDate();d.setDate(1);d.setMonth(d.getMonth()+interval);d.setDate(Math.min(day,new Date(d.getFullYear(),d.getMonth()+1,0).getDate()));return isoDateFrom(d)}
+  if(type==='YEARLY'||(type==='CUSTOM'&&a.repeatUnit==='YEAR')){d.setFullYear(d.getFullYear()+interval);return isoDateFrom(d)}
+  if(type==='CUSTOM'){d.setDate(d.getDate()+(a.repeatUnit==='WEEK'?7*interval:interval));return isoDateFrom(d)}return'';
+}
+function activityOccurrencesForDate(date){
+  const out=[];(S.activities||[]).forEach(a=>{const h=activityHistoryFor(a.id,date);if(h){out.push({...a,scheduledDate:date,occurrenceStatus:h.status});return}if(String(a.repeatType||'NONE')==='NONE'){if(a.date===date)out.push({...a,scheduledDate:date,occurrenceStatus:a.status||'OPEN'});return}let cur=a.nextDate||a.date;if(!cur)return;let guard=0;while(cur&&cur<date&&guard++<400)cur=nextActivityDateLocal(a,cur);if(cur===date)out.push({...a,scheduledDate:date,occurrenceStatus:'OPEN'});});return out;
+}
+function overdueActivities(){const t=todayISO();return (S.activities||[]).filter(a=>a.status!=='DONE'&&a.status!=='SKIPPED'&&(a.nextDate||a.date)&&(a.nextDate||a.date)<t&&!activityHistoryFor(a.id,a.nextDate||a.date)).map(a=>({...a,scheduledDate:a.nextDate||a.date,occurrenceStatus:'OPEN',overdue:true}))}
+function activityMeta(a){const parts=[];if(a.time)parts.push(a.time);parts.push(userName(a.assignedTo));if(a.repeatType&&a.repeatType!=='NONE')parts.push(activityRepeatLabel(a));if(a.location)parts.push(a.location);return parts.join(' · ')}
+function activityRepeatLabel(a){const t=a.repeatType||'NONE',n=Number(a.repeatInterval||1);if(t==='DAILY')return n===1?'Harian':'Setiap '+n+' hari';if(t==='WEEKLY')return (a.repeatDays?String(a.repeatDays).replace(/MON/g,'Sen').replace(/TUE/g,'Sel').replace(/WED/g,'Rab').replace(/THU/g,'Kam').replace(/FRI/g,'Jum').replace(/SAT/g,'Sab').replace(/SUN/g,'Min'):'Mingguan');if(t==='MONTHLY')return n===1?'Bulanan':'Setiap '+n+' bulan';if(t==='YEARLY')return n===1?'Tahunan':'Setiap '+n+' tahun';if(t==='CUSTOM')return 'Setiap '+n+' '+({DAY:'hari',WEEK:'minggu',MONTH:'bulan',YEAR:'tahun'}[a.repeatUnit]||'hari');return''}
+function activityItemHtml(a,opts={}){const done=a.occurrenceStatus==='DONE'||a.status==='DONE',skipped=a.occurrenceStatus==='SKIPPED'||a.status==='SKIPPED',label=a.overdue?'<span class="duechip overdue">Terlambat</span>':a.repeatType&&a.repeatType!=='NONE'?'<span class="badge">↻</span>':'';return `<div class="item"><button class="checkbtn ${done?'done':''}" ${done&&a.repeatType!=='NONE'?'disabled':''} onclick="toggleActivity('${a.id}','${a.scheduledDate||a.nextDate||a.date||todayISO()}')">${done?'✓':skipped?'—':'○'}</button><div class="activity-time">${a.time||''}</div><div class="main"><div class="name ${done?'done-text':''}">${esc(a.title)}</div><div class="meta ${a.overdue?'overdue-text':''}">${esc(activityMeta(a))}${a.overdue?' · '+fmtDate(a.scheduledDate):''}</div></div>${label}${opts.edit===false?'':`<button class="btn ghost sm" onclick="openActivityActions('${a.id}','${a.scheduledDate||a.nextDate||a.date||todayISO()}')">•••</button>`}</div>`}
+function renderTodayActivities(){const arr=[...activityOccurrencesForDate(todayISO()),...overdueActivities()].sort((a,b)=>String(a.time||'99:99').localeCompare(String(b.time||'99:99')));const open=arr.filter(a=>a.occurrenceStatus!=='DONE'&&a.occurrenceStatus!=='SKIPPED').length;document.getElementById('todayActivityCount').textContent=open;const e=document.getElementById('todayActivities');e.innerHTML=arr.length?arr.slice(0,7).map(a=>activityItemHtml(a,{edit:false})).join(''):'<div class="empty small">Tidak ada aktivitas yang perlu ditangani hari ini ✓</div>';}
+function renderPlan(){const today=[...activityOccurrencesForDate(todayISO()),...overdueActivities()];document.getElementById('activitiesTodayList').innerHTML=today.length?today.map(a=>activityItemHtml(a)).join(''):'<div class="empty">Tidak ada aktivitas hari ini.</div>';const routines=(S.activities||[]).filter(a=>a.repeatType&&a.repeatType!=='NONE');document.getElementById('routinesList').innerHTML=routines.length?routines.map(a=>activityItemHtml({...a,scheduledDate:a.nextDate||a.date,occurrenceStatus:'OPEN'})).join(''):'<div class="empty">Belum ada rutinitas berulang.</div>';const done=(S.activityHistory||[]).filter(h=>h.status==='DONE').slice(0,80);document.getElementById('completedActivitiesList').innerHTML=done.length?done.map(h=>{const a=S.activities.find(x=>x.id===h.activityId)||{title:'Aktivitas'};return `<div class="item"><span class="checkbtn done">✓</span><div class="main"><div class="name done-text">${esc(a.title)}</div><div class="meta">${fmtDate(h.scheduledDate)}${h.completedAt?' · '+new Date(h.completedAt).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}):''}</div></div></div>`}).join(''):'<div class="empty">Belum ada riwayat selesai.</div>';renderCalendar();}
+
 function daysTo(dateStr){if(!dateStr)return 9999;const a=new Date(todayISO()+'T00:00:00'),b=new Date(String(dateStr).slice(0,10)+'T00:00:00');return Math.round((b-a)/86400000)}
 function dueLabel(d){const n=daysTo(d);if(n===2)return ['H-2','h2'];if(n===1)return ['H-1','h1'];if(n===0)return ['Hari ini','today'];if(n<0)return ['Terlambat '+Math.abs(n)+' hari','overdue'];return ['H-'+n,'h2']}
-function renderTodayEvents(data){const e=document.getElementById('todayEvents');if(!data.length){e.innerHTML='<div class="empty small">Belum ada agenda hari ini.</div>';return}e.innerHTML=data.map(x=>`<div class="item"><button class="checkbtn ${x.status==='DONE'?'done':''}" onclick="toggleEvent('${x.id}')">${x.status==='DONE'?'✓':'○'}</button><div class="main"><div class="name ${x.status==='DONE'?'done-text':''}">${esc(x.title)}</div><div class="meta">${localDT(x.startAt)}${x.location?' · '+esc(x.location):''}</div></div></div>`).join('')}
-function renderTodayTasks(data){const e=document.getElementById('todayTasks');if(!data.length){e.innerHTML='<div class="empty small">Semua task selesai ✓</div>';return}e.innerHTML=data.map(x=>`<div class="item"><button class="checkbtn" onclick="toggleTask('${x.id}')">○</button><div class="main"><div class="name">${esc(x.title)}</div><div class="meta">${x.dueDate?fmtDate(x.dueDate):'Tanpa jatuh tempo'} · ${esc(userName(x.assignedTo))}</div></div></div>`).join('')}
-function renderTodayBills(){const e=document.getElementById('todayBills'),badge=document.getElementById('billReminderCount');if(!e)return;const arr=S.bills.filter(b=>{const d=daysTo(b.dueDate);return (d>=0&&d<=2)||(b.status!=='PAID'&&d<0)}).sort((a,b)=>String(a.dueDate).localeCompare(String(b.dueDate))).slice(0,8);const unpaid=arr.filter(b=>b.status!=='PAID').length;badge.textContent=unpaid+' perlu dibayar';if(!arr.length){e.innerHTML='<div class="empty small">Tidak ada tagihan H-2/H-1 yang perlu dibayar.</div>';return}e.innerHTML=arr.map(b=>{const d=b.status==='PAID'?['Lunas','']:dueLabel(b.dueDate);return `<div class="item"><button class="checkbtn ${b.status==='PAID'?'done':''}" onclick="toggleBill('${b.id}')" title="${b.status==='PAID'?'Batalkan status lunas':'Tandai sudah dibayar'}">${b.status==='PAID'?'✓':'○'}</button><div class="main"><div class="name ${b.status==='PAID'?'done-text':''}">${esc(b.name)}</div><div class="meta">${rupiah(b.amount)} · ${fmtDate(b.dueDate)} · ${esc(accountName(b.accountId))}</div></div>${b.status==='PAID'?'<span class="badge ok">Lunas</span>':`<span class="duechip ${d[1]}">${d[0]}</span>`}</div>`}).join('')}
+function renderTodayBills(){const e=document.getElementById('todayBills'),badge=document.getElementById('billReminderCount');if(!e)return;const arr=S.bills.filter(b=>{const d=daysTo(b.dueDate);return (d>=0&&d<=2)||(b.status!=='PAID'&&d<0)}).sort((a,b)=>String(a.dueDate).localeCompare(String(b.dueDate))).slice(0,8);const unpaid=arr.filter(b=>b.status!=='PAID').length;badge.textContent=unpaid+' perlu dibayar';if(!arr.length){e.innerHTML='<div class="empty small">Tidak ada tagihan H-2/H-1/Hari H yang perlu dibayar.</div>';return}e.innerHTML=arr.map(b=>{const d=b.status==='PAID'?['Lunas','']:dueLabel(b.dueDate);return `<div class="item"><button class="checkbtn ${b.status==='PAID'?'done':''}" onclick="toggleBill('${b.id}')" title="${b.status==='PAID'?'Batalkan status lunas':'Tandai sudah dibayar'}">${b.status==='PAID'?'✓':'○'}</button><div class="main"><div class="name ${b.status==='PAID'?'done-text':''}">${esc(b.name)}</div><div class="meta">${rupiah(b.amount)} · ${fmtDate(b.dueDate)} · ${esc(accountName(b.accountId))}</div></div>${b.status==='PAID'?'<span class="badge ok">Lunas</span>':`<span class="duechip ${d[1]}">${d[0]}</span>`}</div>`}).join('')}
 function renderSmallList(el,data,map){
   const e=document.getElementById(el);if(!data.length){e.innerHTML='<div class="empty small">Belum ada data.</div>';return}
   e.innerHTML=data.map(x=>{const m=map(x);return `<div class="item"><span class="pinkdot"></span><div class="main"><div class="name">${esc(m.name)}</div><div class="meta">${esc(m.meta||'')}</div></div></div>`}).join('');
@@ -405,7 +469,7 @@ function renderTransactions(){
   const el=document.getElementById('transactionsList');if(!el)return;const f=document.getElementById('txFilter')?.value||'ALL';
   const arr=S.transactions.filter(t=>f==='ALL'||t.type===f);
   if(!arr.length){el.innerHTML='<div class="empty">Belum ada transaksi.</div>';return}
-  el.innerHTML=arr.slice(0,150).map(t=>`<div class="item"><div class="main"><div class="name">${esc(t.description||t.category||t.type)}</div><div class="meta">${fmtDate(t.date)} · ${esc(accountName(t.accountId))}${t.type==='TRANSFER'?' → '+esc(accountName(t.toAccountId)):''} · ${esc(t.category||'')}</div></div><div class="amount ${t.type==='EXPENSE'?'expense':t.type==='INCOME'?'income':''}">${t.type==='EXPENSE'?'-':t.type==='INCOME'?'+':''}${rupiah(t.amount)}</div>${t.canEdit?`<button class="btn ghost sm" onclick="openTransactionModal('${t.id}')">Edit</button>`:''}</div>`).join('');
+  el.innerHTML=arr.slice(0,150).map(t=>`<div class="item"><div class="main"><div class="name">${esc(t.description||t.category||t.type)}</div><div class="meta">${fmtDate(t.date)} · ${esc(accountName(t.accountId))}${t.type==='TRANSFER'?' → '+esc(accountName(t.toAccountId)):''} · ${esc(t.category||'')}</div></div><div class="amount ${t.type==='EXPENSE'?'expense':t.type==='INCOME'?'income':''}">${t.type==='EXPENSE'?'-':t.type==='INCOME'?'+':''}${rupiah(t.amount)}</div>${t.receiptUrl?`<a class="btn ghost sm" href="${esc(t.receiptUrl)}" target="_blank">📎</a>`:''}${t.canEdit?`<button class="btn ghost sm" onclick="openTransactionModal('${t.id}')">Edit</button>`:''}</div>`).join('');
 }
 function renderBudgets(){
   const el=document.getElementById('budgetsList');if(!el)return;if(!S.budgets.length){el.innerHTML='<div class="empty span12">Belum ada budget.</div>';return}
@@ -419,14 +483,8 @@ function renderGoals(){
   const el=document.getElementById('goalsList');if(!el)return;if(!S.goals.length){el.innerHTML='<div class="empty span12">Belum ada goal.</div>';return}
   el.innerHTML=S.goals.map(g=>{const pct=Math.min(100,Math.round(Number(g.current||0)/Math.max(1,Number(g.target||0))*100));return `<div class="card span4"><div class="row between"><b>${esc(g.name)}</b><span class="badge">${pct}%</span></div><div class="metric">${rupiah(g.current)}</div><div class="small muted">Target ${rupiah(g.target)} ${g.dueDate?'· '+fmtDate(g.dueDate):''}</div><div class="progress"><span style="width:${pct}%"></span></div><button class="btn ghost sm" style="margin-top:10px" onclick="openGoalModal('${g.id}')">Edit</button></div>`}).join('');
 }
-function renderTasks(){
-  const el=document.getElementById('tasksList');if(!el)return;if(!S.tasks.length){el.innerHTML='<div class="empty">Belum ada task.</div>';return}
-  el.innerHTML=S.tasks.map(t=>`<div class="item"><button class="iconbtn" style="width:34px;height:34px" onclick="toggleTask('${t.id}')">${t.status==='DONE'?'✓':'○'}</button><div class="main"><div class="name" style="${t.status==='DONE'?'text-decoration:line-through;opacity:.55':''}">${esc(t.title)}</div><div class="meta">${t.dueDate?fmtDate(t.dueDate):'Tanpa tanggal'} · ${esc(userName(t.assignedTo))} · ${esc(t.priority)}</div></div><button class="btn ghost sm" onclick="openTaskModal('${t.id}')">Edit</button></div>`).join('');
-}
-function renderEvents(){
-  const el=document.getElementById('eventsList');if(!el)return;if(!S.events.length){el.innerHTML='<div class="empty">Belum ada agenda.</div>';return}
-  el.innerHTML=S.events.map(e=>`<div class="item"><button class="checkbtn ${e.status==='DONE'?'done':''}" onclick="toggleEvent('${e.id}')">${e.status==='DONE'?'✓':'○'}</button><div class="main"><div class="name ${e.status==='DONE'?'done-text':''}">${esc(e.title)}</div><div class="meta">${localDT(e.startAt)}${e.location?' · '+esc(e.location):''}</div></div><button class="btn ghost sm" onclick="openEventModal('${e.id}')">Edit</button></div>`).join('');
-}
+function renderTasks(){}
+function renderEvents(){}
 function renderShopping(){
   const el=document.getElementById('shoppingList');if(!el)return;if(!S.shopping.length){el.innerHTML='<div class="empty">Daftar belanja kosong.</div>';return}
   el.innerHTML=S.shopping.map(x=>`<div class="item"><button class="iconbtn" style="width:34px;height:34px" onclick="toggleShopping('${x.id}')">${x.status==='DONE'?'✓':'○'}</button><div class="main"><div class="name" style="${x.status==='DONE'?'text-decoration:line-through;opacity:.55':''}">${esc(x.item)}</div><div class="meta">${esc(x.qty||'')} · ditambah ${esc(userName(x.addedBy))}</div></div><button class="btn danger sm" onclick="removeItem('shopping','${x.id}')">Hapus</button></div>`).join('');
@@ -439,9 +497,9 @@ function renderUsers(){
   const el=document.getElementById('usersList');if(!el)return;el.innerHTML=S.users.map(u=>`<div class="item"><div class="main"><div class="name">${esc(u.name)}</div><div class="meta">${esc(u.email)} · ${esc(u.role)}</div></div>${S.user.role==='OWNER'?`<button class="btn ghost sm" onclick="openUserModal('${u.id}')">Edit</button>`:''}</div>`).join('');
 }
 
-function goPage(p,b){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.getElementById('page-'+p).classList.add('active');document.querySelectorAll('.navbtn').forEach(x=>x.classList.remove('active'));b?.classList.add('active');document.querySelector('.fab')?.classList.toggle('hidden-page',p==='ai');window.scrollTo({top:0,behavior:'smooth'})}
+function goPage(p,b){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.getElementById('page-'+p).classList.add('active');document.querySelectorAll('.navbtn').forEach(x=>x.classList.remove('active'));b?.classList.add('active');document.querySelector('.fab')?.classList.toggle('hidden-page',p==='ai');if(p!=='ai')document.body.classList.remove('ai-focus');if(p==='plan')setTimeout(renderCalendar,10);window.scrollTo({top:0,behavior:'smooth'})}
 function moneyTab(p,b){['transactions','accounts','budgets','bills','goals'].forEach(x=>document.getElementById('money-'+x).classList.toggle('hidden',x!==p));b.parentElement.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active')}
-function planTab(p,b){['tasks','events'].forEach(x=>document.getElementById('plan-'+x).classList.toggle('hidden',x!==p));b.parentElement.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active')}
+function planTab(p,b){['today','calendar','routines','done'].forEach(x=>document.getElementById('plan-'+x).classList.toggle('hidden',x!==p));b.parentElement.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');if(p==='calendar')renderCalendar()}
 function moreTab(p,b){['shopping','notes','settings'].forEach(x=>document.getElementById('more-'+x).classList.toggle('hidden',x!==p));b.parentElement.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active')}
 function openSettings(){goPage('more',document.querySelector('.navbtn[data-page="more"]'));const btn=[...document.querySelectorAll('#page-more .tab')].find(x=>x.textContent.includes('Pengaturan'));moreTab('settings',btn);setTimeout(()=>checkSystemStatus(false),80)}
 function closeModal(){document.getElementById('modal').classList.add('hidden')}
@@ -449,9 +507,9 @@ function modal(title,html){document.getElementById('modalTitle').textContent=tit
 function accountOptions(sel=''){return S.accounts.filter(a=>a.canEdit||a.scope==='JOINT'||a.ownerId===S.user.id).map(a=>`<option value="${a.id}" ${a.id===sel?'selected':''}>${esc(a.name)} · ${esc(a.scope)}</option>`).join('')}
 function userOptions(sel=''){return S.users.map(u=>`<option value="${u.id}" ${u.id===sel?'selected':''}>${esc(u.name)}</option>`).join('')}
 
-function cloneState(){return JSON.parse(JSON.stringify({users:S.users,accounts:S.accounts,transactions:S.transactions,budgets:S.budgets,bills:S.bills,goals:S.goals,tasks:S.tasks,events:S.events,shopping:S.shopping,notes:S.notes,summary:S.summary}))}
+function cloneState(){return JSON.parse(JSON.stringify({users:S.users,accounts:S.accounts,transactions:S.transactions,budgets:S.budgets,bills:S.bills,goals:S.goals,activities:S.activities,activityHistory:S.activityHistory,receipts:S.receipts,shopping:S.shopping,notes:S.notes,summary:S.summary}))}
 function restoreState(b){Object.assign(S,b);persistSnapshot();renderAll()}
-function replaceTempId(tempId,newId){if(!tempId||!newId)return;['accounts','transactions','budgets','bills','goals','tasks','events','shopping','notes','users'].forEach(k=>{const x=S[k]?.find(v=>v.id===tempId);if(x)x.id=newId})}
+function replaceTempId(tempId,newId){if(!tempId||!newId)return;['accounts','transactions','budgets','bills','goals','activities','receipts','shopping','notes','users'].forEach(k=>{const x=S[k]?.find(v=>v.id===tempId);if(x)x.id=newId})}
 function stableStringify(v){
   if(v===null||typeof v!=='object')return JSON.stringify(v);
   if(Array.isArray(v))return '['+v.map(stableStringify).join(',')+']';
@@ -499,23 +557,23 @@ function updateConnectionUI(){
   set('stSync',(CONN.pendingWrites?CONN.pendingWrites+' perubahan sedang disimpan · ':'')+(CONN.lastSync?new Date(CONN.lastSync).toLocaleTimeString('id-ID'):'Belum sinkron'));
   set('stVersion','App '+VERSION+' · Backend '+(S.settings.version||'-')+(versionMismatch?' · ⚠ versi berbeda':''));
   const pwaText=!C.PWA_ENABLED?'Dinonaktifkan di config':!PWA_STATE.supported?'Tidak didukung browser':PWA_STATE.installed?'Terpasang · standalone':PWA_STATE.controlled?'Aktif · service worker mengontrol':PWA_STATE.registered?'Terdaftar · siap offline':PWA_STATE.error?'Error · '+PWA_STATE.error:'Menunggu registrasi';
-  set('stPWA',pwaText);set('stDedupe','Aktif · '+PENDING_MUTATIONS.size+' request dijaga');
+  set('stPWA',pwaText);set('stDrive',S.settings.driveStatus||'Menunggu pemeriksaan');set('stEmail',S.settings.emailStatus||'Menunggu pemeriksaan');set('stDedupe','Aktif · '+PENDING_MUTATIONS.size+' request dijaga');
   const ib=document.getElementById('installPwaBtn');if(ib)ib.classList.toggle('show',!!deferredInstallPrompt&&!PWA_STATE.installed);
   set('stEndpoint',API_URL?API_URL.replace(/\/s\/[^/]+\/exec/,'/s/••••/exec'):'Belum diisi');
 }
 async function checkSystemStatus(showToast=false){
   if(!S.session)return checkBootstrap(showToast);if(CONN.checking)return;CONN.checking=true;updateConnectionUI();
-  try{const t=performance.now(),r=await api('system.status',{});CONN.backend=true;CONN.latency=Math.round(performance.now()-t);if(r){CONN.activeSessions=Number(r.activeSessions||0);S.settings={...S.settings,version:r.version,databaseName:r.databaseName,spreadsheetId:r.spreadsheetId,aiProvider:r.aiProvider,aiModel:r.aiModel,aiConfigured:r.aiConfigured};}updateConnectionUI();if(showToast)toast((r&&r.version!==VERSION)?'Koneksi aktif, tetapi versi backend berbeda. Deploy backend.gs terbaru.':'Semua koneksi utama terdeteksi ✓',!!(r&&r.version!==VERSION))}
+  try{const t=performance.now(),r=await api('system.status',{});CONN.backend=true;CONN.latency=Math.round(performance.now()-t);if(r){CONN.activeSessions=Number(r.activeSessions||0);S.settings={...S.settings,version:r.version,databaseName:r.databaseName,spreadsheetId:r.spreadsheetId,aiProvider:r.aiProvider,aiModel:r.aiModel,aiConfigured:r.aiConfigured,receiptVisionConfigured:r.receiptVisionConfigured,driveStatus:r.drive?'Terhubung · '+(r.driveName||'STRUK'):'Tidak terhubung',emailStatus:r.emailTrigger?'Aktif · quota '+(r.emailQuota??'-'):'Trigger belum aktif',appUrl:r.appUrl||S.settings.appUrl};}updateConnectionUI();if(showToast)toast((r&&r.version!==VERSION)?'Koneksi aktif, tetapi versi backend berbeda. Deploy backend.gs terbaru.':'Semua koneksi utama terdeteksi ✓',!!(r&&r.version!==VERSION))}
   catch(e){CONN.backend=false;CONN.lastError=e.message;updateConnectionUI();if(showToast)toast(e.message,true)}finally{CONN.checking=false}
 }
 async function clearAppCache(){
-  localStorage.removeItem(SNAP_KEY);localStorage.removeItem('ruma_snapshot_v2_3');localStorage.removeItem('ruma_snapshot_v2_1');localStorage.removeItem('ruma_snapshot');AI_CACHE.clear();
+  localStorage.removeItem(SNAP_KEY);localStorage.removeItem('ruma_snapshot_v2_4');localStorage.removeItem('ruma_snapshot_v2_3');localStorage.removeItem('ruma_snapshot_v2_1');localStorage.removeItem('ruma_snapshot');AI_CACHE.clear();
   if('caches'in window){try{for(const k of await caches.keys())if(k.startsWith('ruma-'))await caches.delete(k)}catch(e){}}
   toast('Cache aplikasi dibersihkan. Login tetap aktif.');updateConnectionUI();scheduleSync(100)
 }
 function parseHumanAmount(text){
   const src=String(text||'').toLowerCase().replace(/rp\s*/g,'');
-  let m=src.match(/(\d+(?:[.,]\d+)?)\s*(juta|jt|ribu|rb)\b/i);
+  let m=src.match(/(\d+(?:[.,]\d+)?)\s*(juta|jt|ribu|rb|k)\b/i);
   if(m){let n=Number(m[1].replace(',','.'));if(!Number.isFinite(n))return 0;return Math.round(n*(m[2].startsWith('j')?1000000:1000));}
   m=src.match(/\b(\d{1,3}(?:[.]\d{3})+|\d{4,})\b/);
   if(m)return Number(m[1].replace(/\./g,''))||0;
@@ -536,10 +594,14 @@ function inferExpenseCategory(text){
 }
 function extractTxDescription(text,type){
   const q=String(text||'').replace(/\s+/g,' ').trim();
-  let m=q.match(/(?:beli|membeli|bayar|membayar)\s+(.+?)\s+(?:(?:rp\s*)?\d[\d.,]*\s*(?:ribu|rb|juta|jt)?)(?:\b|\s)/i);
+  let m=q.match(/(?:beli|membeli|bayar|membayar|jajan|makan|minum|belanja|isi)\s+(.+?)\s+(?:(?:rp\s*)?\d[\d.,]*\s*(?:ribu|rb|juta|jt|k)?)(?:\b|\s)/i);
   if(m&&m[1])return m[1].replace(/\b(?:seharga|sebesar)\b/gi,'').trim().slice(0,80);
   if(type==='INCOME'){
-    m=q.match(/(?:terima|menerima|dapat|pemasukan|gaji)\s+(.+?)\s+(?:(?:rp\s*)?\d[\d.,]*\s*(?:ribu|rb|juta|jt)?)(?:\b|\s)/i);
+    m=q.match(/(?:terima|menerima|dapat|pemasukan|gaji)\s+(.+?)\s+(?:(?:rp\s*)?\d[\d.,]*\s*(?:ribu|rb|juta|jt|k)?)(?:\b|\s)/i);
+    if(m&&m[1])return m[1].trim().slice(0,80);
+  }
+  if(type==='EXPENSE'){
+    m=q.match(/(?:\d[\d.,]*\s*(?:ribu|rb|juta|jt|k)?)\s+(?:buat|untuk)\s+(.+?)(?:\s+(?:pakai|pake|dari)\b|$)/i);
     if(m&&m[1])return m[1].trim().slice(0,80);
   }
   return type==='EXPENSE'?'Pengeluaran via chat':'Pemasukan via chat';
@@ -558,7 +620,7 @@ function parseChatTransaction(q){
     if(!from||!to){const mentioned=usable.filter(a=>l.includes(String(a.name||'').toLowerCase()));if(mentioned.length>=2){from=from||mentioned[0];to=to||mentioned[1];}}
     if(!from||!to)return {recognized:true,needs:'Sebutkan rekening sumber dan tujuan dengan jelas. Contoh: **“transfer 500 ribu dari BCA ke Mandiri”**.'};
     if(from.id===to.id)return {recognized:true,needs:'Rekening sumber dan tujuan transfer harus berbeda.'};
-    return {recognized:true,payload:{type:'TRANSFER',date:todayISO(),amount,accountId:from.id,toAccountId:to.id,category:'Transfer',description:'Transfer '+from.name+' ke '+to.name,scope:(from.scope==='JOINT'||to.scope==='JOINT')?'JOINT':'PERSONAL'},account:from,toAccount:to};
+    return {recognized:true,payload:{type:'TRANSFER',date:parseNaturalDate(raw)||todayISO(),amount,accountId:from.id,toAccountId:to.id,category:'Transfer',description:'Transfer '+from.name+' ke '+to.name,scope:(from.scope==='JOINT'||to.scope==='JOINT')?'JOINT':'PERSONAL'},account:from,toAccount:to};
   }
   const expenseIntent=/(pengeluaran|expense|habis beli|habis membeli|\bbeli\b|membeli|\bbayar\b|membayar|keluar(?:in)? uang|uang keluar|belanja|jajan|spent|spend)/i.test(l);
   const incomeIntent=/(pemasukan|income|terima gaji|menerima|\bgaji\b|uang masuk|masuk rekening|dibayar|honor|fee)/i.test(l);
@@ -576,52 +638,52 @@ function parseChatTransaction(q){
   if(!account){const preferred=usable.filter(a=>a.ownerId===S.user.id&&a.scope!=='JOINT');if(preferred.length===1)account=preferred[0];}
   if(!account)return {recognized:true,needs:'Transaksi ini mau memakai rekening/wallet yang mana? Pilih: **'+usable.slice(0,5).map(a=>a.name).join(', ')+'**.'};
   const desc=extractTxDescription(raw,type), category=type==='EXPENSE'?inferExpenseCategory(raw):(/gaji/i.test(l)?'Gaji':'Pemasukan');
-  return {recognized:true,payload:{type,date:todayISO(),amount,accountId:account.id,toAccountId:'',category,description:desc,scope:account.scope==='JOINT'?'JOINT':'PERSONAL'},account};
+  return {recognized:true,payload:{type,date:parseNaturalDate(raw)||todayISO(),amount,accountId:account.id,toAccountId:'',category,description:desc,scope:account.scope==='JOINT'?'JOINT':'PERSONAL'},account};
 }
 function isoDateFrom(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function parseNaturalDate(text){
   const l=String(text||'').toLowerCase(),now=new Date();
   if(/\bhari ini\b/.test(l))return isoDateFrom(now);
+  if(/\bkemarin\b/.test(l)){const d=new Date(now);d.setDate(d.getDate()-1);return isoDateFrom(d)}
   if(/\bbesok\b/.test(l)){const d=new Date(now);d.setDate(d.getDate()+1);return isoDateFrom(d)}
   if(/\blusa\b/.test(l)){const d=new Date(now);d.setDate(d.getDate()+2);return isoDateFrom(d)}
   let m=l.match(/\b(?:tanggal|tgl)\s*(\d{1,2})(?:[\s\/-]+(\d{1,2}))?(?:[\s\/-]+(\d{4}))?/);
   if(m){let day=Number(m[1]),mon=m[2]?Number(m[2])-1:now.getMonth(),yr=m[3]?Number(m[3]):now.getFullYear();let d=new Date(yr,mon,day);if(!m[2]&&d<new Date(now.getFullYear(),now.getMonth(),now.getDate()))d=new Date(yr,mon+1,day);return isoDateFrom(d)}
   m=l.match(/\b(\d{1,2})[\/-](\d{1,2})(?:[\/-](\d{2,4}))?\b/);if(m){let yr=m[3]?Number(m[3]):now.getFullYear();if(yr<100)yr+=2000;return isoDateFrom(new Date(yr,Number(m[2])-1,Number(m[1])))}
+  if(!/setiap minggu|mingguan/.test(l)){const wd=[['minggu',0],['senin',1],['selasa',2],['rabu',3],['kamis',4],['jumat',5],['sabtu',6]].find(([n])=>new RegExp('\\b'+n+'\\b').test(l));if(wd){const d=new Date(now),delta=(wd[1]-d.getDay()+7)%7;d.setDate(d.getDate()+delta);return isoDateFrom(d)}}
   return '';
 }
-function parseNaturalDateTime(text){const d=parseNaturalDate(text);if(!d)return'';const m=String(text||'').toLowerCase().match(/\b(?:jam|pukul|pk)\s*(\d{1,2})(?:[:.]([0-5]\d))?/);if(!m)return d+'T09:00';return d+'T'+String(Math.min(23,Number(m[1]))).padStart(2,'0')+':'+String(Number(m[2]||0)).padStart(2,'0')}
+function parseNaturalDateTime(text){const d=parseNaturalDate(text);if(!d)return'';const tm=parseNaturalTime(text)||'09:00';return d+'T'+tm}
+function parseNaturalTime(text){const l=String(text||'').toLowerCase(),m=l.match(/\b(?:jam|pukul|pk)\s*(\d{1,2})(?:[:.]([0-5]\d))?\s*(pagi|siang|sore|malam)?/);if(!m)return'';let h=Math.min(23,Number(m[1])),min=Number(m[2]||0),part=m[3]||'';if(part==='malam'&&h<12)h+=12;else if(part==='sore'&&h<12)h+=12;else if(part==='siang'&&h<11)h+=12;else if(part==='pagi'&&h===12)h=0;return String(h).padStart(2,'0')+':'+String(min).padStart(2,'0')}
+function parseNaturalRepeat(text){
+  const l=String(text||'').toLowerCase();let m=l.match(/setiap\s+(\d+)\s+(hari|minggu|bulan|tahun)/);if(m)return{type:'CUSTOM',interval:Number(m[1]),unit:{hari:'DAY',minggu:'WEEK',bulan:'MONTH',tahun:'YEAR'}[m[2]],days:'',label:'setiap '+m[1]+' '+m[2]};
+  if(/setiap hari|harian/.test(l))return{type:'DAILY',interval:1,unit:'DAY',days:'',label:'harian'};
+  if(/setiap bulan|bulanan/.test(l))return{type:'MONTHLY',interval:1,unit:'MONTH',days:'',label:'bulanan'};
+  if(/setiap tahun|tahunan/.test(l))return{type:'YEARLY',interval:1,unit:'YEAR',days:'',label:'tahunan'};
+  if(/(?:setiap|tiap) minggu|mingguan/.test(l)&&!/(?:setiap|tiap) hari minggu/.test(l))return{type:'WEEKLY',interval:1,unit:'WEEK',days:'',label:'mingguan'};
+  const days=[];[['senin','MON'],['selasa','TUE'],['rabu','WED'],['kamis','THU'],['jumat','FRI'],['sabtu','SAT'],['minggu','SUN']].forEach(([n,c])=>{if(new RegExp('\\b'+n+'\\b').test(l))days.push(c)});
+  if(days.length&&(/\b(?:setiap|tiap)\b/.test(l)||days.length>1))return{type:'WEEKLY',interval:1,unit:'WEEK',days:days.join(','),label:'hari '+days.join(', ')};
+  return{type:'NONE',interval:1,unit:'DAY',days:'',label:''};
+}
+function cleanActivityTitle(q){
+  let s=String(q||'');
+  s=s.replace(/\b(?:tolong|dong|ya|please|catat|simpan|masukkan|masukin|masukkin|tambahkan|tambah|buat|bikin|jadwalkan|agendakan|agenda|jadwal|task|tugas|aktivitas|reminder|ingatkan|saya|aku|kami|untuk|pada)\b/gi,' ');
+  s=s.replace(/\b(?:hari ini|besok|lusa)\b/gi,' ').replace(/\b(?:tanggal|tgl)\s*\d{1,2}(?:[\s\/-]+\d{1,2})?(?:[\s\/-]+\d{4})?/gi,' ').replace(/\b(?:jam|pukul|pk)\s*\d{1,2}(?:[:.]\d{2})?\s*(?:pagi|siang|sore|malam)?/gi,' ');
+  s=s.replace(/\bsetiap\s+\d+\s+(?:hari|minggu|bulan|tahun)\b/gi,' ').replace(/\b(?:setiap hari|harian|setiap minggu|mingguan|setiap bulan|bulanan|setiap tahun|tahunan)\b/gi,' ');
+  if(/\b(?:setiap|tiap)\b/i.test(q))s=s.replace(/\b(?:setiap|tiap|hari|senin|selasa|rabu|kamis|jumat|sabtu|minggu)\b/gi,' ');
+  else if(/\b(?:jadwalkan|agendakan|agenda|jadwal|ingatkan)\b/i.test(q))s=s.replace(/\b(?:senin|selasa|rabu|kamis|jumat|sabtu|minggu)\b/gi,' ');
+  return s.replace(/\s+/g,' ').trim().replace(/^[,.:;-]+|[,.:;-]+$/g,'').slice(0,100);
+}
 function cleanCommandTitle(q){return String(q||'').replace(/\b(?:tolong|dong|ya|please|catat|simpan|masukkan|masukin|masukkin|tambahkan|tambah|buat|bikin|jadwalkan|agendakan|agenda|jadwal|task|tugas|tagihan|reminder|ingatkan|bayar|membayar|saya|aku|kami|untuk|pada|di|ke daftar belanja|daftar belanja|belanja)\b/gi,' ').replace(/\b(?:hari ini|besok|lusa)\b/gi,' ').replace(/\b(?:tanggal|tgl)\s*\d{1,2}(?:[\s\/-]+\d{1,2})?(?:[\s\/-]+\d{4})?/gi,' ').replace(/\b(?:jam|pukul|pk)\s*\d{1,2}(?:[:.]\d{2})?/gi,' ').replace(/\b(?:rp\s*)?\d[\d.,]*\s*(?:ribu|rb|juta|jt)?\b/gi,' ').replace(/\s+/g,' ').trim().replace(/^[,.:;-]+|[,.:;-]+$/g,'').slice(0,100)}
 function findMentioned(arr,q,field){const l=String(q||'').toLowerCase();const hit=arr.filter(x=>{const n=String(x[field]||'').toLowerCase().trim();return n&&l.includes(n)});return hit.length===1?hit[0]:null}
 function parseChatAction(q){
   const raw=String(q||'').trim(),l=raw.toLowerCase();
-  // Tandai selesai/lunas lebih dulu agar tidak salah dianggap create.
-  if(/(lunas|sudah dibayar|udah dibayar|sudah bayar|udah bayar|tandai.*bayar)/.test(l)){
-    const open=S.bills.filter(b=>b.status!=='PAID'),b=findMentioned(open,raw,'name');if(b)return {action:'bill.toggle',payload:{id:b.id},apply:()=>{b.status='PAID'},success:`✓ Tagihan **${b.name}** saya tandai **sudah dibayar**.`};
-    if(open.length===1)return {action:'bill.toggle',payload:{id:open[0].id},apply:()=>{open[0].status='PAID'},success:`✓ Tagihan **${open[0].name}** saya tandai **sudah dibayar**.`};
-    if(open.length>1)return {needs:'Tagihan yang mana yang sudah dibayar? Sebutkan namanya: **'+open.slice(0,5).map(x=>x.name).join(', ')+'**.'};
-  }
-  if(/(selesai|beres|kelar|done)/.test(l)&&/(tugas|task)/.test(l)){
-    const open=S.tasks.filter(t=>t.status!=='DONE'),t=findMentioned(open,raw,'title');if(t)return {action:'task.toggle',payload:{id:t.id},apply:()=>{t.status='DONE'},success:`✓ Task **${t.title}** selesai.`};if(open.length===1)return {action:'task.toggle',payload:{id:open[0].id},apply:()=>{open[0].status='DONE'},success:`✓ Task **${open[0].title}** selesai.`};
-    if(open.length>1)return {needs:'Task yang mana yang selesai? Sebutkan judulnya.'};
-  }
-  if(/(selesai|beres|kelar|done)/.test(l)&&/(agenda|jadwal|acara)/.test(l)){
-    const open=S.events.filter(e=>e.status!=='DONE'),e=findMentioned(open,raw,'title');if(e)return {action:'event.toggle',payload:{id:e.id},apply:()=>{e.status='DONE'},success:`✓ Agenda **${e.title}** saya tandai selesai.`};if(open.length===1)return {action:'event.toggle',payload:{id:open[0].id},apply:()=>{open[0].status='DONE'},success:`✓ Agenda **${open[0].title}** saya tandai selesai.`};
-    if(open.length>1)return {needs:'Agenda yang mana yang selesai? Sebutkan judulnya.'};
-  }
-  if(/(ke daftar belanja|daftar belanja|shopping list)/.test(l)&&/(tambah|masukkan|masukin|catat|beli)/.test(l)){
-    const item=cleanCommandTitle(raw);if(!item)return {needs:'Barangnya apa? Contoh: **“tambahkan beras 5 kg ke daftar belanja”**.'};return {action:'shopping.save',payload:{item,qty:''},create:'shopping',success:`✓ **${item}** ditambahkan ke daftar belanja.`};
-  }
-  if(/\b(tagihan|reminder bayar|ingatkan bayar)\b/.test(l)&&/(tambah|catat|buat|ingatkan|reminder|tagihan)/.test(l)){
-    const due=parseNaturalDate(raw),amount=parseHumanAmount(raw);if(!due)return {needs:'Tanggal jatuh temponya belum jelas. Contoh: **“catat tagihan internet 350 ribu tanggal 20”**.'};
-    let name=cleanCommandTitle(raw).replace(/\b(?:internet|wifi|listrik|pln|pdam|cicilan|sewa|asuransi)\b/i,m=>m).trim();if(!name){const m=l.match(/\b(internet|wifi|listrik|pln|pdam|cicilan|sewa|asuransi)\b/);name=m?m[1].toUpperCase():'Tagihan';}
-    const acc=S.accounts.find(a=>l.includes(String(a.name||'').toLowerCase()));return {action:'bill.save',payload:{name,amount,dueDate:due,accountId:acc?acc.id:'',recurring:'NO',scope:acc&&acc.scope==='PERSONAL'?'PERSONAL':'JOINT'},create:'bill',success:`✓ Tagihan **${name}** untuk **${fmtDate(due)}** sudah dicatat${amount?' sebesar **'+rupiah(amount)+'**':''}.`};
-  }
-  if(/\b(jadwalkan|agendakan|buat agenda|tambah agenda|catat agenda|masukkan agenda|masukin agenda)\b/.test(l)){
-    const start=parseNaturalDateTime(raw);if(!start)return {needs:'Waktu agendanya belum jelas. Contoh: **“jadwalkan dokter besok jam 9”**.'};const title=cleanCommandTitle(raw);if(!title)return {needs:'Judul agendanya apa?'};return {action:'event.save',payload:{title,startAt:start,endAt:'',location:'',scope:'JOINT'},create:'event',success:`✓ Agenda **${title}** dibuat untuk **${localDT(start)}**.`};
-  }
-  if(/\b(buat tugas|tambah tugas|catat tugas|masukkan tugas|masukin tugas|ingatkan saya|remind me)\b/.test(l)){
-    const title=cleanCommandTitle(raw);if(!title)return {needs:'Tugasnya apa? Contoh: **“ingatkan saya service motor besok”**.'};const due=parseNaturalDate(raw);return {action:'task.save',payload:{title,dueDate:due,assignedTo:S.user.id,priority:'NORMAL',scope:'JOINT'},create:'task',success:`✓ Task **${title}** dibuat${due?' untuk **'+fmtDate(due)+'**':''}.`};
-  }
+  if(/(lunas|sudah dibayar|udah dibayar|sudah bayar|udah bayar|tandai.*bayar)/.test(l)){const open=S.bills.filter(b=>b.status!=='PAID'),b=findMentioned(open,raw,'name');if(b)return{action:'bill.toggle',payload:{id:b.id},apply:()=>{b.status='PAID'},success:`✓ Tagihan **${b.name}** saya tandai **sudah dibayar**.`};if(open.length===1)return{action:'bill.toggle',payload:{id:open[0].id},apply:()=>{open[0].status='PAID'},success:`✓ Tagihan **${open[0].name}** saya tandai **sudah dibayar**.`};if(open.length>1)return{needs:'Tagihan yang mana yang sudah dibayar? Sebutkan namanya: **'+open.slice(0,5).map(x=>x.name).join(', ')+'**.'};}
+  if(/(selesai|beres|kelar|done)/.test(l)&&/(aktivitas|tugas|task|agenda|jadwal|acara)/.test(l)){const open=(S.activities||[]).filter(a=>a.status!=='DONE'),a=findMentioned(open,raw,'title');if(a)return{action:'activity.toggle',payload:{id:a.id,scheduledDate:a.nextDate||a.date||todayISO()},apply:()=>localCompleteActivity(a,a.nextDate||a.date||todayISO()),success:`✓ Aktivitas **${a.title}** selesai.`};if(open.length===1)return{action:'activity.toggle',payload:{id:open[0].id,scheduledDate:open[0].nextDate||open[0].date||todayISO()},apply:()=>localCompleteActivity(open[0],open[0].nextDate||open[0].date||todayISO()),success:`✓ Aktivitas **${open[0].title}** selesai.`};if(open.length>1)return{needs:'Aktivitas yang mana yang selesai? Sebutkan judulnya.'};}
+  if(/(ke daftar belanja|daftar belanja|shopping list)/.test(l)&&/(tambah|masukkan|masukin|catat|beli)/.test(l)){const item=cleanCommandTitle(raw);if(!item)return{needs:'Barangnya apa? Contoh: **“tambahkan beras 5 kg ke daftar belanja”**.'};return{action:'shopping.save',payload:{item,qty:''},create:'shopping',success:`✓ **${item}** ditambahkan ke daftar belanja.`};}
+  if(/\b(tagihan|reminder bayar|ingatkan bayar)\b/.test(l)&&/(tambah|catat|buat|ingatkan|reminder|tagihan)/.test(l)){const due=parseNaturalDate(raw),amount=parseHumanAmount(raw);if(!due)return{needs:'Tanggal jatuh temponya belum jelas. Contoh: **“catat tagihan internet 350 ribu tanggal 20”**.'};let name=cleanCommandTitle(raw);if(!name){const mm=l.match(/\b(internet|wifi|listrik|pln|pdam|cicilan|sewa|asuransi)\b/);name=mm?mm[1].toUpperCase():'Tagihan';}const acc=S.accounts.find(a=>l.includes(String(a.name||'').toLowerCase()));return{action:'bill.save',payload:{name,amount,dueDate:due,accountId:acc?acc.id:'',recurring:/setiap bulan|bulanan/.test(l)?'YES':'NO',scope:acc&&acc.scope==='PERSONAL'?'PERSONAL':'JOINT'},create:'bill',success:`✓ Tagihan **${name}** untuk **${fmtDate(due)}** sudah dicatat${amount?' sebesar **'+rupiah(amount)+'**':''}.`};}
+  const activityIntent=/\b(jadwalkan|agendakan|buat agenda|tambah agenda|catat agenda|buat tugas|tambah tugas|catat tugas|ingatkan saya|remind me|buat aktivitas|tambah aktivitas|rutinkan|setiap hari|setiap minggu|setiap bulan|setiap tahun|senin|selasa|rabu|kamis|jumat|sabtu|minggu)\b/.test(l);
+  if(activityIntent){const title=cleanActivityTitle(raw);if(!title)return{needs:'Aktivitasnya apa? Contoh: **“ingatkan service motor besok”**.'};const date=parseNaturalDate(raw)||todayISO(),tm=parseNaturalTime(raw),rec=parseNaturalRepeat(raw);return{action:'activity.save',payload:{title,date,time:tm,assignedTo:S.user.id,priority:/penting|urgent|prioritas tinggi/.test(l)?'HIGH':'NORMAL',scope:'JOINT',repeatType:rec.type,repeatInterval:rec.interval,repeatDays:rec.days,repeatUnit:rec.unit,repeatEnd:'',reminderMinutes:0,notes:'',location:''},create:'activity',success:`✓ Aktivitas **${title}** dibuat${date?' untuk **'+fmtDate(date)+'**':''}${tm?' pukul **'+tm+'**':''}${rec.type!=='NONE'?' · '+rec.label:''}.`};}
   return null;
 }
 function runChatTransaction(cmd){
@@ -637,8 +699,7 @@ function runChatAction(cmd){
   if(cmd.needs){appendChatMessage('assistant',cmd.needs,'feedback');return}
   const backup=cloneState();CHAT_BUSY=true;let tempId='';
   try{
-    if(cmd.create==='task'){tempId=id('TMPTASKC');S.tasks.unshift({...cmd.payload,id:tempId,status:'OPEN'});}
-    else if(cmd.create==='event'){tempId=id('TMPEVTC');S.events.unshift({...cmd.payload,id:tempId,status:'OPEN'});}
+    if(cmd.create==='activity'){tempId=id('TMPACTC');S.activities.unshift({...cmd.payload,id:tempId,status:'OPEN',nextDate:cmd.payload.date,lastCompletedDate:''});}
     else if(cmd.create==='bill'){tempId=id('TMPBILLC');S.bills.unshift({...cmd.payload,id:tempId,status:'UNPAID'});}
     else if(cmd.create==='shopping'){tempId=id('TMPSHPC');S.shopping.unshift({...cmd.payload,id:tempId,status:'OPEN',addedBy:S.user.id});}
     else if(cmd.apply)cmd.apply();
@@ -649,7 +710,7 @@ function runChatAction(cmd){
 function chatClarification(q){
   const x=String(q||'').trim(),l=x.toLowerCase();
   if(x.length<3)return 'Boleh diperjelas sedikit? Contohnya: **“berapa pengeluaran bulan ini?”** atau **“apa tagihan minggu ini?”**';
-  if(/^(cek|gimana|bagaimana|aman|analisis|tolong cek|menurutmu)[?!. ]*$/i.test(x))return 'Bisa. Tapi saya perlu tahu yang mau dicek: **keuangan, tagihan, jadwal, task, atau rekening?**';
+  if(/^(cek|gimana|bagaimana|aman|analisis|tolong cek|menurutmu)[?!. ]*$/i.test(x))return 'Bisa. Tapi saya perlu tahu yang mau dicek: **keuangan, tagihan, aktivitas, kalender, atau rekening?**';
   if(/(aman|boleh|bisa).*(beli|ambil|keluar|pakai)/i.test(l)&&!/(\d|ribu|juta|rb)/i.test(l))return 'Bisa saya nilai, tapi nominalnya belum ada. Tulis misalnya: **“aman beli laptop 8 juta bulan ini?”**';
   if(/(rekening|wallet).*(ini|itu|tersebut)/i.test(l)&&S.accounts.length>1&&!S.accounts.some(a=>l.includes(String(a.name||'').toLowerCase())))return 'Rekeningnya belum jelas. Sebutkan nama rekening/wallet yang dimaksud agar saya tidak salah membaca data.';
   return null;
@@ -667,9 +728,8 @@ Kalau mau, saya bisa lanjut cek arus kas bulan ini.`;
   if(/(boros|kategori.*terbesar|paling banyak)/.test(x)){const arr=Object.entries(sum.expenseByCategory||{}).sort((a,b)=>b[1]-a[1]);if(!arr.length)return 'Belum ada cukup transaksi pengeluaran bulan ini untuk menilai kategori terbesar.';const [cat,val]=arr[0];return `Pengeluaran terbesar bulan ini ada di **${cat}** sebesar **${rupiah(val)}**${exp?` atau sekitar ${Math.round(val/exp*100)}% dari total pengeluaran.`:'.'}`;}
   if(/(budget|anggaran).*(status|aman|bulan|bagaimana)|sisa budget/.test(x)){const active=S.budgets.filter(b=>b.month===todayISO().slice(0,7));if(!active.length)return 'Budget bulan ini belum tercatat. Tambahkan budget dulu supaya saya bisa memberi feedback yang lebih akurat.';const risky=active.filter(b=>Number(b.amount)>0&&Number(b.spent)/Number(b.amount)>=.8).sort((a,b)=>b.spent/b.amount-a.spent/a.amount);return risky.length?`Yang perlu diperhatikan:\n${risky.slice(0,4).map(b=>`- **${b.category}**: ${Math.round(Number(b.spent)/Number(b.amount)*100)}% · ${rupiah(b.spent)} / ${rupiah(b.amount)}`).join('\n')}`:'Budget yang tercatat masih di bawah 80% pemakaian. Sejauh ini belum ada kategori yang mendekati batas.';}
   if(/(tagihan).*(hari|minggu|dekat|apa)|tagihan apa/.test(x)){const a=S.bills.filter(b=>b.status!=='PAID').slice(0,5);return a.length?`Tagihan terdekat:\n${a.map(b=>`- **${b.name}** · ${rupiah(b.amount)} · ${fmtDate(b.dueDate)}`).join('\n')}`:'Tidak ada tagihan aktif yang tercatat.'}
-  if(/(task|tugas).*(apa|aktif|belum|hari)|tugas apa/.test(x)){const a=S.tasks.filter(t=>t.status!=='DONE').slice(0,6);return a.length?`Task yang masih aktif:\n${a.map(t=>`- **${t.title}** · ${userName(t.assignedTo)}${t.dueDate?' · '+fmtDate(t.dueDate):''}`).join('\n')}`:'Semua task yang tercatat sudah selesai.'}
-  if(/(agenda|jadwal).*(hari ini)/.test(x)){const a=S.events.filter(e=>e.status!=='DONE'&&String(e.startAt).slice(0,10)===todayISO());return a.length?`Agenda hari ini:\n${a.map(e=>`- **${e.title}** · ${localDT(e.startAt)}`).join('\n')}`:'Tidak ada agenda hari ini yang tercatat.'}
-  if(/(agenda|jadwal).*(besok)/.test(x)){const d=new Date();d.setDate(d.getDate()+1);const iso=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'),a=S.events.filter(e=>e.status!=='DONE'&&String(e.startAt).slice(0,10)===iso);return a.length?`Agenda besok:\n${a.map(e=>`- **${e.title}** · ${localDT(e.startAt)}`).join('\n')}`:'Belum ada agenda besok yang tercatat.'}
+  if(/(aktivitas|task|tugas|agenda|jadwal).*(apa|aktif|belum|hari ini)|(?:aktivitas|tugas) apa/.test(x)){const a=[...activityOccurrencesForDate(todayISO()),...overdueActivities()].filter(v=>v.occurrenceStatus!=='DONE'&&v.occurrenceStatus!=='SKIPPED').slice(0,8);return a.length?`Aktivitas yang perlu ditangani:\n${a.map(v=>`- **${v.title}**${v.time?' · '+v.time:''}${v.overdue?' · terlambat':''}`).join('\n')}`:'Tidak ada aktivitas yang belum selesai hari ini.'}
+  if(/(aktivitas|agenda|jadwal).*(besok)/.test(x)){const d=new Date();d.setDate(d.getDate()+1);const iso=isoDateFrom(d),a=activityOccurrencesForDate(iso).filter(v=>v.occurrenceStatus!=='DONE'&&v.occurrenceStatus!=='SKIPPED');return a.length?`Aktivitas besok:\n${a.map(v=>`- **${v.title}**${v.time?' · '+v.time:''}`).join('\n')}`:'Belum ada aktivitas besok yang tercatat.'}
   return null;
 }
 function chatHtml(text){
@@ -689,7 +749,7 @@ function appendChatMessage(role,text,kind='normal',persist=true){const msg={id:i
 function showChatThinking(label='Saya cek…'){const ch=document.getElementById('chat');document.getElementById('chatThinking')?.remove();ch.insertAdjacentHTML('beforeend',`<div id="chatThinking" class="bubble ai"><span class="chattyping">${esc(label)} <i></i><i></i><i></i></span></div>`);ch.scrollTop=ch.scrollHeight}
 function finishChat(text,kind='normal'){document.getElementById('chatThinking')?.remove();CHAT_BUSY=false;appendChatMessage('assistant',text,kind,true);renderChatHistory()}
 
-function openQuick(){modal('Tambah cepat',`<div class="grid" style="margin-top:14px"><button class="btn secondary span6" onclick="closeModal();openTransactionModal()">💸 Transaksi</button><button class="btn secondary span6" onclick="closeModal();openTaskModal()">✅ Task</button><button class="btn secondary span6" onclick="closeModal();openEventModal()">📅 Agenda</button><button class="btn secondary span6" onclick="closeModal();openShoppingModal()">🛒 Belanja</button></div>`)}
+function openQuick(){modal('Tambah cepat',`<div class="grid" style="margin-top:14px"><button class="btn secondary span6" onclick="closeModal();openTransactionModal()">💸 Transaksi</button><button class="btn secondary span6" onclick="closeModal();openActivityModal()">📌 Aktivitas</button><button class="btn secondary span6" onclick="closeModal();openBillModal()">💳 Tagihan</button><button class="btn secondary span6" onclick="closeModal();openShoppingModal()">🛒 Belanja</button></div>`)}
 function openAccountModal(i=''){const a=S.accounts.find(x=>x.id===i)||{};modal(i?'Edit Rekening':'Tambah Rekening',`
 <div class="field"><label>Nama rekening/wallet</label><input id="mAccName" value="${esc(a.name||'')}"></div>
 <div class="field"><label>Jenis</label><select id="mAccType">${['BANK','EWALLET','CASH','SAVING','CREDIT','INVESTMENT','OTHER'].map(x=>`<option ${a.type===x?'selected':''}>${x}</option>`).join('')}</select></div>
@@ -725,15 +785,26 @@ function openGoalModal(i=''){const g=S.goals.find(x=>x.id===i)||{};modal(i?'Edit
 <div class="field"><label>Nama goal</label><input id="mGoalName" value="${esc(g.name||'')}"></div><div class="field"><label>Target</label><input id="mGoalTarget" type="number" value="${Number(g.target||0)}"></div><div class="field"><label>Saat ini</label><input id="mGoalCurrent" type="number" value="${Number(g.current||0)}"></div><div class="field"><label>Target tanggal</label><input id="mGoalDate" type="date" value="${g.dueDate||''}"></div><div class="field"><label>Scope</label><select id="mGoalScope"><option ${g.scope!=='JOINT'?'selected':''}>PERSONAL</option><option ${g.scope==='JOINT'?'selected':''}>JOINT</option></select></div><div class="row"><button class="btn" onclick="saveGoal('${i}')">Simpan</button>${i?`<button class="btn danger" onclick="removeItem('goal','${i}')">Hapus</button>`:''}</div>`)}
 function saveGoal(i){const p={id:i,name:formVal('mGoalName'),target:Number(formVal('mGoalTarget')),current:Number(formVal('mGoalCurrent')),dueDate:formVal('mGoalDate'),scope:formVal('mGoalScope')};optimistic('goal.save',p,()=>{const tid=i||id('TMPGOAL');upsert(S.goals,{...p,id:tid},i||tid);return{tempId:i?'':tid}})}
 
-function openTaskModal(i=''){const t=S.tasks.find(x=>x.id===i)||{};modal(i?'Edit Task':'Tambah Task',`
-<div class="field"><label>Task</label><input id="mTaskTitle" value="${esc(t.title||'')}"></div><div class="field"><label>Jatuh tempo</label><input id="mTaskDate" type="date" value="${t.dueDate||''}"></div><div class="field"><label>Ditugaskan ke</label><select id="mTaskUser">${userOptions(t.assignedTo||S.user.id)}</select></div><div class="field"><label>Prioritas</label><select id="mTaskPri">${['LOW','NORMAL','HIGH'].map(x=>`<option ${t.priority===x?'selected':''}>${x}</option>`).join('')}</select></div><div class="field"><label>Scope</label><select id="mTaskScope"><option ${t.scope!=='JOINT'?'selected':''}>PERSONAL</option><option ${t.scope==='JOINT'?'selected':''}>JOINT</option></select></div><div class="row"><button class="btn" onclick="saveTask('${i}')">Simpan</button>${i?`<button class="btn danger" onclick="removeItem('task','${i}')">Hapus</button>`:''}</div>`)}
-function saveTask(i){const p={id:i,title:formVal('mTaskTitle'),dueDate:formVal('mTaskDate'),assignedTo:formVal('mTaskUser'),priority:formVal('mTaskPri'),scope:formVal('mTaskScope')};optimistic('task.save',p,()=>{const old=S.tasks.find(x=>x.id===i),tid=i||id('TMPTASK');upsert(S.tasks,{...p,id:tid,status:old?old.status:'OPEN'},i||tid);return{tempId:i?'':tid}})}
-function toggleTask(i){optimistic('task.toggle',{id:i},()=>{const t=S.tasks.find(x=>x.id===i);if(t)t.status=t.status==='DONE'?'OPEN':'DONE'})}
-
-function openEventModal(i=''){const e=S.events.find(x=>x.id===i)||{};const dt=x=>x?String(x).slice(0,16):'';modal(i?'Edit Agenda':'Tambah Agenda',`
-<div class="field"><label>Judul</label><input id="mEventTitle" value="${esc(e.title||'')}"></div><div class="field"><label>Mulai</label><input id="mEventStart" type="datetime-local" value="${dt(e.startAt)}"></div><div class="field"><label>Selesai</label><input id="mEventEnd" type="datetime-local" value="${dt(e.endAt)}"></div><div class="field"><label>Lokasi</label><input id="mEventLoc" value="${esc(e.location||'')}"></div><div class="field"><label>Scope</label><select id="mEventScope"><option ${e.scope!=='JOINT'?'selected':''}>PERSONAL</option><option ${e.scope==='JOINT'?'selected':''}>JOINT</option></select></div><div class="row"><button class="btn" onclick="saveEvent('${i}')">Simpan</button>${i?`<button class="btn danger" onclick="removeItem('event','${i}')">Hapus</button>`:''}</div>`)}
-function saveEvent(i){const p={id:i,title:formVal('mEventTitle'),startAt:formVal('mEventStart'),endAt:formVal('mEventEnd'),location:formVal('mEventLoc'),scope:formVal('mEventScope')};optimistic('event.save',p,()=>{const old=S.events.find(x=>x.id===i),tid=i||id('TMPEVT');upsert(S.events,{...p,id:tid,status:old?old.status:'OPEN'},i||tid);return{tempId:i?'':tid}})}
-function toggleEvent(i){optimistic('event.toggle',{id:i},()=>{const e=S.events.find(x=>x.id===i);if(e)e.status=e.status==='DONE'?'OPEN':'DONE'})}
+function repeatFieldsVisibility(){const t=formVal('mActRepeat');document.getElementById('repeatDaysWrap')?.classList.toggle('hidden',t!=='WEEKLY');document.getElementById('repeatCustomWrap')?.classList.toggle('hidden',t!=='CUSTOM');document.getElementById('repeatIntervalWrap')?.classList.toggle('hidden',!['DAILY','WEEKLY','MONTHLY','YEARLY','CUSTOM'].includes(t))}
+function openActivityModal(i='',scheduled=''){const a=S.activities.find(x=>x.id===i)||{},days=String(a.repeatDays||'').split(',');modal(i?'Edit Aktivitas':'Tambah Aktivitas',`
+<div class="field"><label>Aktivitas</label><input id="mActTitle" value="${esc(a.title||'')}" placeholder="Apa yang perlu dilakukan?"></div>
+<div class="row"><div class="field grow"><label>Tanggal</label><input id="mActDate" type="date" value="${scheduled||a.nextDate||a.date||todayISO()}"></div><div class="field grow"><label>Jam (opsional)</label><input id="mActTime" type="time" value="${a.time||''}"></div></div>
+<div class="field"><label>Penanggung jawab</label><select id="mActUser">${userOptions(a.assignedTo||S.user.id)}</select></div>
+<div class="row"><div class="field grow"><label>Prioritas</label><select id="mActPri">${['LOW','NORMAL','HIGH'].map(x=>`<option ${a.priority===x?'selected':''}>${x}</option>`).join('')}</select></div><div class="field grow"><label>Scope</label><select id="mActScope"><option ${a.scope!=='JOINT'?'selected':''}>PERSONAL</option><option ${a.scope==='JOINT'?'selected':''}>JOINT</option></select></div></div>
+<div class="field"><label>Berulang</label><select id="mActRepeat" onchange="repeatFieldsVisibility()">${[['NONE','Tidak berulang'],['DAILY','Harian'],['WEEKLY','Mingguan / hari tertentu'],['MONTHLY','Bulanan'],['YEARLY','Tahunan'],['CUSTOM','Custom']].map(([v,l])=>`<option value="${v}" ${String(a.repeatType||'NONE')===v?'selected':''}>${l}</option>`).join('')}</select></div>
+<div id="repeatIntervalWrap" class="field"><label>Interval</label><input id="mActInterval" type="number" min="1" value="${Number(a.repeatInterval||1)}"></div>
+<div id="repeatDaysWrap" class="field"><label>Hari</label><div class="choice-days">${[['MON','Sen'],['TUE','Sel'],['WED','Rab'],['THU','Kam'],['FRI','Jum'],['SAT','Sab'],['SUN','Min']].map(([v,l])=>`<label><input type="checkbox" class="actDay" value="${v}" ${days.includes(v)?'checked':''}> ${l}</label>`).join('')}</div></div>
+<div id="repeatCustomWrap" class="field"><label>Satuan custom</label><select id="mActUnit">${[['DAY','Hari'],['WEEK','Minggu'],['MONTH','Bulan'],['YEAR','Tahun']].map(([v,l])=>`<option value="${v}" ${a.repeatUnit===v?'selected':''}>${l}</option>`).join('')}</select></div>
+<div class="row"><div class="field grow"><label>Berakhir (opsional)</label><input id="mActRepeatEnd" type="date" value="${a.repeatEnd||''}"></div><div class="field grow"><label>Reminder</label><select id="mActReminder">${[[0,'Tidak ada'],[0,'Saat waktunya'],[10,'10 menit sebelum'],[60,'1 jam sebelum'],[1440,'1 hari sebelum']].map(([v,l])=>`<option value="${v}" ${Number(a.reminderMinutes||0)===v?'selected':''}>${l}</option>`).join('')}</select></div></div>
+<div class="field"><label>Lokasi (opsional)</label><input id="mActLoc" value="${esc(a.location||'')}"></div><div class="field"><label>Catatan</label><textarea id="mActNotes">${esc(a.notes||'')}</textarea></div>
+<div class="row wrap"><button class="btn" onclick="saveActivity('${i}')">Simpan</button>${i?`<button class="btn danger" onclick="removeItem('activity','${i}')">Hapus</button>`:''}</div>`);setTimeout(repeatFieldsVisibility,0)}
+function saveActivity(i){const days=[...document.querySelectorAll('.actDay:checked')].map(x=>x.value).join(','),p={id:i,title:formVal('mActTitle'),date:formVal('mActDate'),time:formVal('mActTime'),assignedTo:formVal('mActUser'),priority:formVal('mActPri'),scope:formVal('mActScope'),repeatType:formVal('mActRepeat'),repeatInterval:Number(formVal('mActInterval')||1),repeatDays:days,repeatUnit:formVal('mActUnit'),repeatEnd:formVal('mActRepeatEnd'),reminderMinutes:Number(formVal('mActReminder')||0),notes:formVal('mActNotes'),location:formVal('mActLoc')};if(!p.title)return toast('Judul aktivitas wajib diisi.',true);optimistic('activity.save',p,()=>{const old=S.activities.find(x=>x.id===i),tid=i||id('TMPACT');upsert(S.activities,{...old,...p,id:tid,status:old?old.status:'OPEN',nextDate:old&&p.repeatType!=='NONE'?old.nextDate:p.date,lastCompletedDate:old?old.lastCompletedDate:''},i||tid);return{tempId:i?'':tid}})}
+function localCompleteActivity(a,scheduled){if(String(a.repeatType||'NONE')!=='NONE'){S.activityHistory.unshift({id:id('TMPAH'),activityId:a.id,scheduledDate:scheduled,status:'DONE',completedAt:new Date().toISOString(),userId:S.user.id});a.lastCompletedDate=scheduled;a.nextDate=nextActivityDateLocal(a,scheduled);a.status='OPEN'}else{a.status=a.status==='DONE'?'OPEN':'DONE';if(a.status==='DONE')S.activityHistory.unshift({id:id('TMPAH'),activityId:a.id,scheduledDate:scheduled,status:'DONE',completedAt:new Date().toISOString(),userId:S.user.id});else S.activityHistory=S.activityHistory.filter(h=>!(h.activityId===a.id&&h.scheduledDate===scheduled&&h.status==='DONE'))}}
+function toggleActivity(i,scheduled){optimistic('activity.toggle',{id:i,scheduledDate:scheduled},()=>{const a=S.activities.find(x=>x.id===i);if(a)localCompleteActivity(a,scheduled)})}
+function openActivityActions(i,scheduled){const a=S.activities.find(x=>x.id===i);if(!a)return;modal(a.title,`<div class="alert">${fmtDate(scheduled)}${a.time?' · '+a.time:''}${a.repeatType!=='NONE'?' · '+activityRepeatLabel(a):''}</div><div class="grid" style="margin-top:12px"><button class="btn secondary span6" onclick="closeModal();toggleActivity('${i}','${scheduled}')">✓ Tandai selesai</button><button class="btn secondary span6" onclick="openReschedule('${i}','${scheduled}')">📅 Jadwal ulang</button>${a.repeatType!=='NONE'?`<button class="btn ghost span6" onclick="closeModal();skipActivity('${i}','${scheduled}')">⏭ Lewati kali ini</button>`:''}<button class="btn ghost span6" onclick="closeModal();openActivityModal('${i}','${scheduled}')">✏ Edit</button></div>`)}
+function skipActivity(i,scheduled){optimistic('activity.skip',{id:i,scheduledDate:scheduled},()=>{const a=S.activities.find(x=>x.id===i);if(!a)return;S.activityHistory.unshift({id:id('TMPAH'),activityId:i,scheduledDate:scheduled,status:'SKIPPED',completedAt:'',userId:S.user.id});if(a.repeatType!=='NONE')a.nextDate=nextActivityDateLocal(a,scheduled);else a.status='SKIPPED'})}
+function openReschedule(i,scheduled){const a=S.activities.find(x=>x.id===i);modal('Jadwal Ulang',`<div class="field"><label>Tanggal baru</label><input id="resDate" type="date" value="${scheduled||todayISO()}"></div><div class="field"><label>Jam</label><input id="resTime" type="time" value="${a?.time||''}"></div><div class="pillbar"><button class="pill" onclick="document.getElementById('resDate').value='${(()=>{const d=new Date();d.setDate(d.getDate()+1);return isoDateFrom(d)})()}'">Besok</button><button class="pill" onclick="document.getElementById('resDate').value='${(()=>{const d=new Date();d.setDate(d.getDate()+2);return isoDateFrom(d)})()}'">Lusa</button></div><button class="btn" style="margin-top:12px" onclick="rescheduleActivity('${i}')">Simpan Jadwal</button>`)}
+function rescheduleActivity(i){const d=formVal('resDate'),t=formVal('resTime');if(!d)return toast('Pilih tanggal baru.',true);optimistic('activity.reschedule',{id:i,date:d,time:t},()=>{const a=S.activities.find(x=>x.id===i);if(a){a.nextDate=d;if(a.repeatType==='NONE')a.date=d;a.time=t;a.status='OPEN'}})}
 
 function openShoppingModal(){modal('Tambah Belanja',`<div class="field"><label>Item</label><input id="mShopItem"></div><div class="field"><label>Jumlah/catatan</label><input id="mShopQty" placeholder="2 pcs / 1 kg"></div><button class="btn" onclick="saveShopping()">Tambah</button>`)}
 function saveShopping(){const p={item:formVal('mShopItem'),qty:formVal('mShopQty')};optimistic('shopping.save',p,()=>{const tid=id('TMPSHP');S.shopping.unshift({id:tid,item:p.item,qty:p.qty,status:'OPEN',addedBy:S.user.id});return{tempId:tid}})}
@@ -747,12 +818,34 @@ function openUserModal(i=''){if(S.user.role!=='OWNER'){toast('Hanya owner yang d
 <div class="field"><label>Nama</label><input id="mUserName" value="${esc(u.name||'')}"></div><div class="field"><label>Email</label><input id="mUserEmail" type="email" value="${esc(u.email||'')}"></div><div class="field"><label>Role</label><select id="mUserRole"><option value="PARTNER" ${u.role!=='OWNER'?'selected':''}>PARTNER</option><option value="OWNER" ${u.role==='OWNER'?'selected':''}>OWNER</option></select></div><div class="field"><label>${i?'Password baru (kosong = tetap)':'Password sementara'}</label><input id="mUserPass" type="password"></div><button class="btn" onclick="saveUser('${i}')">Simpan User</button>`)}
 function saveUser(i){const p={id:i,name:formVal('mUserName'),email:formVal('mUserEmail'),role:formVal('mUserRole'),password:formVal('mUserPass')};if(!i&&p.password.length<10)return toast('Password user baru minimal 10 karakter dan mengandung huruf & angka.',true);optimistic('user.save',p,()=>{const tid=i||id('TMPUSR');upsert(S.users,{id:tid,name:p.name,email:p.email,role:p.role},i||tid);return{tempId:i?'':tid}})}
 
-function saveSystemSettings(){const p={aiProvider:formVal('setAiProvider'),aiModel:formVal('setAiModel'),aiKey:formVal('setAiKey'),theme:formVal('setTheme')};S.settings={...S.settings,aiProvider:p.aiProvider,aiModel:p.aiModel,theme:p.theme};applyTheme(p.theme);document.getElementById('setAiKey').value='';persistSnapshot();renderAll();api('settings.save',p).then(()=>{toast('Pengaturan disimpan');scheduleSync(300)}).catch(e=>toast(e.message,true))}
+function saveSystemSettings(){const p={aiProvider:formVal('setAiProvider'),aiModel:formVal('setAiModel'),aiKey:formVal('setAiKey'),receiptGeminiKey:formVal('setReceiptGeminiKey'),receiptVisionModel:formVal('setReceiptVisionModel'),theme:formVal('setTheme'),appUrl:formVal('setAppUrl'),activityEmail:checked('setActivityEmail'),activityEveningHour:Number(formVal('setActivityHour')||19),billH2:checked('setBillH2'),billH1:checked('setBillH1'),billDue:checked('setBillDue'),billOverdue:checked('setBillOverdue'),billFollowup:checked('setBillFollowup'),billMorningHour:Number(formVal('setBillMorningHour')||8),billEveningHour:Number(formVal('setBillEveningHour')||19)};S.settings={...S.settings,...p};applyTheme(p.theme);document.getElementById('setAiKey').value='';document.getElementById('setReceiptGeminiKey').value='';persistSnapshot();renderAll();api('settings.save',p).then(()=>{toast('Pengaturan disimpan');scheduleSync(300);checkSystemStatus(false)}).catch(e=>toast(e.message,true))}
+function testNotification(){api('notification.test',{clientMutationId:id('MUTMAIL')}).then(r=>toast('Email tes dikirim ke '+(r.email||'email user')+' ✓')).catch(e=>toast(e.message,true))}
 function applyTheme(t){document.body.dataset.theme=t||'system'}
 
-function removeItem(type,i){if(!confirm('Yakin menghapus/mengarsipkan data ini?'))return;const map={account:'accounts',transaction:'transactions',budget:'budgets',bill:'bills',goal:'goals',task:'tasks',event:'events',shopping:'shopping',note:'notes'};const k=map[type];if(!k)return;optimistic(type+'.delete',{id:i},()=>{if(type==='transaction'){const old=S.transactions.find(x=>x.id===i);if(old)adjustTx(old,-1)}S[k]=S[k].filter(x=>x.id!==i)})}
+function removeItem(type,i){if(!confirm('Yakin menghapus/mengarsipkan data ini?'))return;const map={account:'accounts',transaction:'transactions',budget:'budgets',bill:'bills',goal:'goals',activity:'activities',shopping:'shopping',note:'notes'};const k=map[type];if(!k)return;optimistic(type+'.delete',{id:i},()=>{if(type==='transaction'){const old=S.transactions.find(x=>x.id===i);if(old)adjustTx(old,-1)}S[k]=S[k].filter(x=>x.id!==i)})}
 
-function sendChat(){const q=formVal('chatInput').trim();if(!q||CHAT_BUSY)return;document.getElementById('chatInput').value='';askPreset(q)}
+function calendarSetMode(mode,b){CAL.mode=mode;document.querySelectorAll('[data-calmode]').forEach(x=>x.classList.remove('active'));b?.classList.add('active');renderCalendar()}
+function calendarMove(delta){if(CAL.mode==='week'){CAL.cursor.setDate(CAL.cursor.getDate()+delta*7)}else{CAL.cursor.setMonth(CAL.cursor.getMonth()+delta)}renderCalendar()}
+function calendarSelect(date){CAL.selected=date;renderCalendar()}
+function calendarDataForDate(date){return{acts:activityOccurrencesForDate(date),bills:S.bills.filter(b=>b.dueDate===date)}}
+function renderCalendar(){const root=document.getElementById('calendarView');if(!root)return;if(CAL.mode==='month')renderCalendarMonth(root);else if(CAL.mode==='week')renderCalendarWeek(root);else renderCalendarAgenda(root);renderCalendarDetail()}
+function renderCalendarMonth(root){const y=CAL.cursor.getFullYear(),m=CAL.cursor.getMonth(),first=new Date(y,m,1,12),last=new Date(y,m+1,0,12),start=new Date(first);start.setDate(start.getDate()-((start.getDay()+6)%7));document.getElementById('calendarTitle').textContent=first.toLocaleDateString('id-ID',{month:'long',year:'numeric'});let cells='<div class="calendar-grid">'+['Sen','Sel','Rab','Kam','Jum','Sab','Min'].map(x=>`<div class="cal-head">${x}</div>`).join('');for(let i=0;i<42;i++){const d=new Date(start);d.setDate(start.getDate()+i);const iso=isoDateFrom(d),data=calendarDataForDate(iso),done=data.acts.length&&data.acts.every(a=>a.occurrenceStatus==='DONE'||a.occurrenceStatus==='SKIPPED');cells+=`<button class="cal-day ${d.getMonth()!==m?'out':''} ${iso===todayISO()?'today':''} ${iso===CAL.selected?'selected':''}" onclick="calendarSelect('${iso}')"><span class="cal-num">${d.getDate()}</span><div class="cal-dots">${data.acts.length?`<span class="cal-dot ${done?'done':''}"></span>`:''}${data.bills.length?'<span class="cal-dot bill"></span>':''}</div></button>`}root.innerHTML=cells+'</div>'}
+function renderCalendarWeek(root){const d=new Date(CAL.cursor),day=(d.getDay()+6)%7;d.setDate(d.getDate()-day);document.getElementById('calendarTitle').textContent='Minggu '+d.toLocaleDateString('id-ID',{day:'numeric',month:'short'});let html='<div class="week-list">';for(let i=0;i<7;i++){const x=new Date(d);x.setDate(d.getDate()+i);const iso=isoDateFrom(x),data=calendarDataForDate(iso);html+=`<div class="daygroup"><h3>${x.toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'short'})}</h3>${data.acts.map(a=>activityItemHtml(a,{edit:false})).join('')||'<div class="small muted">Tidak ada aktivitas</div>'}${data.bills.map(b=>`<div class="item"><span class="duechip ${b.status==='PAID'?'':'today'}">${b.status==='PAID'?'Lunas':'Tagihan'}</span><div class="main"><div class="name">${esc(b.name)}</div><div class="meta">${rupiah(b.amount)}</div></div></div>`).join('')}</div>`}root.innerHTML=html+'</div>'}
+function renderCalendarAgenda(root){document.getElementById('calendarTitle').textContent='Agenda 30 hari';let html='<div class="agenda-list">',d=new Date();for(let i=0;i<30;i++){const x=new Date(d);x.setDate(d.getDate()+i);const iso=isoDateFrom(x),data=calendarDataForDate(iso);if(!data.acts.length&&!data.bills.length)continue;html+=`<div class="daygroup"><h3>${x.toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long'})}</h3>${data.acts.map(a=>activityItemHtml(a,{edit:false})).join('')}${data.bills.map(b=>`<div class="item"><span class="duechip ${b.status==='PAID'?'':'today'}">💳</span><div class="main"><div class="name">${esc(b.name)}</div><div class="meta">${rupiah(b.amount)} · ${b.status==='PAID'?'Lunas':'Belum dibayar'}</div></div></div>`).join('')}</div>`}root.innerHTML=html+'</div>'}
+function renderCalendarDetail(){const e=document.getElementById('calendarDayDetail');if(!e)return;const data=calendarDataForDate(CAL.selected);e.innerHTML=`<div class="sectionhead" style="margin:6px 0"><h2>${fmtDate(CAL.selected)}</h2><button class="btn sm" onclick="openActivityModal('', '${CAL.selected}')">+ Aktivitas</button></div>`+(data.acts.map(a=>activityItemHtml(a)).join('')||'<div class="empty small">Tidak ada aktivitas.</div>')+data.bills.map(b=>`<div class="item"><button class="checkbtn ${b.status==='PAID'?'done':''}" onclick="toggleBill('${b.id}')">${b.status==='PAID'?'✓':'○'}</button><div class="main"><div class="name">${esc(b.name)}</div><div class="meta">${rupiah(b.amount)} · Tagihan</div></div></div>`).join('')}
+function toggleAiFocus(){document.body.classList.toggle('ai-focus');setTimeout(()=>{const ch=document.getElementById('chat');if(ch)ch.scrollTop=ch.scrollHeight},60)}
+function chatAutoResize(el){el.style.height='auto';el.style.height=Math.min(132,Math.max(46,el.scrollHeight))+'px'}
+function searchChatHistory(){const q=prompt('Cari kata dalam riwayat chat:');if(!q)return;const hits=(S.chatHistory||[]).filter(m=>String(m.text||'').toLowerCase().includes(q.toLowerCase()));if(!hits.length)return toast('Tidak ditemukan di riwayat chat.');const ch=document.getElementById('chat');ch.innerHTML='<div class="chat-history-note">Hasil pencarian: '+esc(q)+'</div>'+hits.slice(-80).map(m=>`<div class="bubble ${m.role==='user'?'user':'ai'}">${m.role==='user'?esc(m.text):chatHtml(m.text)}</div>`).join('');ch.scrollTop=ch.scrollHeight}
+function openAiAttachMenu(){modal('Tambah lewat RUMA AI',`<div class="grid" style="margin-top:12px"><button class="btn secondary span6" onclick="closeModal();document.getElementById('receiptCamera').click()">📷 Foto Struk</button><button class="btn secondary span6" onclick="closeModal();document.getElementById('receiptGallery').click()">🖼 Galeri</button><button class="btn secondary span6" onclick="closeModal();openTransactionModal()">💸 Transaksi</button><button class="btn secondary span6" onclick="closeModal();openActivityModal()">📌 Aktivitas</button><button class="btn secondary span6" onclick="closeModal();openBillModal()">💳 Tagihan</button><button class="btn secondary span6" onclick="closeModal();openShoppingModal()">🛒 Belanja</button></div>`)}
+async function handleReceiptInput(input){const file=input.files&&input.files[0];input.value='';if(!file)return;if(!/^image\//.test(file.type))return toast('Pilih file gambar.',true);try{toast('Mengoptimalkan foto…');const c=await compressReceipt(file);RECEIPT_WORK={...c,originalSize:file.size};modal('Preview Struk',`<img class="receipt-preview" src="${c.dataUrl}"><div class="row between" style="margin-top:10px"><div class="small muted">Asli ${formatBytes(file.size)}</div><div class="small"><b>${formatBytes(c.size)}</b> · Optimized ✓</div></div><div class="row" style="margin-top:12px"><button class="btn ghost" onclick="closeModal();document.getElementById('receiptCamera').click()">Foto Ulang</button><button class="btn" onclick="uploadReceiptPreview()">Gunakan</button></div>`)}catch(e){toast('Foto gagal diproses: '+e.message,true)}}
+function compressReceipt(file){return new Promise((resolve,reject)=>{const img=new Image(),url=URL.createObjectURL(file);img.onload=async()=>{try{let w=img.naturalWidth,h=img.naturalHeight,max=1600;if(Math.max(w,h)>max){const s=max/Math.max(w,h);w=Math.round(w*s);h=Math.round(h*s)}const cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d',{alpha:false}).drawImage(img,0,0,w,h);let q=.78,blob=await new Promise(r=>cv.toBlob(r,'image/jpeg',q));while(blob&&blob.size>700000&&q>.5){q-=.08;blob=await new Promise(r=>cv.toBlob(r,'image/jpeg',q))}if(!blob)throw new Error('Browser gagal mengompres foto.');const dataUrl=await blobToDataUrl(blob);resolve({blob,dataUrl,base64:dataUrl.split(',')[1],mimeType:'image/jpeg',size:blob.size,width:w,height:h})}catch(e){reject(e)}finally{URL.revokeObjectURL(url)}};img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('Gambar tidak dapat dibaca.'))};img.src=url})}
+function blobToDataUrl(b){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(b)})}
+function formatBytes(n){if(n<1024)return n+' B';if(n<1048576)return(Math.round(n/1024))+' KB';return(n/1048576).toFixed(1)+' MB'}
+function uploadReceiptPreview(){if(!RECEIPT_WORK)return;closeModal();goPage('ai',document.querySelector('.navbtn[data-page="ai"]'));appendChatMessage('user','📷 Foto struk dikirim untuk dibaca.','normal',true);CHAT_BUSY=true;showChatThinking('Mengunggah dan membaca struk…');api('receipt.upload',{base64:RECEIPT_WORK.base64,mimeType:RECEIPT_WORK.mimeType,scope:'PERSONAL',clientMutationId:id('MUTRCT')}).then(r=>{const existing=S.receipts.find(x=>x.id===r.id);if(!existing)S.receipts.unshift(r);const msg=r.duplicatePrevented?`Struk ini **sudah pernah disimpan**, jadi tidak saya gandakan.\n${r.merchant||'Struk'} · ${r.total?rupiah(r.total):'nominal belum terbaca'}`:`✓ **Struk tersimpan di Drive**\n${r.merchant||'Struk'} · ${r.receiptDate?fmtDate(r.receiptDate):'tanggal belum terbaca'} · ${r.total?rupiah(r.total):'nominal belum terbaca'}${r.visionError?'\n\nTulisan belum terbaca penuh: '+r.visionError:''}`;finishChat(msg,r.visionError?'feedback':'success');persistSnapshot();renderAll();if(!r.transactionId)setTimeout(()=>openReceiptConfirmModal(r),250);RECEIPT_WORK=null;scheduleSync(350)}).catch(e=>{finishChat('Foto belum berhasil disimpan: **'+e.message+'**','feedback');toast(e.message,true);RECEIPT_WORK=null})}
+function openReceiptConfirmModal(r){const accs=S.accounts.filter(a=>a.canEdit||a.scope==='JOINT'||a.ownerId===S.user.id).filter(a=>!a.summaryOnly);modal('Catat Transaksi dari Struk',`<div class="receipt-card"><b>${esc(r.merchant||'Struk')}</b><div class="small muted">${esc(r.fileName||'')} ${r.fileUrl?`· <a href="${esc(r.fileUrl)}" target="_blank">Lihat Drive</a>`:''}</div></div><div class="field"><label>Keterangan</label><input id="rDesc" value="${esc(r.merchant||'Struk')}"></div><div class="row"><div class="field grow"><label>Nominal</label><input id="rAmount" type="number" value="${Number(r.total||0)}"></div><div class="field grow"><label>Tanggal</label><input id="rDate" type="date" value="${r.receiptDate||todayISO()}"></div></div><div class="field"><label>Kategori</label><input id="rCat" value="${esc(r.category||'Belanja')}"></div><div class="field"><label>Rekening</label><select id="rAcc">${accs.map(a=>`<option value="${a.id}">${esc(a.name)} · ${esc(a.scope)}</option>`).join('')}</select></div><div class="field"><label>Scope</label><select id="rScope"><option>PERSONAL</option><option>JOINT</option></select></div><div class="row"><button class="btn ghost" onclick="closeModal()">Simpan struk saja</button><button class="btn" onclick="confirmReceipt('${r.id}')">Catat Pengeluaran</button></div>`)}
+function confirmReceipt(idr){const p={id:idr,description:formVal('rDesc'),amount:Number(formVal('rAmount')),date:formVal('rDate'),category:formVal('rCat'),accountId:formVal('rAcc'),scope:formVal('rScope')};if(!p.accountId||p.amount<=0)return toast('Pilih rekening dan pastikan nominal benar.',true);const backup=cloneState(),tid=id('TMPRCTX'),receipt=S.receipts.find(x=>x.id===idr),item={id:tid,date:p.date,type:'EXPENSE',amount:p.amount,accountId:p.accountId,toAccountId:'',category:p.category,description:p.description,scope:p.scope,canEdit:true,receiptId:idr,receiptUrl:receipt?.fileUrl||''};S.transactions.unshift(item);adjustTx(item,1);if(receipt){receipt.status='LINKED';receipt.transactionId=tid}closeModal();persistSnapshot();renderAll();toast('Transaksi langsung tampil. Menyimpan di belakang…');CONN.pendingWrites++;api('receipt.confirm',{...p,clientMutationId:id('MUTRCF')}).then(r=>{const tx=S.transactions.find(x=>x.id===tid);if(tx)tx.id=r.transactionId||tid;if(receipt)receipt.transactionId=r.transactionId||tid;persistSnapshot();renderAll();appendChatMessage('assistant',`✓ Pengeluaran **${p.description} · ${rupiah(p.amount)}** sudah dicatat dari foto struk.`,'success',true);scheduleSync(250)}).catch(e=>{restoreState(backup);appendChatMessage('assistant','Transaksi dari struk belum tersimpan: **'+e.message+'**','feedback',true)}).finally(()=>{CONN.pendingWrites=Math.max(0,CONN.pendingWrites-1);updateConnectionUI()})}
+
+function sendChat(){const el=document.getElementById('chatInput'),q=String(el?.value||'').trim();if(!q||CHAT_BUSY)return;el.value='';chatAutoResize(el);askPreset(q)}
 function askPreset(q){
   goPage('ai',document.querySelector('.navbtn[data-page="ai"]'));appendChatMessage('user',q,'normal',true);
   const action=parseChatAction(q);if(action){runChatAction(action);return}
@@ -780,7 +873,7 @@ function initPWA(){
 (async function init(){
   initPWA();
   updateConnectionUI();
-  const cachedRaw=localStorage.getItem(SNAP_KEY)||localStorage.getItem('ruma_snapshot_v2_3')||localStorage.getItem('ruma_snapshot_v2_1')||localStorage.getItem('ruma_snapshot');
+  const cachedRaw=localStorage.getItem(SNAP_KEY)||localStorage.getItem('ruma_snapshot_v2_4')||localStorage.getItem('ruma_snapshot_v2_3')||localStorage.getItem('ruma_snapshot_v2_1')||localStorage.getItem('ruma_snapshot');
   if(S.session&&cachedRaw){try{const c=JSON.parse(cachedRaw);Object.assign(S,c.data);showApp();renderAll();CONN.lastSync=Number(c.at||0)}catch(e){}}
   if(S.session){syncAll(true,{silent:true}).catch(()=>{});setTimeout(()=>checkSystemStatus(false),900)}else await checkBootstrap(false);
   window.addEventListener('online',()=>{CONN.online=true;updateConnectionUI();if(S.session)scheduleSync(150)});
