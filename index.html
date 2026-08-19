@@ -248,7 +248,7 @@
             <div class="field"><label>AI Provider</label><select id="setAiProvider"><option value="GEMINI">Gemini</option><option value="GROQ">Groq</option></select></div>
             <div class="field"><label>Model Chat</label><input id="setAiModel"></div>
             <div class="field"><label>API Key provider baru (opsional)</label><input id="setAiKey" type="password" placeholder="Tidak pernah ditampilkan kembali"></div>
-            <div class="field"><label>Model Foto Struk</label><input id="setReceiptModel" placeholder="gemini-3.6-flash"></div>
+            <div class="field"><label>Model Foto Struk</label><select id="setReceiptModel"><option value="gemini-3.5-flash-lite">Cepat · Gemini 3.5 Flash-Lite</option><option value="gemini-3.6-flash">Seimbang · Gemini 3.6 Flash</option><option value="gemini-3.7-flash">Akurat · Gemini 3.7 Flash</option></select><div class="small muted">Mode cepat direkomendasikan untuk OCR struk.</div></div>
             <div class="field"><label>Gemini Vision API Key (opsional)</label><input id="setGeminiVisionKey" type="password" placeholder="Dibutuhkan jika chat memakai Groq"></div>
             <div class="field"><label>Tema</label><select id="setTheme"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></div>
             <button class="btn" onclick="saveSystemSettings()">Simpan Pengaturan</button>
@@ -311,7 +311,7 @@
 <script>
 const C = window.RUMA_CONFIG || {};
 const API_URL = (C.API_URL || '').trim();
-const VERSION = '2.7.0';
+const VERSION = '2.7.1';
 const CACHE_TTL = Number(C.CACHE_TTL_MS || 300000);
 const BG_SYNC_MS = Number(C.BACKGROUND_SYNC_MS || 120000);
 const SNAP_KEY='ruma_snapshot_v2_6';
@@ -331,7 +331,7 @@ const TIMEOUT = Math.max(30000,Number(C.REQUEST_TIMEOUT || 32000));
 let API_INFLIGHT=0;
 const API_STATS={timeouts:0,lastAction:'',lastMs:0};
 function timeoutForAction(action){
-  if(action==='ai.receipt')return Math.max(TIMEOUT,65000);
+  if(action==='ai.receipt')return Math.max(TIMEOUT,80000);
   if(action==='ai.chat')return Math.max(TIMEOUT,55000);
   if(action==='app.snapshot')return Math.max(TIMEOUT,45000);
   if(/\.(save|delete|toggle)$/.test(action)||action==='account.reconcile')return Math.max(TIMEOUT,38000);
@@ -351,50 +351,39 @@ function fmtDate(v){if(!v)return'-';const d=new Date(v+'T00:00:00');return d.toL
 function formVal(id){return document.getElementById(id)?.value ?? ''}
 function checked(id){return !!document.getElementById(id)?.checked}
 
-const BRIDGE={state:'idle',iframe:null,readyPromise:null,pending:new Map(),listener:false};
-function bridgeOriginHint(){try{return new URL(API_URL).origin}catch(e){return''}}
-function ensureBridge(){
-  if(BRIDGE.state==='ready')return Promise.resolve(true);
-  if(BRIDGE.state==='failed')return Promise.resolve(false);
-  if(BRIDGE.readyPromise)return BRIDGE.readyPromise;
-  BRIDGE.readyPromise=new Promise(resolve=>{
-    if(!API_URL){BRIDGE.state='failed';resolve(false);return}
-    BRIDGE.state='loading';
-    if(!BRIDGE.listener){
-      window.addEventListener('message',ev=>{
-        const d=ev.data||{};if(!d||d.rumaBridge!==1)return;
-        if(BRIDGE.iframe&&ev.source!==BRIDGE.iframe.contentWindow)return;
-        if(d.type==='ready'){BRIDGE.state='ready';if(BRIDGE._readyResolve)BRIDGE._readyResolve(true);return}
-        if(d.id&&BRIDGE.pending.has(d.id)){const h=BRIDGE.pending.get(d.id);BRIDGE.pending.delete(d.id);clearTimeout(h.timer);API_INFLIGHT=Math.max(0,API_INFLIGHT-1);API_STATS.lastMs=Math.round(performance.now()-h.started);if(d.result&&d.result.ok){CONN.backend=true;CONN.latency=API_STATS.lastMs;CONN.lastError='';updateConnectionUI();h.resolve(d.result.data)}else{const e=new Error((d.result&&d.result.error)||d.error||'Respons bridge tidak valid');CONN.lastError=e.message;updateConnectionUI();h.reject(e)}}
-      });BRIDGE.listener=true;
-    }
-    let settled=false,t;const done=v=>{if(settled)return;settled=true;clearTimeout(t);resolve(v)};BRIDGE._readyResolve=v=>{done(v)};
-    const iframe=document.createElement('iframe');iframe.style.display='none';iframe.setAttribute('aria-hidden','true');BRIDGE.iframe=iframe;iframe.onerror=()=>{BRIDGE.state='failed';done(false)};iframe.src=API_URL+(API_URL.includes('?')?'&':'?')+'bridge=1&v='+encodeURIComponent(VERSION)+'&_='+Date.now();document.body.appendChild(iframe);
-    t=setTimeout(()=>{if(BRIDGE.state!=='ready'){BRIDGE.state='failed';done(false)}else done(true)},6500);
-  });
-  return BRIDGE.readyPromise;
-}
-function bridgeApi(action,payload={},opts={}){
-  const started=performance.now(),requestTimeout=Number(opts.timeout||timeoutForAction(action));API_INFLIGHT++;API_STATS.lastAction=action;
+const DIRECT_READ_ACTIONS=new Set(['bootstrap.status','app.snapshot','app.revision','system.status','system.diagnose']);
+const TRANSPORT={read:'Direct JSONP',write:'POST job + poll',last:'-'};
+function directJsonpApi(action,payload={},opts={}){
+  if(!API_URL)return Promise.reject(new Error('API_URL belum diisi di config.js'));
+  if(!navigator.onLine){const e=new Error('Perangkat sedang offline. Data lokal tetap tersedia.');e.code='OFFLINE';return Promise.reject(e)}
+  const started=performance.now(),requestTimeout=Number(opts.timeout||timeoutForAction(action));
+  API_INFLIGHT++;API_STATS.lastAction=action;TRANSPORT.last='READ';
   return new Promise((resolve,reject)=>{
-    const rid=id('BRQ');
-    const timer=setTimeout(()=>{if(!BRIDGE.pending.has(rid))return;BRIDGE.pending.delete(rid);API_INFLIGHT=Math.max(0,API_INFLIGHT-1);API_STATS.timeouts++;const e=new Error(action==='ai.receipt'?'Pembacaan struk masih diproses terlalu lama. Coba lagi beberapa saat.':'Backend terlalu lama merespons. Cache lokal tetap dipakai.');e.code='TIMEOUT';CONN.lastError=e.message;updateConnectionUI();reject(e)},requestTimeout);
-    BRIDGE.pending.set(rid,{resolve,reject,timer,started});
-    try{BRIDGE.iframe.contentWindow.postMessage({rumaBridge:1,id:rid,action,payload:payload||{},session:opts.noSession?'':S.session,deviceId:DEVICE_ID},'*')}catch(err){clearTimeout(timer);BRIDGE.pending.delete(rid);API_INFLIGHT=Math.max(0,API_INFLIGHT-1);reject(err)}
+    const cb='__ruma_rpc_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,9);
+    const scr=document.createElement('script');let done=false,timer;
+    const finish=()=>{API_INFLIGHT=Math.max(0,API_INFLIGHT-1);API_STATS.lastMs=Math.round(performance.now()-started);clearTimeout(timer);try{delete window[cb]}catch(e){};scr.remove()};
+    const success=data=>{if(done)return;done=true;finish();CONN.backend=true;CONN.latency=API_STATS.lastMs;CONN.lastError='';updateConnectionUI();resolve(data)};
+    const failure=err=>{if(done)return;done=true;finish();CONN.lastError=String(err.message||err);if(err.code==='TIMEOUT')API_STATS.timeouts++;if(err.code!=='OFFLINE')CONN.backend=false;updateConnectionUI();reject(err)};
+    window[cb]=(res)=>{if(res&&res.ok)success(res.data);else failure(new Error((res&&res.error)||'Respons backend tidak valid'))};
+    scr.onerror=()=>{const e=new Error('Respons Apps Script tidak dapat dibaca. Periksa deployment /exec.');e.code='NETWORK';failure(e)};
+    const q=new URLSearchParams();
+    q.set('rpc','1');q.set('action',action);q.set('payload',JSON.stringify(payload||{}));q.set('session',opts.noSession?'':S.session);q.set('deviceId',DEVICE_ID);q.set('callback',cb);q.set('_',String(Date.now()));
+    scr.src=API_URL+(API_URL.includes('?')?'&':'?')+q.toString();
+    timer=setTimeout(()=>{const e=new Error(action==='app.snapshot'?'Sinkronisasi data terlalu lama. RUMA tetap memakai cache lokal.':'Koneksi Apps Script timeout. Data lokal tetap aman.');e.code='TIMEOUT';failure(e)},requestTimeout);
+    document.head.appendChild(scr);
   });
 }
 async function api(action,payload={},opts={}){
   if(!API_URL)throw new Error('API_URL belum diisi di config.js');
   if(!navigator.onLine){const e=new Error('Perangkat sedang offline. Data lokal tetap tersedia.');e.code='OFFLINE';throw e}
-  const bridgeReady=await ensureBridge();
-  if(bridgeReady)return bridgeApi(action,payload,opts);
+  if(DIRECT_READ_ACTIONS.has(action))return directJsonpApi(action,payload,opts);
   return apiLegacy(action,payload,opts);
 }
 function apiLegacy(action,payload={},opts={}){
   if(!API_URL) return Promise.reject(new Error('API_URL belum diisi di config.js'));
   if(!navigator.onLine){const e=new Error('Perangkat sedang offline. Data lokal tetap tersedia.');e.code='OFFLINE';return Promise.reject(e)}
   const started=performance.now(),requestTimeout=Number(opts.timeout||timeoutForAction(action));
-  API_INFLIGHT++;API_STATS.lastAction=action;
+  API_INFLIGHT++;API_STATS.lastAction=action;TRANSPORT.last='WRITE';
   return new Promise((resolve,reject)=>{
     const rid=id('RID'), frameName='bridge_'+rid;
     const iframe=document.createElement('iframe');iframe.name=frameName;iframe.style.display='none';document.body.appendChild(iframe);
@@ -406,18 +395,18 @@ function apiLegacy(action,payload={},opts={}){
     const cleanup=()=>{done=true;clearTimeout(timer);form.remove();setTimeout(()=>iframe.remove(),600)};
     const success=res=>{cleanup();finish();CONN.backend=true;CONN.latency=API_STATS.lastMs;CONN.lastError='';updateConnectionUI();resolve(res)};
     const failure=err=>{cleanup();finish();CONN.lastError=String(err.message||err);if(err.code==='TIMEOUT')API_STATS.timeouts++;if(err.code!=='OFFLINE')CONN.backend=false;updateConnectionUI();reject(err)};
-    const nextDelay=()=>Math.min(1800,550+tries*180);
+    const nextDelay=()=>Math.min(2200,700+tries*220);
     const poll=()=>{
       if(done)return;tries++;
       const cb='__ruma_'+rid+'_'+tries,scr=document.createElement('script');
       const kill=()=>{try{delete window[cb]}catch(e){};scr.remove()};
       window[cb]=(res)=>{kill();if(done)return;if(res&&res.pending)return setTimeout(poll,nextDelay());if(res&&res.ok)success(res.data);else failure(new Error((res&&res.error)||'Respons backend tidak valid'))};
-      scr.onerror=()=>{kill();if(done)return;if(performance.now()-started>requestTimeout){const e=new Error('Koneksi Apps Script terlalu lama. RUMA akan tetap memakai cache lokal.');e.code='TIMEOUT';failure(e)}else setTimeout(poll,nextDelay())};
+      scr.onerror=()=>{kill();if(done)return;if(performance.now()-started>requestTimeout){const e=new Error('Koneksi Apps Script terlalu lama. Data lokal tetap aman.');e.code='TIMEOUT';failure(e)}else setTimeout(poll,nextDelay())};
       scr.src=API_URL+'?action=poll&rid='+encodeURIComponent(rid)+'&callback='+encodeURIComponent(cb)+'&_='+Date.now();
       document.head.appendChild(scr);
     };
-    timer=setTimeout(()=>{if(!done){const e=new Error(action==='ai.receipt'?'Pembacaan struk melewati batas waktu. Coba lagi; foto yang sama akan memakai cache jika backend sudah selesai.':'Koneksi Apps Script timeout. Data lokal tetap aman.');e.code='TIMEOUT';failure(e)}},requestTimeout);
-    try{form.submit();setTimeout(poll,500)}catch(err){failure(err)}
+    timer=setTimeout(()=>{if(!done){const e=new Error(action==='ai.receipt'?'Pembacaan struk masih diproses. Coba lagi; foto yang sama akan memakai cache bila hasil sudah tersedia.':'Koneksi Apps Script timeout. Data lokal tetap aman.');e.code='TIMEOUT';failure(e)}},requestTimeout);
+    try{form.submit();setTimeout(poll,850)}catch(err){failure(err)}
   });
 }
 async function checkBootstrap(force=false){
@@ -515,7 +504,7 @@ function renderAll(){
   renderTodayActivities();
   renderTodayBills();
   document.getElementById('aiStatus').textContent=S.settings.aiConfigured?(S.settings.aiProvider+' · '+S.settings.aiModel):'Belum dikonfigurasi';
-  document.getElementById('setAiProvider').value=S.settings.aiProvider||'GEMINI';document.getElementById('setAiModel').value=S.settings.aiModel||'gemini-3.6-flash';document.getElementById('setReceiptModel').value=S.settings.receiptModel||'gemini-3.6-flash';document.getElementById('setTheme').value=S.settings.theme||'system';document.getElementById('setEmailEnabled').checked=S.settings.emailEnabled!==false;document.getElementById('setEmailBill').checked=S.settings.emailBill!==false;document.getElementById('setEmailTask').checked=S.settings.emailTask!==false;document.getElementById('setEmailEvent').checked=S.settings.emailEvent!==false;document.getElementById('setEmailHour').value=Number(S.settings.emailHour??7);applyTheme(S.settings.theme||'system');
+  document.getElementById('setAiProvider').value=S.settings.aiProvider||'GEMINI';document.getElementById('setAiModel').value=S.settings.aiModel||'gemini-3.6-flash';const rm=document.getElementById('setReceiptModel'),rv=S.settings.receiptModel||'gemini-3.5-flash-lite';if(rm){rm.value=[...rm.options].some(o=>o.value===rv)?rv:'gemini-3.5-flash-lite';}document.getElementById('setTheme').value=S.settings.theme||'system';document.getElementById('setEmailEnabled').checked=S.settings.emailEnabled!==false;document.getElementById('setEmailBill').checked=S.settings.emailBill!==false;document.getElementById('setEmailTask').checked=S.settings.emailTask!==false;document.getElementById('setEmailEvent').checked=S.settings.emailEvent!==false;document.getElementById('setEmailHour').value=Number(S.settings.emailHour??7);applyTheme(S.settings.theme||'system');
   document.getElementById('dbInfo').textContent=(S.settings.databaseName||'RUMA Database')+' · '+(S.settings.spreadsheetId||'');updateConnectionUI();
   renderAccounts();renderTransactions();renderBudgets();renderBills();renderGoals();renderTasks();renderEvents();renderActivities();renderCalendar();renderShopping();renderNotes();renderUsers();if(!CHAT_BUSY)renderChatHistory();
 }
@@ -683,7 +672,7 @@ function updateConnectionUI(){
   const cacheRaw=localStorage.getItem(SNAP_KEY),cache=(()=>{try{return JSON.parse(cacheRaw||'{}')}catch(e){return{}}})();
   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};
   set('stInternet',CONN.online?'Online':'Offline');
-  set('stBackend',CONN.backend===true?'Terhubung'+(CONN.latency?' · '+CONN.latency+' ms':'')+' · '+(BRIDGE.state==='ready'?'Direct Bridge':'Fallback')+(API_STATS.timeouts?' · timeout '+API_STATS.timeouts:''):CONN.backend===false?'Tidak terhubung'+(CONN.lastError?' · '+CONN.lastError:''):'Belum diperiksa');
+  set('stBackend',CONN.backend===true?'Terhubung'+(CONN.latency?' · '+CONN.latency+' ms':'')+' · '+(TRANSPORT.last==='WRITE'?'POST background':'Direct JSONP')+(API_STATS.timeouts?' · timeout '+API_STATS.timeouts:''):CONN.backend===false?'Terputus sementara'+(CONN.lastError?' · '+CONN.lastError:''):'Belum diperiksa');
   set('stDatabase',(S.settings.databaseName||'-')+(S.settings.spreadsheetId?' · '+S.settings.spreadsheetId.slice(0,12)+'…':''));
   set('stSession',S.session?'Aktif · tetap login sampai logout'+(CONN.activeSessions?' · '+CONN.activeSessions+' perangkat':''):'Tidak aktif');
   set('stCache',cache.at?((Date.now()-cache.at<=CACHE_TTL?'Fresh':'Stale')+' · '+Math.max(0,Math.round((Date.now()-cache.at)/1000))+' dtk · rev '+(S.revision||'-')):'Belum ada snapshot');
@@ -699,8 +688,18 @@ function updateConnectionUI(){
 }
 async function checkSystemStatus(showToast=false){
   if(!S.session)return checkBootstrap(showToast);if(CONN.checking)return;if(!showToast&&API_INFLIGHT>0){setTimeout(()=>checkSystemStatus(false),1800);return}CONN.checking=true;updateConnectionUI();
-  try{const t=performance.now(),r=await api('system.status',{});CONN.backend=true;CONN.latency=Math.round(performance.now()-t);if(r){CONN.activeSessions=Number(r.activeSessions||0);S.settings={...S.settings,version:r.version,databaseName:r.databaseName,spreadsheetId:r.spreadsheetId,aiProvider:r.aiProvider,aiModel:r.aiModel,aiConfigured:r.aiConfigured,receiptConfigured:!!r.receiptConfigured,emailEnabled:r.emailEnabled!==false,emailHour:Number(r.emailHour||7),notificationTrigger:!!r.notificationTrigger,mailQuota:Number(r.mailQuota||0),legacyGhostBills:Number(r.legacyGhostBills||0)};}updateConnectionUI();if(showToast)toast((r&&r.version!==VERSION)?('Backend masih v'+r.version+'. Deploy backend.gs v'+VERSION+' sebagai New version.'):'Semua koneksi utama terdeteksi ✓',!!(r&&r.version!==VERSION))}
-  catch(e){CONN.backend=false;CONN.lastError=e.message;updateConnectionUI();if(showToast)toast(e.message,true)}finally{CONN.checking=false}
+  try{
+    const t=performance.now(),r=await api('system.status',{});
+    CONN.backend=true;CONN.latency=Math.round(performance.now()-t);
+    if(r){CONN.activeSessions=Number(r.activeSessions||0);S.settings={...S.settings,version:r.version,databaseName:r.databaseName,spreadsheetId:r.spreadsheetId,aiProvider:r.aiProvider,aiModel:r.aiModel,aiConfigured:r.aiConfigured,receiptConfigured:!!r.receiptConfigured,emailEnabled:r.emailEnabled!==false,emailHour:Number(r.emailHour||7),notificationTrigger:!!r.notificationTrigger,mailQuota:Number(r.mailQuota||0),legacyGhostBills:Number(r.legacyGhostBills||0),transport:r.transport||'Direct JSONP read'};}
+    updateConnectionUI();if(showToast)toast((r&&r.version!==VERSION)?('Backend masih v'+r.version+'. Deploy backend.gs v'+VERSION+' sebagai New version.'):'Semua koneksi utama terdeteksi ✓',!!(r&&r.version!==VERSION));
+  }catch(e){
+    try{
+      const ping=await directJsonpApi('app.revision',{revision:Number(S.revision||0)},{timeout:18000});
+      CONN.backend=true;CONN.lastError='Status detail tertunda, tetapi backend merespons.';if(ping&&ping.version)S.settings={...S.settings,version:ping.version};updateConnectionUI();
+      if(showToast)toast('Backend terhubung. Status detail belum selesai dimuat.');
+    }catch(pingErr){CONN.backend=false;CONN.lastError=e.message;updateConnectionUI();if(showToast)toast(e.message,true)}
+  }finally{CONN.checking=false}
 }
 async function runDiagnostics(){if(!S.session)return;try{const r=await api('system.diagnose',{});const issues=r.issues||[];const score=Number(r.score||0);const st=document.getElementById('stDiagnostics');if(st)st.textContent=score+'/100 · '+(issues.length?issues.length+' catatan':'Sehat');const health=document.getElementById('stDataHealth');if(health)health.textContent=issues.length?issues.map(x=>x.label).slice(0,2).join(' · '):'Bersih';modal('Diagnosa Sistem',`<div class="system-score"><div class="scoreball">${score}</div><div><b>Kesehatan RUMA ${score}/100</b><div class="small muted">${issues.length?issues.length+' hal perlu diperhatikan':'Semua pemeriksaan utama sehat'}</div></div></div><div class="list">${issues.length?issues.map(x=>`<div class="item"><div class="main"><div class="name">${esc(x.label)}</div><div class="meta" style="white-space:normal">${esc(x.detail||'')}</div></div><span class="badge ${x.level==='error'?'warn':'gray'}">${esc(x.level||'info')}</span></div>`).join(''):'<div class="alert ok">Semua pemeriksaan utama sehat. Tidak ada referensi rusak atau schema yang hilang.</div>'}</div>`)}catch(e){toast('Diagnostik gagal: '+e.message,true)}}
 
@@ -1037,11 +1036,11 @@ async function fileToReceiptPayload(file){
     source=await new Promise((resolve,reject)=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=()=>reject(new Error('Format foto tidak dapat dibaca browser.'));i.src=dataUrl});
   }
   const sw=source.width||source.naturalWidth,sh=source.height||source.naturalHeight;
-  let max=960,quality=.60,out='';
+  let max=820,quality=.58,out='';
   for(let pass=0;pass<3;pass++){
     const scale=Math.min(1,max/Math.max(sw,sh)),w=Math.max(1,Math.round(sw*scale)),h=Math.max(1,Math.round(sh*scale)),c=document.createElement('canvas');c.width=w;c.height=h;
     const ctx=c.getContext('2d',{alpha:false});ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.drawImage(source,0,0,w,h);out=c.toDataURL('image/jpeg',quality);
-    if(out.length<760000)break;max=Math.round(max*.82);quality=Math.max(.46,quality-.07);
+    if(out.length<520000)break;max=Math.round(max*.84);quality=Math.max(.44,quality-.06);
   }
   release();
   return{imageBase64:out.split(',')[1],mimeType:'image/jpeg',preview:out,fileName:file.name||'struk.jpg',clientProcessMs:Math.round(performance.now()-started),compressedKB:Math.round((out.length*3/4)/1024)}
