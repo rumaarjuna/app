@@ -261,6 +261,29 @@
             <div class="field"><label>Jam kirim (0–23)</label><input id="setEmailHour" type="number" min="0" max="23" value="7"></div>
             <div class="row wrap"><button class="btn" onclick="saveNotificationSettings()">Simpan Notifikasi</button><button class="btn secondary" onclick="sendTestEmail()">Kirim Email Uji</button><button class="btn ghost" onclick="runNotificationNow()">Jalankan Sekarang</button></div>
           </div>
+          <div class="card span12" id="calendarSettingsCard">
+            <div class="row between wrap"><div><h2 style="margin:0">Google Calendar</h2><div class="small muted">Sinkronisasi berjalan di background agar CRUD RUMA tetap cepat.</div></div><span id="calendarStatusBadge" class="badge gray">Belum aktif</span></div>
+            <div class="grid" style="margin-top:12px">
+              <div class="span6">
+                <div class="switchline"><div><b>Aktifkan integrasi</b><div class="small muted">Gunakan kalender khusus RUMA Household</div></div><input id="setCalendarEnabled" type="checkbox"></div>
+                <div class="field"><label>Nama kalender</label><input id="setCalendarName" value="RUMA Household" maxlength="80"></div>
+                <div class="switchline"><div><b>Agenda</b><div class="small muted">Agenda dengan jam otomatis disinkronkan</div></div><input id="setCalendarEvents" type="checkbox"></div>
+                <div class="switchline"><div><b>Task</b><div class="small muted">Task bertanggal dibuat sebagai all-day event</div></div><input id="setCalendarTasks" type="checkbox"></div>
+                <div class="switchline"><div><b>Tagihan</b><div class="small muted">Tagihan bertanggal dibuat sebagai all-day event</div></div><input id="setCalendarBills" type="checkbox"></div>
+              </div>
+              <div class="span6">
+                <div class="small muted" style="margin-bottom:8px">Reminder Google Calendar</div>
+                <div class="switchline"><div><b>H-1</b><div class="small muted">Popup 1 hari sebelumnya</div></div><input id="setCalendarPopupH1" type="checkbox"></div>
+                <div class="switchline"><div><b>1 jam</b><div class="small muted">Popup 60 menit sebelumnya</div></div><input id="setCalendarPopup60" type="checkbox"></div>
+                <div class="switchline"><div><b>15 menit</b><div class="small muted">Popup tambahan untuk agenda penting</div></div><input id="setCalendarPopup15" type="checkbox"></div>
+                <div class="switchline"><div><b>Email H-1</b><div class="small muted">Opsional. Digest email RUMA tetap berjalan terpisah.</div></div><input id="setCalendarEmailH1" type="checkbox"></div>
+                <div class="switchline"><div><b>Undang pasangan</b><div class="small muted">Untuk data BERSAMA. Google dapat mengirim email invitation.</div></div><input id="setCalendarInvites" type="checkbox"></div>
+              </div>
+            </div>
+            <div class="alert warn" style="margin-top:12px"><b>Catatan notifikasi pasangan</b><div class="small">RUMA membuat kalender melalui akun Google pemilik Apps Script. Untuk alarm paling konsisten di HP pasangan, bagikan kalender <b>RUMA Household</b> ke akun pasangan sekali dari Google Calendar, atau aktifkan “Undang pasangan”. Pengaturan notifikasi tiap akun Google tetap dapat berbeda.</div></div>
+            <div class="row wrap" style="margin-top:12px"><button class="btn" onclick="saveCalendarSettings()">Simpan Calendar</button><button class="btn secondary" onclick="setupGoogleCalendarUI()">Hubungkan / Buat Kalender</button><button class="btn ghost" onclick="testGoogleCalendarUI()">Tes Koneksi</button><button class="btn ghost" onclick="syncGoogleCalendarUI()">Sinkronkan Sekarang</button></div>
+            <div id="calendarSettingsInfo" class="small muted" style="margin-top:10px">Belum diperiksa.</div>
+          </div>
           <div class="card span12">
             <div class="row between wrap"><div><h2 style="margin:0">Status Sistem</h2><div class="small muted">Koneksi, cache, session, database, dan AI.</div></div><button class="btn ghost sm" onclick="checkSystemStatus(true)">Periksa Semua</button></div>
             <div class="statusgrid" style="margin-top:14px">
@@ -272,6 +295,7 @@
               <div class="statusbox"><b>AI</b><div id="stAI" class="statusvalue">-</div></div>
               <div class="statusbox"><b>Foto Struk</b><div id="stReceipt" class="statusvalue">-</div></div>
               <div class="statusbox"><b>Notifikasi Email</b><div id="stEmail" class="statusvalue">-</div></div>
+              <div class="statusbox"><b>Google Calendar</b><div id="stCalendar" class="statusvalue">-</div></div>
               <div class="statusbox"><b>Sinkronisasi</b><div id="stSync" class="statusvalue">-</div></div>
               <div class="statusbox"><b>Versi</b><div id="stVersion" class="statusvalue">-</div></div>
               <div class="statusbox"><b>PWA</b><div id="stPWA" class="statusvalue">Memeriksa...</div></div>
@@ -311,7 +335,7 @@
 <script>
 const C = window.RUMA_CONFIG || {};
 const API_URL = (C.API_URL || '').trim();
-const VERSION = '2.7.1';
+const VERSION = '2.8.0';
 const CACHE_TTL = Number(C.CACHE_TTL_MS || 300000);
 const BG_SYNC_MS = Number(C.BACKGROUND_SYNC_MS || 120000);
 const SNAP_KEY='ruma_snapshot_v2_6';
@@ -334,6 +358,7 @@ function timeoutForAction(action){
   if(action==='ai.receipt')return Math.max(TIMEOUT,80000);
   if(action==='ai.chat')return Math.max(TIMEOUT,55000);
   if(action==='app.snapshot')return Math.max(TIMEOUT,45000);
+  if(action.startsWith('calendar.'))return Math.max(TIMEOUT,65000);
   if(/\.(save|delete|toggle)$/.test(action)||action==='account.reconcile')return Math.max(TIMEOUT,38000);
   return TIMEOUT;
 }
@@ -351,7 +376,7 @@ function fmtDate(v){if(!v)return'-';const d=new Date(v+'T00:00:00');return d.toL
 function formVal(id){return document.getElementById(id)?.value ?? ''}
 function checked(id){return !!document.getElementById(id)?.checked}
 
-const DIRECT_READ_ACTIONS=new Set(['bootstrap.status','app.snapshot','app.revision','system.status','system.diagnose']);
+const DIRECT_READ_ACTIONS=new Set(['bootstrap.status','app.snapshot','app.revision','system.status','system.diagnose','calendar.status']);
 const TRANSPORT={read:'Direct JSONP',write:'POST job + poll',last:'-'};
 function directJsonpApi(action,payload={},opts={}){
   if(!API_URL)return Promise.reject(new Error('API_URL belum diisi di config.js'));
@@ -504,7 +529,7 @@ function renderAll(){
   renderTodayActivities();
   renderTodayBills();
   document.getElementById('aiStatus').textContent=S.settings.aiConfigured?(S.settings.aiProvider+' · '+S.settings.aiModel):'Belum dikonfigurasi';
-  document.getElementById('setAiProvider').value=S.settings.aiProvider||'GEMINI';document.getElementById('setAiModel').value=S.settings.aiModel||'gemini-3.6-flash';const rm=document.getElementById('setReceiptModel'),rv=S.settings.receiptModel||'gemini-3.5-flash-lite';if(rm){rm.value=[...rm.options].some(o=>o.value===rv)?rv:'gemini-3.5-flash-lite';}document.getElementById('setTheme').value=S.settings.theme||'system';document.getElementById('setEmailEnabled').checked=S.settings.emailEnabled!==false;document.getElementById('setEmailBill').checked=S.settings.emailBill!==false;document.getElementById('setEmailTask').checked=S.settings.emailTask!==false;document.getElementById('setEmailEvent').checked=S.settings.emailEvent!==false;document.getElementById('setEmailHour').value=Number(S.settings.emailHour??7);applyTheme(S.settings.theme||'system');
+  document.getElementById('setAiProvider').value=S.settings.aiProvider||'GEMINI';document.getElementById('setAiModel').value=S.settings.aiModel||'gemini-3.6-flash';const rm=document.getElementById('setReceiptModel'),rv=S.settings.receiptModel||'gemini-3.5-flash-lite';if(rm){rm.value=[...rm.options].some(o=>o.value===rv)?rv:'gemini-3.5-flash-lite';}document.getElementById('setTheme').value=S.settings.theme||'system';document.getElementById('setEmailEnabled').checked=S.settings.emailEnabled!==false;document.getElementById('setEmailBill').checked=S.settings.emailBill!==false;document.getElementById('setEmailTask').checked=S.settings.emailTask!==false;document.getElementById('setEmailEvent').checked=S.settings.emailEvent!==false;document.getElementById('setEmailHour').value=Number(S.settings.emailHour??7);fillCalendarSettings();applyTheme(S.settings.theme||'system');
   document.getElementById('dbInfo').textContent=(S.settings.databaseName||'RUMA Database')+' · '+(S.settings.spreadsheetId||'');updateConnectionUI();
   renderAccounts();renderTransactions();renderBudgets();renderBills();renderGoals();renderTasks();renderEvents();renderActivities();renderCalendar();renderShopping();renderNotes();renderUsers();if(!CHAT_BUSY)renderChatHistory();
 }
@@ -679,6 +704,7 @@ function updateConnectionUI(){
   set('stAI',S.settings.aiConfigured?(S.settings.aiProvider+' · '+S.settings.aiModel):'Belum dikonfigurasi');
   set('stReceipt',S.settings.receiptConfigured?'Aktif · Gemini Vision':'Belum aktif · butuh Gemini API Key');
   set('stEmail',S.settings.emailEnabled===false?'Nonaktif':((S.settings.notificationTrigger===false?'Trigger belum aktif':'Aktif')+' · jam '+String(S.settings.emailHour??7).padStart(2,'0')+'.00'+(S.settings.mailQuota!==undefined?' · kuota '+S.settings.mailQuota:'')));
+  const calOn=!!S.settings.calendarEnabled,calConnected=!!S.settings.calendarConnected;set('stCalendar',!calOn?'Nonaktif':(calConnected?'Terhubung · '+(S.settings.calendarName||'RUMA Household')+(S.settings.calendarPending?' · '+S.settings.calendarPending+' antrean':''):'Perlu setup'+(S.settings.calendarLastError?' · '+S.settings.calendarLastError:'')));
   set('stSync',(CONN.pendingWrites?CONN.pendingWrites+' perubahan sedang disimpan · ':'')+(CONN.lastSync?new Date(CONN.lastSync).toLocaleTimeString('id-ID'):'Belum sinkron'));
   set('stVersion','App '+VERSION+' · Backend '+(S.settings.version||'-')+(versionMismatch?' · ⚠ versi berbeda':''));
   const pwaText=!C.PWA_ENABLED?'Dinonaktifkan di config':!PWA_STATE.supported?'Tidak didukung browser':PWA_STATE.installed?'Terpasang · standalone':PWA_STATE.controlled?'Aktif · service worker mengontrol':PWA_STATE.registered?'Terdaftar · siap offline':PWA_STATE.error?'Error · '+PWA_STATE.error:'Menunggu registrasi';
@@ -691,7 +717,7 @@ async function checkSystemStatus(showToast=false){
   try{
     const t=performance.now(),r=await api('system.status',{});
     CONN.backend=true;CONN.latency=Math.round(performance.now()-t);
-    if(r){CONN.activeSessions=Number(r.activeSessions||0);S.settings={...S.settings,version:r.version,databaseName:r.databaseName,spreadsheetId:r.spreadsheetId,aiProvider:r.aiProvider,aiModel:r.aiModel,aiConfigured:r.aiConfigured,receiptConfigured:!!r.receiptConfigured,emailEnabled:r.emailEnabled!==false,emailHour:Number(r.emailHour||7),notificationTrigger:!!r.notificationTrigger,mailQuota:Number(r.mailQuota||0),legacyGhostBills:Number(r.legacyGhostBills||0),transport:r.transport||'Direct JSONP read'};}
+    if(r){CONN.activeSessions=Number(r.activeSessions||0);const c=r.calendar||{};S.settings={...S.settings,version:r.version,databaseName:r.databaseName,spreadsheetId:r.spreadsheetId,aiProvider:r.aiProvider,aiModel:r.aiModel,aiConfigured:r.aiConfigured,receiptConfigured:!!r.receiptConfigured,emailEnabled:r.emailEnabled!==false,emailHour:Number(r.emailHour||7),notificationTrigger:!!r.notificationTrigger,mailQuota:Number(r.mailQuota||0),legacyGhostBills:Number(r.legacyGhostBills||0),transport:r.transport||'Direct JSONP read',calendarEnabled:!!c.enabled,calendarConnected:!!c.connected,calendarId:c.id||'',calendarName:c.name||'RUMA Household',calendarTrigger:!!c.trigger,calendarSyncEvents:c.syncEvents!==false,calendarSyncTasks:!!c.syncTasks,calendarSyncBills:c.syncBills!==false,calendarPopupH1:c.popupH1!==false,calendarPopup60:c.popup60!==false,calendarPopup15:!!c.popup15,calendarEmailH1:!!c.emailH1,calendarSendInvites:!!c.sendInvites,calendarLastSync:c.lastSync||'',calendarLastError:c.lastError||'',calendarPending:Number(c.pending||0)};fillCalendarSettings();}
     updateConnectionUI();if(showToast)toast((r&&r.version!==VERSION)?('Backend masih v'+r.version+'. Deploy backend.gs v'+VERSION+' sebagai New version.'):'Semua koneksi utama terdeteksi ✓',!!(r&&r.version!==VERSION));
   }catch(e){
     try{
@@ -1017,6 +1043,30 @@ function saveUser(i){const p={id:i,name:formVal('mUserName'),email:formVal('mUse
 
 function saveSystemSettings(){const p={aiProvider:formVal('setAiProvider'),aiModel:formVal('setAiModel'),aiKey:formVal('setAiKey'),receiptModel:formVal('setReceiptModel'),geminiVisionKey:formVal('setGeminiVisionKey'),theme:formVal('setTheme')};S.settings={...S.settings,aiProvider:p.aiProvider,aiModel:p.aiModel,receiptModel:p.receiptModel,theme:p.theme};applyTheme(p.theme);document.getElementById('setAiKey').value='';document.getElementById('setGeminiVisionKey').value='';persistSnapshot();renderAll();api('settings.save',p).then(r=>{if(r&&r.receiptConfigured)S.settings.receiptConfigured=true;updateConnectionUI();toast('Pengaturan disimpan');scheduleSync(300)}).catch(e=>toast(e.message,true))}
 function saveNotificationSettings(){const p={enabled:checked('setEmailEnabled'),bill:checked('setEmailBill'),task:checked('setEmailTask'),event:checked('setEmailEvent'),hour:Number(formVal('setEmailHour')||7)};S.settings={...S.settings,emailEnabled:p.enabled,emailBill:p.bill,emailTask:p.task,emailEvent:p.event,emailHour:p.hour};persistSnapshot();updateConnectionUI();api('notifications.save',p).then(()=>{toast('Notifikasi email disimpan ✓');setTimeout(()=>checkSystemStatus(false),250)}).catch(e=>toast(e.message,true))}
+
+function fillCalendarSettings(){
+  const by=id=>document.getElementById(id);if(!by('setCalendarEnabled'))return;
+  by('setCalendarEnabled').checked=!!S.settings.calendarEnabled;by('setCalendarName').value=S.settings.calendarName||'RUMA Household';by('setCalendarEvents').checked=S.settings.calendarSyncEvents!==false;by('setCalendarTasks').checked=!!S.settings.calendarSyncTasks;by('setCalendarBills').checked=S.settings.calendarSyncBills!==false;by('setCalendarPopupH1').checked=S.settings.calendarPopupH1!==false;by('setCalendarPopup60').checked=S.settings.calendarPopup60!==false;by('setCalendarPopup15').checked=!!S.settings.calendarPopup15;by('setCalendarEmailH1').checked=!!S.settings.calendarEmailH1;by('setCalendarInvites').checked=!!S.settings.calendarSendInvites;
+  const badge=by('calendarStatusBadge'),info=by('calendarSettingsInfo');if(badge){badge.className='badge '+(S.settings.calendarEnabled?(S.settings.calendarConnected?'ok':'warn'):'gray');badge.textContent=!S.settings.calendarEnabled?'Nonaktif':S.settings.calendarConnected?'Terhubung':'Perlu setup'}
+  if(info){const bits=[];if(S.settings.calendarId)bits.push((S.settings.calendarName||'RUMA Household')+' · '+S.settings.calendarId.slice(0,18)+'…');if(S.settings.calendarTrigger)bits.push('sync background 5 menit');if(S.settings.calendarPending)bits.push(S.settings.calendarPending+' menunggu sinkron');if(S.settings.calendarLastSync)bits.push('terakhir '+new Date(S.settings.calendarLastSync).toLocaleString('id-ID'));if(S.settings.calendarLastError)bits.push('⚠ '+S.settings.calendarLastError);info.textContent=bits.join(' · ')||'Belum terhubung ke Google Calendar.'}
+  const owner=S.user&&S.user.role==='OWNER';['setCalendarEnabled','setCalendarName','setCalendarEvents','setCalendarTasks','setCalendarBills','setCalendarPopupH1','setCalendarPopup60','setCalendarPopup15','setCalendarEmailH1','setCalendarInvites'].forEach(id=>{const e=by(id);if(e)e.disabled=!owner});
+}
+function applyCalendarResponse(r){if(!r)return;S.settings={...S.settings,calendarEnabled:!!r.enabled,calendarConnected:!!r.connected,calendarId:r.id||S.settings.calendarId||'',calendarName:r.name||S.settings.calendarName||'RUMA Household',calendarTrigger:!!r.trigger,calendarSyncEvents:r.syncEvents!==false,calendarSyncTasks:!!r.syncTasks,calendarSyncBills:r.syncBills!==false,calendarPopupH1:r.popupH1!==false,calendarPopup60:r.popup60!==false,calendarPopup15:!!r.popup15,calendarEmailH1:!!r.emailH1,calendarSendInvites:!!r.sendInvites,calendarLastSync:r.lastSync||'',calendarLastError:r.lastError||'',calendarPending:Number(r.pending||0)};persistSnapshot();fillCalendarSettings();updateConnectionUI()}
+async function saveCalendarSettings(){
+  if(!S.user||S.user.role!=='OWNER')return toast('Hanya owner yang dapat mengubah Google Calendar.',true);
+  const p={enabled:checked('setCalendarEnabled'),name:formVal('setCalendarName')||'RUMA Household',events:checked('setCalendarEvents'),tasks:checked('setCalendarTasks'),bills:checked('setCalendarBills'),popupH1:checked('setCalendarPopupH1'),popup60:checked('setCalendarPopup60'),popup15:checked('setCalendarPopup15'),emailH1:checked('setCalendarEmailH1'),sendInvites:checked('setCalendarInvites'),clientMutationId:id('MUTCAL')};
+  try{const r=await api('calendar.saveSettings',p,{timeout:65000});applyCalendarResponse(r);toast(p.enabled?'Google Calendar disimpan ✓':'Google Calendar dinonaktifkan');scheduleSync(600)}catch(e){toast('Calendar belum tersimpan: '+e.message,true)}
+}
+async function setupGoogleCalendarUI(){
+  if(!S.user||S.user.role!=='OWNER')return toast('Hanya owner yang dapat menghubungkan Google Calendar.',true);
+  toast('Menghubungkan Google Calendar…');try{const r=await api('calendar.setup',{clientMutationId:id('MUTCALSET')},{timeout:70000});applyCalendarResponse(r);toast('Google Calendar terhubung ✓');setTimeout(()=>checkSystemStatus(false),500)}catch(e){toast('Setup Calendar gagal: '+e.message+'. Jika Google meminta izin baru, jalankan setupGoogleCalendar() sekali dari editor Apps Script lalu deploy New version.',true)}
+}
+async function testGoogleCalendarUI(){try{const r=await api('calendar.test',{clientMutationId:id('MUTCALTEST')},{timeout:65000});toast('Tes Google Calendar berhasil · '+(r.calendarName||'RUMA Household')+' ✓')}catch(e){toast(e.message,true)}}
+async function syncGoogleCalendarUI(){
+  if(!S.settings.calendarEnabled)return toast('Aktifkan Google Calendar dulu.',true);toast('Sinkronisasi Calendar berjalan di background…');
+  try{const r=await api('calendar.sync',{clientMutationId:id('MUTCALSYNC')},{timeout:90000});S.settings.calendarLastSync=r.lastSync||S.settings.calendarLastSync;S.settings.calendarPending=Number(r.pending||0);S.settings.calendarLastError=r.errors?(r.errors+' item gagal disinkronkan'):'';persistSnapshot();fillCalendarSettings();updateConnectionUI();toast('Calendar: '+Number(r.processed||0)+' diproses · '+Number(r.errors||0)+' gagal')}catch(e){toast('Sinkronisasi Calendar belum selesai: '+e.message,true)}
+}
+
 function sendTestEmail(){api('system.emailTest',{}).then(r=>toast('Email uji dikirim ke '+r.to+' ✓')).catch(e=>toast(e.message,true))}
 function runNotificationNow(){api('system.notificationRun',{}).then(r=>toast('Reminder diproses · '+Number(r.sent||0)+' email terkirim')).catch(e=>toast(e.message,true))}
 function applyTheme(t){document.body.dataset.theme=t||'system'}
