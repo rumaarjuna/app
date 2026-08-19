@@ -277,10 +277,11 @@
                 <div class="switchline"><div><b>1 jam</b><div class="small muted">Popup 60 menit sebelumnya</div></div><input id="setCalendarPopup60" type="checkbox"></div>
                 <div class="switchline"><div><b>15 menit</b><div class="small muted">Popup tambahan untuk agenda penting</div></div><input id="setCalendarPopup15" type="checkbox"></div>
                 <div class="switchline"><div><b>Email H-1</b><div class="small muted">Opsional. Digest email RUMA tetap berjalan terpisah.</div></div><input id="setCalendarEmailH1" type="checkbox"></div>
-                <div class="switchline"><div><b>Undang pasangan</b><div class="small muted">Untuk data BERSAMA. Google dapat mengirim email invitation.</div></div><input id="setCalendarInvites" type="checkbox"></div>
+                <div class="switchline"><div><b>Kaitkan email user</b><div class="small muted">Email yang terdaftar di RUMA menjadi guest sesuai penanggung jawab aktivitas.</div></div><input id="setCalendarLinkUsers" type="checkbox"></div>
+                <div class="switchline"><div><b>Kirim email undangan</b><div class="small muted">Opsional. Hanya dikirim ke user yang terkait aktivitas.</div></div><input id="setCalendarInvites" type="checkbox"></div>
               </div>
             </div>
-            <div class="alert warn" style="margin-top:12px"><b>Catatan notifikasi pasangan</b><div class="small">RUMA membuat kalender melalui akun Google pemilik Apps Script. Untuk alarm paling konsisten di HP pasangan, bagikan kalender <b>RUMA Household</b> ke akun pasangan sekali dari Google Calendar, atau aktifkan “Undang pasangan”. Pengaturan notifikasi tiap akun Google tetap dapat berbeda.</div></div>
+            <div class="alert" style="margin-top:12px"><b>Akun terdaftar & penanggung jawab</b><div class="small">Task dan agenda dapat diarahkan ke <b>Saya, pasangan, atau Bersama</b>. RUMA mengambil email langsung dari User terdaftar dan mengaitkannya ke event Calendar. Email undangan tetap opsional agar tidak menimbulkan spam.</div><div id="calendarLinkedUsers" class="small" style="margin-top:8px"></div></div>
             <div class="row wrap" style="margin-top:12px"><button class="btn" onclick="saveCalendarSettings()">Simpan Calendar</button><button class="btn secondary" onclick="setupGoogleCalendarUI()">Hubungkan / Buat Kalender</button><button class="btn ghost" onclick="testGoogleCalendarUI()">Tes Koneksi</button><button class="btn ghost" onclick="syncGoogleCalendarUI()">Sinkronkan Sekarang</button></div>
             <div id="calendarSettingsInfo" class="small muted" style="margin-top:10px">Belum diperiksa.</div>
           </div>
@@ -335,7 +336,7 @@
 <script>
 const C = window.RUMA_CONFIG || {};
 const API_URL = (C.API_URL || '').trim();
-const VERSION = '2.8.0';
+const VERSION = '2.8.1';
 const CACHE_TTL = Number(C.CACHE_TTL_MS || 300000);
 const BG_SYNC_MS = Number(C.BACKGROUND_SYNC_MS || 120000);
 const SNAP_KEY='ruma_snapshot_v2_6';
@@ -546,7 +547,7 @@ function combinedActivities(){
 function activityRow(a,opts={}){
   const done=a.status==='DONE',isEvent=a.kind==='EVENT',time=isEvent?(String(a.startAt||'').slice(11,16)||'Agenda'):(a.dueDate?fmtDate(a.dueDate):'Fleksibel');
   const toggle=isEvent?`toggleEvent('${a.id}')`:`toggleTask('${a.id}')`,edit=isEvent?`openActivityModal('${a.id}','AGENDA')`:`openActivityModal('${a.id}','TASK')`;
-  const meta=isEvent?`${localDT(a.startAt)}${a.location?' · '+esc(a.location):''}`:`${a.dueDate?fmtDate(a.dueDate):'Tanpa tanggal'} · ${esc(userName(a.assignedTo))}${a.priority?' · '+esc(a.priority):''}`;
+  const who=a.assignedTo==='HOUSEHOLD'?'Bersama':userName(a.assignedTo),meta=isEvent?`${localDT(a.startAt)} · ${esc(who)}${a.location?' · '+esc(a.location):''}`:`${a.dueDate?fmtDate(a.dueDate):'Tanpa tanggal'} · ${esc(who)}${a.priority?' · '+esc(a.priority):''}`;
   return `<div class="item"><button class="checkbtn ${done?'done':''}" onclick="${toggle}">${done?'✓':'○'}</button>${opts.timeline?`<div class="activity-time">${esc(isEvent?(String(a.startAt||'').slice(11,16)||'—'):(a.dueDate===todayISO()?'Hari ini':'Task'))}</div>`:''}<div class="main"><div class="row wrap" style="gap:6px"><span class="activity-kind ${isEvent?'event':'task'}">${isEvent?'Agenda':'Task'}</span><div class="name ${done?'done-text':''}">${esc(a.title)}</div></div><div class="meta">${meta}</div></div>${opts.edit===false?'':`<button class="btn ghost sm" onclick="${edit}">Edit</button>`}</div>`;
 }
 function renderTodayActivities(){
@@ -567,7 +568,7 @@ function renderSmallList(el,data,map){
   const e=document.getElementById(el);if(!data.length){e.innerHTML='<div class="empty small">Belum ada data.</div>';return}
   e.innerHTML=data.map(x=>{const m=map(x);return `<div class="item"><span class="pinkdot"></span><div class="main"><div class="name">${esc(m.name)}</div><div class="meta">${esc(m.meta||'')}</div></div></div>`}).join('');
 }
-function userName(uid){return (S.users.find(u=>u.id===uid)||{}).name||'Bersama'}
+function userName(uid){if(uid==='HOUSEHOLD')return 'Bersama';return (S.users.find(u=>u.id===uid)||{}).name||'Belum ditentukan'}
 function accountName(id){return (S.accounts.find(a=>a.id===id)||{}).name||'-'}
 function accountMonthStats(accountId){const m=todayISO().slice(0,7),tx=S.transactions.filter(t=>String(t.date||'').slice(0,7)===m);let incoming=0,outgoing=0;tx.forEach(t=>{const n=Number(t.amount||0);if(t.type==='INCOME'&&t.accountId===accountId)incoming+=n;if(t.type==='EXPENSE'&&t.accountId===accountId)outgoing+=n;if(t.type==='TRANSFER'){if(t.toAccountId===accountId)incoming+=n;if(t.accountId===accountId)outgoing+=n}});return{incoming,outgoing}}
 function renderAccounts(){
@@ -645,7 +646,8 @@ function openSettings(){goPage('more',document.querySelector('.navbtn[data-page=
 function closeModal(){document.getElementById('modal').classList.add('hidden')}
 function modal(title,html){document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').innerHTML=html;document.getElementById('modal').classList.remove('hidden')}
 function accountOptions(sel=''){return S.accounts.filter(a=>a.canEdit||a.scope==='JOINT'||a.ownerId===S.user.id).map(a=>`<option value="${a.id}" ${a.id===sel?'selected':''}>${esc(a.name)} · ${esc(a.scope)}</option>`).join('')}
-function userOptions(sel=''){return S.users.map(u=>`<option value="${u.id}" ${u.id===sel?'selected':''}>${esc(u.name)}</option>`).join('')}
+function userOptions(sel=''){return S.users.map(u=>`<option value="${u.id}" ${u.id===sel?'selected':''}>${esc(u.name)}${u.email?' · '+esc(u.email):''}</option>`).join('')}
+function activityAssigneeOptions(sel=''){const selected=sel||S.user.id;return `<option value="HOUSEHOLD" ${selected==='HOUSEHOLD'?'selected':''}>Bersama · semua user</option>`+userOptions(selected)}
 
 function cloneState(){return JSON.parse(JSON.stringify({users:S.users,accounts:S.accounts,transactions:S.transactions,budgets:S.budgets,bills:S.bills,goals:S.goals,tasks:S.tasks,events:S.events,shopping:S.shopping,notes:S.notes,summary:S.summary}))}
 function restoreState(b){Object.assign(S,b);persistSnapshot();renderAll()}
@@ -717,7 +719,7 @@ async function checkSystemStatus(showToast=false){
   try{
     const t=performance.now(),r=await api('system.status',{});
     CONN.backend=true;CONN.latency=Math.round(performance.now()-t);
-    if(r){CONN.activeSessions=Number(r.activeSessions||0);const c=r.calendar||{};S.settings={...S.settings,version:r.version,databaseName:r.databaseName,spreadsheetId:r.spreadsheetId,aiProvider:r.aiProvider,aiModel:r.aiModel,aiConfigured:r.aiConfigured,receiptConfigured:!!r.receiptConfigured,emailEnabled:r.emailEnabled!==false,emailHour:Number(r.emailHour||7),notificationTrigger:!!r.notificationTrigger,mailQuota:Number(r.mailQuota||0),legacyGhostBills:Number(r.legacyGhostBills||0),transport:r.transport||'Direct JSONP read',calendarEnabled:!!c.enabled,calendarConnected:!!c.connected,calendarId:c.id||'',calendarName:c.name||'RUMA Household',calendarTrigger:!!c.trigger,calendarSyncEvents:c.syncEvents!==false,calendarSyncTasks:!!c.syncTasks,calendarSyncBills:c.syncBills!==false,calendarPopupH1:c.popupH1!==false,calendarPopup60:c.popup60!==false,calendarPopup15:!!c.popup15,calendarEmailH1:!!c.emailH1,calendarSendInvites:!!c.sendInvites,calendarLastSync:c.lastSync||'',calendarLastError:c.lastError||'',calendarPending:Number(c.pending||0)};fillCalendarSettings();}
+    if(r){CONN.activeSessions=Number(r.activeSessions||0);const c=r.calendar||{};S.settings={...S.settings,version:r.version,databaseName:r.databaseName,spreadsheetId:r.spreadsheetId,aiProvider:r.aiProvider,aiModel:r.aiModel,aiConfigured:r.aiConfigured,receiptConfigured:!!r.receiptConfigured,emailEnabled:r.emailEnabled!==false,emailHour:Number(r.emailHour||7),notificationTrigger:!!r.notificationTrigger,mailQuota:Number(r.mailQuota||0),legacyGhostBills:Number(r.legacyGhostBills||0),transport:r.transport||'Direct JSONP read',calendarEnabled:!!c.enabled,calendarConnected:!!c.connected,calendarId:c.id||'',calendarName:c.name||'RUMA Household',calendarTrigger:!!c.trigger,calendarSyncEvents:c.syncEvents!==false,calendarSyncTasks:!!c.syncTasks,calendarSyncBills:c.syncBills!==false,calendarPopupH1:c.popupH1!==false,calendarPopup60:c.popup60!==false,calendarPopup15:!!c.popup15,calendarEmailH1:!!c.emailH1,calendarLinkUsers:c.linkUsers!==false,calendarSendInvites:!!c.sendInvites,calendarLinkedUsers:c.linkedUsers||[],calendarLastSync:c.lastSync||'',calendarLastError:c.lastError||'',calendarPending:Number(c.pending||0)};fillCalendarSettings();}
     updateConnectionUI();if(showToast)toast((r&&r.version!==VERSION)?('Backend masih v'+r.version+'. Deploy backend.gs v'+VERSION+' sebagai New version.'):'Semua koneksi utama terdeteksi ✓',!!(r&&r.version!==VERSION));
   }catch(e){
     try{
@@ -834,6 +836,13 @@ function parseNaturalDate(text){
   return '';
 }
 function parseNaturalDateTime(text){const d=parseNaturalDate(text);if(!d)return'';const m=String(text||'').toLowerCase().match(/\b(?:jam|pukul|pk)\s*(\d{1,2})(?:[:.]([0-5]\d))?/);if(!m)return d+'T09:00';return d+'T'+String(Math.min(23,Number(m[1]))).padStart(2,'0')+':'+String(Number(m[2]||0)).padStart(2,'0')}
+function resolveCommandAssignee(raw){
+  const text=normText_(raw||'');if(/\bbersama\b/.test(text))return 'HOUSEHOLD';
+  const other=(S.users||[]).find(u=>u.id!==S.user.id);if(/\b(?:pasangan|suami|istri)\b/.test(text)&&other)return other.id;
+  for(const u of (S.users||[])){const nm=normText_(u.name||'');if(nm&&nm.length>=3&&text.includes(nm))return u.id;}
+  return S.user.id;
+}
+function commandAssignmentLabel(id){return id==='HOUSEHOLD'?'Bersama':userName(id)}
 function cleanCommandTitle(q){return String(q||'').replace(/\b(?:tolong|dong|ya|please|catat|simpan|masukkan|masukin|masukkin|tambahkan|tambah|buat|bikin|jadwalkan|agendakan|agenda|jadwal|task|tugas|tagihan|reminder|ingatkan|bayar|membayar|saya|aku|kami|untuk|pada|di|ke daftar belanja|daftar belanja|belanja)\b/gi,' ').replace(/\b(?:hari ini|besok|lusa)\b/gi,' ').replace(/\b(?:tanggal|tgl)\s*\d{1,2}(?:[\s\/-]+\d{1,2})?(?:[\s\/-]+\d{4})?/gi,' ').replace(/\b(?:jam|pukul|pk)\s*\d{1,2}(?:[:.]\d{2})?/gi,' ').replace(/\b(?:rp\s*)?\d[\d.,]*\s*(?:ribu|rb|juta|jt)?\b/gi,' ').replace(/\s+/g,' ').trim().replace(/^[,.:;-]+|[,.:;-]+$/g,'').slice(0,100)}
 function findMentioned(arr,q,field){const l=String(q||'').toLowerCase();const hit=arr.filter(x=>{const n=String(x[field]||'').toLowerCase().trim();return n&&l.includes(n)});return hit.length===1?hit[0]:null}
 function parseChatAction(q){
@@ -865,10 +874,10 @@ function parseChatAction(q){
     const acc=S.accounts.find(a=>l.includes(String(a.name||'').toLowerCase()));return {action:'bill.save',payload:{name,amount,dueDate:due,accountId:acc?acc.id:'',recurring:'NO',scope:acc&&acc.scope==='PERSONAL'?'PERSONAL':'JOINT'},create:'bill',success:`✓ Tagihan **${name}** untuk **${fmtDate(due)}** sudah dicatat${amount?' sebesar **'+rupiah(amount)+'**':''}.`};
   }
   if(/\b(jadwalkan|agendakan|buat agenda|tambah agenda|catat agenda|masukkan agenda|masukin agenda)\b/.test(l)){
-    const start=parseNaturalDateTime(raw);if(!start)return {needs:'Waktu agendanya belum jelas. Contoh: **“jadwalkan dokter besok jam 9”**.'};const title=cleanCommandTitle(raw);if(!title)return {needs:'Judul agendanya apa?'};return {action:'event.save',payload:{title,startAt:start,endAt:'',location:'',scope:'JOINT'},create:'event',success:`✓ Agenda **${title}** dibuat untuk **${localDT(start)}**.`};
+    const start=parseNaturalDateTime(raw);if(!start)return {needs:'Waktu agendanya belum jelas. Contoh: **“jadwalkan dokter besok jam 9”**.'};const title=cleanCommandTitle(raw);if(!title)return {needs:'Judul agendanya apa?'};const assignedTo=resolveCommandAssignee(raw),scope=assignedTo===S.user.id?'PERSONAL':'JOINT';return {action:'event.save',payload:{title,startAt:start,endAt:'',location:'',assignedTo,scope},create:'event',success:`✓ Agenda **${title}** dibuat untuk **${localDT(start)}** · ${commandAssignmentLabel(assignedTo)}.`};
   }
   if(/\b(buat tugas|tambah tugas|catat tugas|masukkan tugas|masukin tugas|ingatkan saya|remind me)\b/.test(l)){
-    const title=cleanCommandTitle(raw);if(!title)return {needs:'Tugasnya apa? Contoh: **“ingatkan saya service motor besok”**.'};const due=parseNaturalDate(raw);return {action:'task.save',payload:{title,dueDate:due,assignedTo:S.user.id,priority:'NORMAL',scope:'JOINT'},create:'task',success:`✓ Task **${title}** dibuat${due?' untuk **'+fmtDate(due)+'**':''}.`};
+    const title=cleanCommandTitle(raw);if(!title)return {needs:'Tugasnya apa? Contoh: **“ingatkan saya service motor besok”**.'};const due=parseNaturalDate(raw),assignedTo=resolveCommandAssignee(raw),scope=assignedTo===S.user.id?'PERSONAL':'JOINT';return {action:'task.save',payload:{title,dueDate:due,assignedTo,priority:'NORMAL',scope},create:'task',success:`✓ Task **${title}** dibuat${due?' untuk **'+fmtDate(due)+'**':''} · ${commandAssignmentLabel(assignedTo)}.`};
   }
   return null;
 }
@@ -1003,30 +1012,31 @@ function openActivityModal(i='',kind='TASK',presetDate=''){
   <div class="field"><label>Jenis</label><select id="mActivityType" ${locked} onchange="updateActivityFields()"><option value="TASK" ${!isEvent?'selected':''}>Task / Tugas</option><option value="AGENDA" ${isEvent?'selected':''}>Agenda / Jadwal</option></select></div>
   <div class="field"><label>Judul</label><input id="mActivityTitle" value="${esc(src.title||'')}" placeholder="Contoh: Bayar pajak / Meeting"></div>
   <div class="field"><label>Tanggal</label><input id="mActivityDate" type="date" value="${date}"></div>
+  <div class="field"><label>Untuk / Penanggung jawab</label><select id="mActivityUser" onchange="syncActivityScope()">${activityAssigneeOptions(src.assignedTo||S.user.id)}</select><div class="small muted">Email user diambil otomatis dari Pengaturan User. Jika Google Calendar aktif, event akan dikaitkan ke email penanggung jawab tanpa perlu mengetik ulang.</div></div>
   <div id="activityAgendaFields">
     <div class="grid"><div class="field span6"><label>Mulai</label><input id="mActivityStart" type="time" value="${startTime}"></div><div class="field span6"><label>Selesai</label><input id="mActivityEnd" type="time" value="${endTime}"></div></div>
     <div class="field"><label>Lokasi</label><input id="mActivityLocation" value="${esc(src.location||'')}" placeholder="Opsional"></div>
   </div>
   <div id="activityTaskFields">
-    <div class="field"><label>Ditugaskan ke</label><select id="mActivityUser">${userOptions(src.assignedTo||S.user.id)}</select></div>
     <div class="grid"><div class="field span6"><label>Prioritas</label><select id="mActivityPri">${['LOW','NORMAL','HIGH'].map(x=>`<option ${src.priority===x?'selected':''}>${x}</option>`).join('')}</select></div><div class="field span6"><label>Berulang</label><select id="mActivityRecurring">${['NO','WEEKLY','MONTHLY'].map(x=>`<option ${String(src.recurring||'NO')===x?'selected':''}>${x}</option>`).join('')}</select></div></div>
   </div>
-  <div class="field"><label>Untuk</label><select id="mActivityScope"><option ${src.scope!=='JOINT'?'selected':''}>PERSONAL</option><option ${src.scope==='JOINT'?'selected':''}>JOINT</option></select></div>
+  <div class="field"><label>Visibilitas</label><select id="mActivityScope"><option ${src.scope!=='JOINT'?'selected':''}>PERSONAL</option><option ${src.scope==='JOINT'?'selected':''}>JOINT</option></select><div id="activityScopeHint" class="small muted"></div></div>
   <div class="row"><button class="btn" onclick="saveActivity('${i}','${kind}')">Simpan Aktivitas</button>${i?`<button class="btn danger" onclick="removeItem('${isEvent?'event':'task'}','${i}')">Hapus</button>`:''}</div>`);
-  updateActivityFields();
+  updateActivityFields();syncActivityScope();
 }
 function updateActivityFields(){const type=formVal('mActivityType')||'TASK';document.getElementById('activityAgendaFields')?.classList.toggle('hidden',type!=='AGENDA');document.getElementById('activityTaskFields')?.classList.toggle('hidden',type!=='TASK')}
+function syncActivityScope(){const assignee=formVal('mActivityUser')||S.user.id,scope=document.getElementById('mActivityScope'),hint=document.getElementById('activityScopeHint'),shared=assignee==='HOUSEHOLD'||assignee!==S.user.id;if(scope&&shared){scope.value='JOINT';scope.disabled=true}else if(scope)scope.disabled=false;if(hint)hint.textContent=shared?'Aktivitas untuk pasangan/Bersama otomatis memakai visibilitas BERSAMA.':'Aktivitas pribadi dapat tetap PERSONAL atau dibagikan sebagai JOINT.'}
 function saveActivity(i='',originalKind='TASK'){
   const type=formVal('mActivityType')||originalKind,title=formVal('mActivityTitle').trim(),date=formVal('mActivityDate');if(!title)return toast('Judul aktivitas wajib diisi.',true);if(!date)return toast('Tanggal aktivitas wajib diisi.',true);
-  if(type==='AGENDA'){const st=formVal('mActivityStart')||'09:00',en=formVal('mActivityEnd');const p={id:i,title,startAt:date+'T'+st,endAt:en?date+'T'+en:'',location:formVal('mActivityLocation'),scope:formVal('mActivityScope')};optimistic('event.save',p,()=>{const old=S.events.find(x=>x.id===i),tid=i||id('TMPEVT');upsert(S.events,{...p,id:tid,status:old?old.status:'OPEN'},i||tid);return{tempId:i?'':tid}});
-  }else{const p={id:i,title,dueDate:date,assignedTo:formVal('mActivityUser')||S.user.id,priority:formVal('mActivityPri')||'NORMAL',recurring:formVal('mActivityRecurring')||'NO',scope:formVal('mActivityScope')};optimistic('task.save',p,()=>{const old=S.tasks.find(x=>x.id===i),tid=i||id('TMPTASK');upsert(S.tasks,{...p,id:tid,status:old?old.status:'OPEN'},i||tid);return{tempId:i?'':tid}});}
+  if(type==='AGENDA'){const st=formVal('mActivityStart')||'09:00',en=formVal('mActivityEnd'),assignedTo=formVal('mActivityUser')||S.user.id,scope=(assignedTo==='HOUSEHOLD'||assignedTo!==S.user.id)?'JOINT':formVal('mActivityScope');const p={id:i,title,startAt:date+'T'+st,endAt:en?date+'T'+en:'',location:formVal('mActivityLocation'),assignedTo,scope};optimistic('event.save',p,()=>{const old=S.events.find(x=>x.id===i),tid=i||id('TMPEVT');upsert(S.events,{...p,id:tid,status:old?old.status:'OPEN'},i||tid);return{tempId:i?'':tid}});
+  }else{const assignedTo=formVal('mActivityUser')||S.user.id,scope=(assignedTo==='HOUSEHOLD'||assignedTo!==S.user.id)?'JOINT':formVal('mActivityScope'),p={id:i,title,dueDate:date,assignedTo,priority:formVal('mActivityPri')||'NORMAL',recurring:formVal('mActivityRecurring')||'NO',scope};optimistic('task.save',p,()=>{const old=S.tasks.find(x=>x.id===i),tid=i||id('TMPTASK');upsert(S.tasks,{...p,id:tid,status:old?old.status:'OPEN'},i||tid);return{tempId:i?'':tid}});}
 }
 function openTaskModal(i=''){openActivityModal(i,'TASK')}
 function saveTask(i){const p={id:i,title:formVal('mTaskTitle'),dueDate:formVal('mTaskDate'),assignedTo:formVal('mTaskUser'),priority:formVal('mTaskPri'),recurring:formVal('mTaskRecurring'),scope:formVal('mTaskScope')};optimistic('task.save',p,()=>{const old=S.tasks.find(x=>x.id===i),tid=i||id('TMPTASK');upsert(S.tasks,{...p,id:tid,status:old?old.status:'OPEN'},i||tid);return{tempId:i?'':tid}})}
 function toggleTask(i){optimistic('task.toggle',{id:i},()=>{const t=S.tasks.find(x=>x.id===i);if(t)t.status=t.status==='DONE'?'OPEN':'DONE'})}
 
 function openEventModal(i=''){openActivityModal(i,'AGENDA')}
-function saveEvent(i){const p={id:i,title:formVal('mEventTitle'),startAt:formVal('mEventStart'),endAt:formVal('mEventEnd'),location:formVal('mEventLoc'),scope:formVal('mEventScope')};optimistic('event.save',p,()=>{const old=S.events.find(x=>x.id===i),tid=i||id('TMPEVT');upsert(S.events,{...p,id:tid,status:old?old.status:'OPEN'},i||tid);return{tempId:i?'':tid}})}
+function saveEvent(i){const p={id:i,title:formVal('mEventTitle'),startAt:formVal('mEventStart'),endAt:formVal('mEventEnd'),location:formVal('mEventLoc'),assignedTo:S.user.id,scope:formVal('mEventScope')};optimistic('event.save',p,()=>{const old=S.events.find(x=>x.id===i),tid=i||id('TMPEVT');upsert(S.events,{...p,id:tid,status:old?old.status:'OPEN'},i||tid);return{tempId:i?'':tid}})}
 function toggleEvent(i){optimistic('event.toggle',{id:i},()=>{const e=S.events.find(x=>x.id===i);if(e)e.status=e.status==='DONE'?'OPEN':'DONE'})}
 
 function openShoppingModal(){modal('Tambah Belanja',`<div class="field"><label>Item</label><input id="mShopItem"></div><div class="field"><label>Jumlah/catatan</label><input id="mShopQty" placeholder="2 pcs / 1 kg"></div><button class="btn" onclick="saveShopping()">Tambah</button>`)}
@@ -1046,15 +1056,15 @@ function saveNotificationSettings(){const p={enabled:checked('setEmailEnabled'),
 
 function fillCalendarSettings(){
   const by=id=>document.getElementById(id);if(!by('setCalendarEnabled'))return;
-  by('setCalendarEnabled').checked=!!S.settings.calendarEnabled;by('setCalendarName').value=S.settings.calendarName||'RUMA Household';by('setCalendarEvents').checked=S.settings.calendarSyncEvents!==false;by('setCalendarTasks').checked=!!S.settings.calendarSyncTasks;by('setCalendarBills').checked=S.settings.calendarSyncBills!==false;by('setCalendarPopupH1').checked=S.settings.calendarPopupH1!==false;by('setCalendarPopup60').checked=S.settings.calendarPopup60!==false;by('setCalendarPopup15').checked=!!S.settings.calendarPopup15;by('setCalendarEmailH1').checked=!!S.settings.calendarEmailH1;by('setCalendarInvites').checked=!!S.settings.calendarSendInvites;
+  by('setCalendarEnabled').checked=!!S.settings.calendarEnabled;by('setCalendarName').value=S.settings.calendarName||'RUMA Household';by('setCalendarEvents').checked=S.settings.calendarSyncEvents!==false;by('setCalendarTasks').checked=!!S.settings.calendarSyncTasks;by('setCalendarBills').checked=S.settings.calendarSyncBills!==false;by('setCalendarPopupH1').checked=S.settings.calendarPopupH1!==false;by('setCalendarPopup60').checked=S.settings.calendarPopup60!==false;by('setCalendarPopup15').checked=!!S.settings.calendarPopup15;by('setCalendarEmailH1').checked=!!S.settings.calendarEmailH1;by('setCalendarLinkUsers').checked=S.settings.calendarLinkUsers!==false;by('setCalendarInvites').checked=!!S.settings.calendarSendInvites;
   const badge=by('calendarStatusBadge'),info=by('calendarSettingsInfo');if(badge){badge.className='badge '+(S.settings.calendarEnabled?(S.settings.calendarConnected?'ok':'warn'):'gray');badge.textContent=!S.settings.calendarEnabled?'Nonaktif':S.settings.calendarConnected?'Terhubung':'Perlu setup'}
-  if(info){const bits=[];if(S.settings.calendarId)bits.push((S.settings.calendarName||'RUMA Household')+' · '+S.settings.calendarId.slice(0,18)+'…');if(S.settings.calendarTrigger)bits.push('sync background 5 menit');if(S.settings.calendarPending)bits.push(S.settings.calendarPending+' menunggu sinkron');if(S.settings.calendarLastSync)bits.push('terakhir '+new Date(S.settings.calendarLastSync).toLocaleString('id-ID'));if(S.settings.calendarLastError)bits.push('⚠ '+S.settings.calendarLastError);info.textContent=bits.join(' · ')||'Belum terhubung ke Google Calendar.'}
+  if(info){const bits=[];if(S.settings.calendarId)bits.push((S.settings.calendarName||'RUMA Household')+' · '+S.settings.calendarId.slice(0,18)+'…');if(S.settings.calendarTrigger)bits.push('sync background 5 menit');if(S.settings.calendarPending)bits.push(S.settings.calendarPending+' menunggu sinkron');if(S.settings.calendarLastSync)bits.push('terakhir '+new Date(S.settings.calendarLastSync).toLocaleString('id-ID'));if(S.settings.calendarLastError)bits.push('⚠ '+S.settings.calendarLastError);info.textContent=bits.join(' · ')||'Belum terhubung ke Google Calendar.'}const links=by('calendarLinkedUsers');if(links){const us=S.settings.calendarLinkedUsers?.length?S.settings.calendarLinkedUsers:S.users;links.innerHTML=us.length?us.map(u=>`<span class="badge gray" style="margin:2px 4px 2px 0">${esc(u.name)} · ${esc(u.email||'email belum diisi')}</span>`).join(''):'Belum ada user dengan email aktif.'}
   const owner=S.user&&S.user.role==='OWNER';['setCalendarEnabled','setCalendarName','setCalendarEvents','setCalendarTasks','setCalendarBills','setCalendarPopupH1','setCalendarPopup60','setCalendarPopup15','setCalendarEmailH1','setCalendarInvites'].forEach(id=>{const e=by(id);if(e)e.disabled=!owner});
 }
-function applyCalendarResponse(r){if(!r)return;S.settings={...S.settings,calendarEnabled:!!r.enabled,calendarConnected:!!r.connected,calendarId:r.id||S.settings.calendarId||'',calendarName:r.name||S.settings.calendarName||'RUMA Household',calendarTrigger:!!r.trigger,calendarSyncEvents:r.syncEvents!==false,calendarSyncTasks:!!r.syncTasks,calendarSyncBills:r.syncBills!==false,calendarPopupH1:r.popupH1!==false,calendarPopup60:r.popup60!==false,calendarPopup15:!!r.popup15,calendarEmailH1:!!r.emailH1,calendarSendInvites:!!r.sendInvites,calendarLastSync:r.lastSync||'',calendarLastError:r.lastError||'',calendarPending:Number(r.pending||0)};persistSnapshot();fillCalendarSettings();updateConnectionUI()}
+function applyCalendarResponse(r){if(!r)return;S.settings={...S.settings,calendarEnabled:!!r.enabled,calendarConnected:!!r.connected,calendarId:r.id||S.settings.calendarId||'',calendarName:r.name||S.settings.calendarName||'RUMA Household',calendarTrigger:!!r.trigger,calendarSyncEvents:r.syncEvents!==false,calendarSyncTasks:!!r.syncTasks,calendarSyncBills:r.syncBills!==false,calendarPopupH1:r.popupH1!==false,calendarPopup60:r.popup60!==false,calendarPopup15:!!r.popup15,calendarEmailH1:!!r.emailH1,calendarLinkUsers:r.linkUsers!==false,calendarSendInvites:!!r.sendInvites,calendarLinkedUsers:r.linkedUsers||S.settings.calendarLinkedUsers||[],calendarLastSync:r.lastSync||'',calendarLastError:r.lastError||'',calendarPending:Number(r.pending||0)};persistSnapshot();fillCalendarSettings();updateConnectionUI()}
 async function saveCalendarSettings(){
   if(!S.user||S.user.role!=='OWNER')return toast('Hanya owner yang dapat mengubah Google Calendar.',true);
-  const p={enabled:checked('setCalendarEnabled'),name:formVal('setCalendarName')||'RUMA Household',events:checked('setCalendarEvents'),tasks:checked('setCalendarTasks'),bills:checked('setCalendarBills'),popupH1:checked('setCalendarPopupH1'),popup60:checked('setCalendarPopup60'),popup15:checked('setCalendarPopup15'),emailH1:checked('setCalendarEmailH1'),sendInvites:checked('setCalendarInvites'),clientMutationId:id('MUTCAL')};
+  const p={enabled:checked('setCalendarEnabled'),name:formVal('setCalendarName')||'RUMA Household',events:checked('setCalendarEvents'),tasks:checked('setCalendarTasks'),bills:checked('setCalendarBills'),popupH1:checked('setCalendarPopupH1'),popup60:checked('setCalendarPopup60'),popup15:checked('setCalendarPopup15'),emailH1:checked('setCalendarEmailH1'),linkUsers:checked('setCalendarLinkUsers'),sendInvites:checked('setCalendarInvites'),clientMutationId:id('MUTCAL')};
   try{const r=await api('calendar.saveSettings',p,{timeout:65000});applyCalendarResponse(r);toast(p.enabled?'Google Calendar disimpan ✓':'Google Calendar dinonaktifkan');scheduleSync(600)}catch(e){toast('Calendar belum tersimpan: '+e.message,true)}
 }
 async function setupGoogleCalendarUI(){
