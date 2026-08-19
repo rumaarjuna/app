@@ -77,13 +77,17 @@
     .statusgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.statusbox{border:1px solid var(--line-2);border-radius:17px;padding:12px;background:#fff}.statusbox b{display:block;font-size:11px;margin-bottom:4px}.statusvalue{font-size:11px;color:var(--muted);word-break:break-word}.system-score{display:flex;align-items:center;gap:11px;padding:12px 13px;border-radius:18px;background:linear-gradient(135deg,#fff1f7,#fff);border:1px solid #f5dce8}.scoreball{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--ink);color:#fff;font-size:12px;font-weight:950}
     .account-card{position:relative;overflow:hidden}.account-card::after{content:"";position:absolute;width:95px;height:95px;border-radius:50%;right:-38px;top:-42px;background:rgba(236,72,153,.07)}.account-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.account-stat{padding:9px;border-radius:13px;background:#fbf8fa}.account-stat b{display:block;font-size:11px}.account-stat span{font-size:10px;color:var(--muted)}
     .saving{opacity:.62}.syncline{font-size:10px;color:var(--muted);margin-top:4px}.savehint{font-size:10px;color:var(--muted);margin-left:auto}.installbtn{display:none}.installbtn.show{display:inline-flex;align-items:center;gap:6px}
+    .chatback{display:none}.chatphoto{width:44px;height:44px;min-width:44px;border-radius:15px}.chatphoto.loading{opacity:.5;pointer-events:none}.receipt-preview{width:100%;max-height:240px;object-fit:contain;border-radius:18px;background:#f6f1f4;border:1px solid var(--line)}
+    body.chat-mode{overflow:hidden}body.chat-mode .top,body.chat-mode .nav,body.chat-mode .fab{display:none!important}body.chat-mode .app{max-width:none;padding:0;min-height:100dvh}body.chat-mode #page-ai{display:flex!important;position:fixed;inset:0;z-index:55;flex-direction:column;background:var(--bg);padding:max(10px,env(safe-area-inset-top)) 14px max(10px,env(safe-area-inset-bottom));animation:none}body.chat-mode #page-ai .sectionhead{margin:0 0 8px;flex:0 0 auto}body.chat-mode #page-ai .chatback{display:grid}body.chat-mode #page-ai .pillbar{flex:0 0 auto;margin-bottom:4px}body.chat-mode #page-ai .ai-shell{flex:1;min-height:0;display:flex;flex-direction:column;padding:9px;border-radius:24px}body.chat-mode #page-ai .chat{flex:1;height:auto;min-height:0;max-height:none}body.chat-mode #page-ai .chatinput{flex:0 0 auto;position:relative;bottom:auto;margin-top:6px}
+    .cal-card{padding:12px}.cal-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}.cal-title{font-size:17px;font-weight:950;letter-spacing:-.02em}.cal-week,.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}.cal-week div{text-align:center;font-size:9px;color:var(--muted);font-weight:900;padding:4px 0}.cal-day{min-height:76px;border:1px solid var(--line-2);background:rgba(255,255,255,.78);border-radius:14px;padding:7px;position:relative;cursor:pointer;transition:.14s ease}.cal-day:active{transform:scale(.97)}.cal-day.out{opacity:.34}.cal-day.today{border-color:#f08ab9;box-shadow:inset 0 0 0 1px #f08ab9}.cal-day.selected{background:var(--pink-soft);border-color:#f08ab9}.cal-num{font-size:11px;font-weight:900}.cal-dots{display:flex;gap:3px;flex-wrap:wrap;margin-top:8px}.cal-dot{width:6px;height:6px;border-radius:50%}.cal-dot.event{background:#ec4899}.cal-dot.task{background:#f59e0b}.cal-dot.bill{background:#ef4444}.cal-count{font-size:8px;color:var(--muted);margin-top:4px}.calendar-legend{display:flex;gap:12px;flex-wrap:wrap;font-size:10px;color:var(--muted);margin:9px 2px 0}.calendar-legend span{display:flex;align-items:center;gap:5px}.calendar-modebar{display:flex;gap:7px;margin-bottom:9px}.calendar-modebar .btn.active{background:var(--ink);color:#fff}
+    .switchline{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line-2)}.switchline:last-child{border-bottom:0}.switchline input[type=checkbox]{width:20px;height:20px;accent-color:var(--pink)}
 
     body[data-theme="dark"]{--ink:#f8eef4;--muted:#bcaeb7;--muted-2:#92848d;--line:#3f323a;--line-2:#352b31;--bg:#171216;--card:rgba(37,28,35,.94);--card-solid:#261d24;--pink-soft:#3a2030;--rose:#2a1d25}
     body[data-theme="dark"]{background:radial-gradient(circle at 10% -10%,rgba(236,72,153,.15),transparent 28rem),#171216}
     body[data-theme="dark"] .top{background:linear-gradient(180deg,rgba(23,18,22,.98),rgba(23,18,22,.80),rgba(23,18,22,0))}
     body[data-theme="dark"] .topin,body[data-theme="dark"] .card,body[data-theme="dark"] .item,body[data-theme="dark"] .statbox,body[data-theme="dark"] .statusbox,body[data-theme="dark"] .iconbtn,body[data-theme="dark"] .connpill,body[data-theme="dark"] .pill,body[data-theme="dark"] .tab,body[data-theme="dark"] .sheet,body[data-theme="dark"] .chatinput,body[data-theme="dark"] .bubble.ai{background:var(--card-solid);color:var(--ink)}
     body[data-theme="dark"] .field input,body[data-theme="dark"] .field select,body[data-theme="dark"] .field textarea{background:#20181e;color:var(--ink)}
-    body[data-theme="dark"] .nav{background:rgba(36,27,33,.94)}body[data-theme="dark"] .navbtn.active{background:#3c2230}
+    body[data-theme="dark"] .nav{background:rgba(36,27,33,.94)}body[data-theme="dark"] .navbtn.active{background:#3c2230}body[data-theme="dark"] .cal-day{background:#20181e;color:var(--ink)}
 
     @media(max-width:760px){
       .app{padding:0 12px calc(112px + env(safe-area-inset-bottom))}.top{padding-top:8px}.topin{border-radius:19px;padding:8px 9px}.brand{width:40px;height:40px;border-radius:13px}.title{font-size:16px}.connpill{padding:7px 8px}.connpill span:last-child{max-width:82px;overflow:hidden;text-overflow:ellipsis}.iconbtn{width:38px;height:38px;border-radius:13px}
@@ -91,7 +95,7 @@
       .money-hero{padding:19px;border-radius:25px}.balance-main{font-size:30px}.balance-mini{padding:10px 11px;border-radius:15px}.statrail{gap:7px}.statbox{padding:11px 10px;border-radius:16px}.statvalue{font-size:14px}.statbox .label{font-size:9px}
       .span4,.span6,.span8{grid-column:span 12}.grid{gap:10px}.priority-grid .span6{grid-column:span 6}.card{padding:15px;border-radius:21px}.sectionhead{margin-top:16px}.sectionhead h2{font-size:18px}
       .statusgrid{grid-template-columns:repeat(2,1fr)}.item{padding:10px}.item .name{font-size:12.5px}.item .meta{font-size:10.5px}.amount{font-size:12px}.duechip{font-size:9px}
-      .chat{height:calc(100dvh - 300px);min-height:370px}.bubble{max-width:92%;font-size:13px}.ai-shell{padding:8px;border-radius:22px}.chatinput{margin-bottom:1px}.fab{right:16px;bottom:92px;width:52px;height:52px;border-radius:18px}
+      .chat{height:calc(100dvh - 300px);min-height:370px}.bubble{max-width:92%;font-size:13px}.ai-shell{padding:8px;border-radius:22px}.chatinput{margin-bottom:1px}.fab{right:16px;bottom:92px;width:52px;height:52px;border-radius:18px}.cal-day{min-height:58px;padding:5px;border-radius:11px}.cal-num{font-size:10px}.cal-dots{margin-top:5px}.cal-dot{width:5px;height:5px}.cal-count{display:none}body.chat-mode #page-ai{padding-left:8px;padding-right:8px}body.chat-mode #page-ai .sectionhint{display:none}
       .nav{bottom:max(8px,env(safe-area-inset-bottom));width:calc(100% - 16px);border-radius:23px;padding:6px}.navbtn{min-height:51px;padding:6px 2px}.navbtn b{height:23px}
       .modal{padding:8px}.sheet{border-radius:27px 27px 20px 20px;padding:17px;max-height:88dvh}.field input,.field select,.field textarea{font-size:16px}
       .account-stats{grid-template-columns:1fr 1fr}.quick-actions{margin-right:-12px;padding-right:12px}
@@ -123,7 +127,7 @@
       <div class="field"><label>Password</label><input id="ownerPassword" type="password" placeholder="Minimal 10 karakter + huruf & angka"></div>
       <button class="btn" style="width:100%" onclick="createOwner()">Aktifkan RUMA</button>
     </div>
-    <div class="small muted" style="margin-top:16px">v<span id="gateVersion">2.6.0</span> · Pink Edition</div>
+    <div class="small muted" style="margin-top:16px">v<span id="gateVersion">2.6.2</span> · Pink Edition</div>
   </div>
 </section>
 
@@ -162,6 +166,7 @@
 
       <div class="quick-actions">
         <button class="quick-action primary" onclick="openTransactionModal()">＋ Transaksi</button>
+        <button class="quick-action" onclick="triggerReceiptPhoto()">📷 Foto Struk</button>
         <button class="quick-action" onclick="openTaskModal()">✓ Task</button>
         <button class="quick-action" onclick="openEventModal()">◷ Agenda</button>
         <button class="quick-action" onclick="openBillModal()">◫ Tagihan</button>
@@ -193,7 +198,7 @@
     </section>
 
     <section id="page-ai" class="page" data-chat-page="1">
-      <div class="sectionhead"><div><h2>RUMA AI</h2><div class="sectionhint">Chat tersimpan, jawaban cepat dari data lokal.</div></div><div class="row"><button class="iconbtn" onclick="openChatSearch()" title="Cari chat"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button><span class="badge" id="aiStatus">Belum dikonfigurasi</span></div></div>
+      <div class="sectionhead"><div class="row"><button class="iconbtn chatback" onclick="exitChat()" title="Kembali">←</button><div><h2>RUMA AI</h2><div class="sectionhint">Full screen · chat tersimpan · foto struk aktif.</div></div></div><div class="row"><button class="iconbtn" onclick="triggerReceiptPhoto()" title="Kirim foto struk">📷</button><button class="iconbtn" onclick="openChatSearch()" title="Cari chat"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button><span class="badge" id="aiStatus">Belum dikonfigurasi</span></div></div>
       <div class="pillbar" style="margin-bottom:8px">
         <button class="pill" onclick="askPreset('Bulan ini saya paling boros di kategori apa? Berikan saran konkret.')">Keuangan bulan ini</button>
         <button class="pill" onclick="askPreset('Apa saja yang harus saya perhatikan dalam 7 hari ke depan?')">7 hari ke depan</button>
@@ -201,8 +206,8 @@
         <button class="pill" onclick="askPreset('Apakah pembagian task suami istri saat ini seimbang? Jelaskan netral.')">Pembagian task</button>
       </div>
       <div class="ai-shell">
-        <div id="chat" class="chat"><div class="bubble ai">Hai. Tulis apa saja seperti “catat bensin 100 ribu pakai BCA”, “apa tagihan hari ini?”, atau “bulan ini boros nggak?”. Riwayat chat tersimpan otomatis.</div></div>
-        <div class="chatinput"><input id="chatInput" placeholder="Tulis pesan atau command…" onkeydown="if(event.key==='Enter')sendChat()"><button class="btn" onclick="sendChat()">➜</button></div>
+        <div id="chat" class="chat"><div class="bubble ai">Hai. Tulis command, tanya kondisi rumah tangga, atau kirim foto struk. Riwayat chat tetap tersimpan.</div></div>
+        <div class="chatinput"><input id="receiptFile" type="file" accept="image/*" capture="environment" class="hidden" onchange="handleReceiptPhoto(event)"><button id="receiptBtn" class="iconbtn chatphoto" onclick="triggerReceiptPhoto()" title="Foto struk">📷</button><input id="chatInput" placeholder="Tulis pesan atau command…" onkeydown="if(event.key==='Enter')sendChat()"><button class="btn" onclick="sendChat()">➜</button></div>
       </div>
     </section>
 
@@ -212,7 +217,18 @@
         <button class="tab" onclick="planTab('events',this)">Kalender</button>
       </div>
       <div id="plan-tasks"><div class="sectionhead"><h2>Task</h2><button class="btn sm" onclick="openTaskModal()">+ Task</button></div><div id="tasksList" class="list"></div></div>
-      <div id="plan-events" class="hidden"><div class="sectionhead"><h2>Agenda</h2><button class="btn sm" onclick="openEventModal()">+ Agenda</button></div><div id="eventsList" class="list"></div></div>
+      <div id="plan-events" class="hidden">
+        <div class="sectionhead"><div><h2>Kalender</h2><div class="sectionhint">Agenda, task, dan tagihan dalam satu kalender.</div></div><button class="btn sm" onclick="openEventModal()">+ Agenda</button></div>
+        <div class="calendar-modebar"><button id="calModeMonth" class="btn secondary sm active" onclick="setCalendarMode('month')">Bulan</button><button id="calModeList" class="btn ghost sm" onclick="setCalendarMode('list')">Daftar</button></div>
+        <div id="calendarMonthView" class="card cal-card">
+          <div class="cal-head"><button class="iconbtn" onclick="calendarMove(-1)">‹</button><div class="cal-title" id="calendarTitle">Kalender</div><div class="row"><button class="btn ghost sm" onclick="calendarToday()">Hari ini</button><button class="iconbtn" onclick="calendarMove(1)">›</button></div></div>
+          <div class="cal-week"><div>Sen</div><div>Sel</div><div>Rab</div><div>Kam</div><div>Jum</div><div>Sab</div><div>Min</div></div>
+          <div id="calendarGrid" class="cal-grid"></div>
+          <div class="calendar-legend"><span><i class="cal-dot event"></i>Agenda</span><span><i class="cal-dot task"></i>Task</span><span><i class="cal-dot bill"></i>Tagihan</span></div>
+        </div>
+        <div id="calendarDayPanel" class="card" style="margin-top:10px"><div class="row between"><b id="calendarSelectedTitle">Hari ini</b><button class="btn ghost sm" onclick="openEventModalForSelected()">+ Agenda</button></div><div id="calendarDayList" class="list"></div></div>
+        <div id="calendarListView" class="hidden"><div id="eventsList" class="list"></div></div>
+      </div>
     </section>
 
     <section id="page-more" class="page">
@@ -228,10 +244,21 @@
           <div class="card span6"><div class="sectionhead" style="margin-top:0"><h2>User</h2><button class="btn sm" onclick="openUserModal()">+ User</button></div><div id="usersList" class="list"></div></div>
           <div class="card span6"><h2 style="margin-top:0">AI & Tampilan</h2>
             <div class="field"><label>AI Provider</label><select id="setAiProvider"><option value="GEMINI">Gemini</option><option value="GROQ">Groq</option></select></div>
-            <div class="field"><label>Model</label><input id="setAiModel"></div>
-            <div class="field"><label>API Key baru (opsional)</label><input id="setAiKey" type="password" placeholder="Tidak pernah ditampilkan kembali"></div>
+            <div class="field"><label>Model Chat</label><input id="setAiModel"></div>
+            <div class="field"><label>API Key provider baru (opsional)</label><input id="setAiKey" type="password" placeholder="Tidak pernah ditampilkan kembali"></div>
+            <div class="field"><label>Model Foto Struk</label><input id="setReceiptModel" placeholder="gemini-3.6-flash"></div>
+            <div class="field"><label>Gemini Vision API Key (opsional)</label><input id="setGeminiVisionKey" type="password" placeholder="Dibutuhkan jika chat memakai Groq"></div>
             <div class="field"><label>Tema</label><select id="setTheme"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></div>
             <button class="btn" onclick="saveSystemSettings()">Simpan Pengaturan</button>
+          </div>
+          <div class="card span6"><h2 style="margin-top:0">Notifikasi Email</h2><div class="small muted">Mode inbox-friendly: dikirim dari Gmail terautentikasi sebagai 1 digest harian, tanpa tracking, lampiran, atau link promosi.</div>
+            <div class="alert ok" style="margin-top:12px"><b>Pengiriman aman</b><br><span class="small">GmailApp · Digest harian · anti-duplikat · cooldown email uji/manual.</span></div>
+            <div class="switchline"><div><b>Aktifkan email</b><div class="small muted">Reminder otomatis harian</div></div><input id="setEmailEnabled" type="checkbox"></div>
+            <div class="switchline"><div><b>Tagihan</b><div class="small muted">H-2, H-1, dan hari H</div></div><input id="setEmailBill" type="checkbox"></div>
+            <div class="switchline"><div><b>Task</b><div class="small muted">Task jatuh tempo hari ini</div></div><input id="setEmailTask" type="checkbox"></div>
+            <div class="switchline"><div><b>Agenda</b><div class="small muted">Agenda hari ini</div></div><input id="setEmailEvent" type="checkbox"></div>
+            <div class="field"><label>Jam digest (0–23)</label><input id="setEmailHour" type="number" min="0" max="23" value="7"><div class="small muted">RUMA membuat trigger harian sekitar jam pilihan (waktu eksekusi Apps Script dapat bergeser beberapa menit).</div></div>
+            <div class="row wrap"><button class="btn" onclick="saveNotificationSettings()">Simpan Notifikasi</button><button class="btn secondary" onclick="sendTestEmail()">Kirim Email Uji</button><button class="btn ghost" onclick="runNotificationNow()">Jalankan Sekarang</button></div>
           </div>
           <div class="card span12">
             <div class="row between wrap"><div><h2 style="margin:0">Status Sistem</h2><div class="small muted">Koneksi, cache, session, database, dan AI.</div></div><button class="btn ghost sm" onclick="checkSystemStatus(true)">Periksa Semua</button></div>
@@ -242,6 +269,8 @@
               <div class="statusbox"><b>Session</b><div id="stSession" class="statusvalue">Aktif · persisten</div></div>
               <div class="statusbox"><b>Cache</b><div id="stCache" class="statusvalue">-</div></div>
               <div class="statusbox"><b>AI</b><div id="stAI" class="statusvalue">-</div></div>
+              <div class="statusbox"><b>Foto Struk</b><div id="stReceipt" class="statusvalue">-</div></div>
+              <div class="statusbox"><b>Notifikasi Email</b><div id="stEmail" class="statusvalue">-</div></div>
               <div class="statusbox"><b>Sinkronisasi</b><div id="stSync" class="statusvalue">-</div></div>
               <div class="statusbox"><b>Versi</b><div id="stVersion" class="statusvalue">-</div></div>
               <div class="statusbox"><b>PWA</b><div id="stPWA" class="statusvalue">Memeriksa...</div></div>
@@ -281,7 +310,7 @@
 <script>
 const C = window.RUMA_CONFIG || {};
 const API_URL = (C.API_URL || '').trim();
-const VERSION = '2.6.0';
+const VERSION = '2.6.2';
 const CACHE_TTL = Number(C.CACHE_TTL_MS || 300000);
 const BG_SYNC_MS = Number(C.BACKGROUND_SYNC_MS || 120000);
 const SNAP_KEY='ruma_snapshot_v2_6';
@@ -294,6 +323,7 @@ let syncTimer=null;
 const AI_CACHE=new Map();
 const PENDING_MUTATIONS=new Map();
 let CHAT_BUSY=false;
+let CAL_CURSOR=new Date(), CAL_SELECTED=todayISO(), CAL_MODE='month';
 let deferredInstallPrompt=null;
 let PWA_STATE={supported:'serviceWorker' in navigator,registered:false,controlled:!!(navigator.serviceWorker&&navigator.serviceWorker.controller),installed:window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches,updateAvailable:false,error:''};
 const TIMEOUT = Number(C.REQUEST_TIMEOUT || 25000);
@@ -431,9 +461,9 @@ function renderAll(){
   const ot=S.tasks.filter(t=>t.status!=='DONE');document.getElementById('openTaskCount').textContent=ot.length;renderTodayTasks(ot.slice(0,5));
   renderTodayBills();
   document.getElementById('aiStatus').textContent=S.settings.aiConfigured?(S.settings.aiProvider+' · '+S.settings.aiModel):'Belum dikonfigurasi';
-  document.getElementById('setAiProvider').value=S.settings.aiProvider||'GEMINI';document.getElementById('setAiModel').value=S.settings.aiModel||'gemini-3.6-flash';document.getElementById('setTheme').value=S.settings.theme||'system';applyTheme(S.settings.theme||'system');
+  document.getElementById('setAiProvider').value=S.settings.aiProvider||'GEMINI';document.getElementById('setAiModel').value=S.settings.aiModel||'gemini-3.6-flash';document.getElementById('setReceiptModel').value=S.settings.receiptModel||'gemini-3.6-flash';document.getElementById('setTheme').value=S.settings.theme||'system';document.getElementById('setEmailEnabled').checked=S.settings.emailEnabled!==false;document.getElementById('setEmailBill').checked=S.settings.emailBill!==false;document.getElementById('setEmailTask').checked=S.settings.emailTask!==false;document.getElementById('setEmailEvent').checked=S.settings.emailEvent!==false;document.getElementById('setEmailHour').value=Number(S.settings.emailHour??7);applyTheme(S.settings.theme||'system');
   document.getElementById('dbInfo').textContent=(S.settings.databaseName||'RUMA Database')+' · '+(S.settings.spreadsheetId||'');updateConnectionUI();
-  renderAccounts();renderTransactions();renderBudgets();renderBills();renderGoals();renderTasks();renderEvents();renderShopping();renderNotes();renderUsers();if(!CHAT_BUSY)renderChatHistory();
+  renderAccounts();renderTransactions();renderBudgets();renderBills();renderGoals();renderTasks();renderEvents();renderCalendar();renderShopping();renderNotes();renderUsers();if(!CHAT_BUSY)renderChatHistory();
 }
 function daysTo(dateStr){if(!dateStr)return 9999;const a=new Date(todayISO()+'T00:00:00'),b=new Date(String(dateStr).slice(0,10)+'T00:00:00');return Math.round((b-a)/86400000)}
 function dueLabel(d){const n=daysTo(d);if(n===2)return ['H-2','h2'];if(n===1)return ['H-1','h1'];if(n===0)return ['Hari ini','today'];if(n<0)return ['Terlambat '+Math.abs(n)+' hari','overdue'];return ['H-'+n,'h2']}
@@ -478,6 +508,28 @@ function renderEvents(){
   const el=document.getElementById('eventsList');if(!el)return;if(!S.events.length){el.innerHTML='<div class="empty">Belum ada agenda.</div>';return}
   el.innerHTML=S.events.map(e=>`<div class="item"><button class="checkbtn ${e.status==='DONE'?'done':''}" onclick="toggleEvent('${e.id}')">${e.status==='DONE'?'✓':'○'}</button><div class="main"><div class="name ${e.status==='DONE'?'done-text':''}">${esc(e.title)}</div><div class="meta">${localDT(e.startAt)}${e.location?' · '+esc(e.location):''}</div></div><button class="btn ghost sm" onclick="openEventModal('${e.id}')">Edit</button></div>`).join('');
 }
+function calISO(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function setCalendarMode(mode){CAL_MODE=mode;document.getElementById('calendarMonthView')?.classList.toggle('hidden',mode!=='month');document.getElementById('calendarDayPanel')?.classList.toggle('hidden',mode!=='month');document.getElementById('calendarListView')?.classList.toggle('hidden',mode!=='list');document.getElementById('calModeMonth')?.classList.toggle('active',mode==='month');document.getElementById('calModeList')?.classList.toggle('active',mode==='list');renderCalendar()}
+function calendarMove(delta){CAL_CURSOR=new Date(CAL_CURSOR.getFullYear(),CAL_CURSOR.getMonth()+delta,1,12);renderCalendar()}
+function calendarToday(){CAL_CURSOR=new Date();CAL_SELECTED=todayISO();renderCalendar()}
+function selectCalendarDay(d){CAL_SELECTED=d;renderCalendar()}
+function openEventModalForSelected(){openEventModal();setTimeout(()=>{const el=document.getElementById('mEventStart');if(el&&!el.value)el.value=CAL_SELECTED+'T09:00'},30)}
+function renderCalendar(){
+  const grid=document.getElementById('calendarGrid');if(!grid)return;
+  const y=CAL_CURSOR.getFullYear(),m=CAL_CURSOR.getMonth(),title=document.getElementById('calendarTitle');if(title)title.textContent=new Date(y,m,1).toLocaleDateString('id-ID',{month:'long',year:'numeric'});
+  const first=new Date(y,m,1,12),offset=(first.getDay()+6)%7,start=new Date(y,m,1-offset,12),cells=[];
+  for(let i=0;i<42;i++){const d=new Date(start);d.setDate(start.getDate()+i);const key=calISO(d),inMonth=d.getMonth()===m,ev=S.events.filter(x=>String(x.startAt||'').slice(0,10)===key),ta=S.tasks.filter(x=>String(x.dueDate||'').slice(0,10)===key&&x.status!=='DONE'),bi=S.bills.filter(x=>String(x.dueDate||'').slice(0,10)===key&&x.status!=='PAID');const dots=[];if(ev.length)dots.push('<i class="cal-dot event"></i>');if(ta.length)dots.push('<i class="cal-dot task"></i>');if(bi.length)dots.push('<i class="cal-dot bill"></i>');const total=ev.length+ta.length+bi.length;cells.push(`<button class="cal-day ${inMonth?'':'out'} ${key===todayISO()?'today':''} ${key===CAL_SELECTED?'selected':''}" onclick="selectCalendarDay('${key}')"><div class="cal-num">${d.getDate()}</div><div class="cal-dots">${dots.join('')}</div>${total?`<div class="cal-count">${total} item</div>`:''}</button>`)}
+  grid.innerHTML=cells.join('');renderCalendarDay();
+}
+function renderCalendarDay(){
+  const el=document.getElementById('calendarDayList'),ttl=document.getElementById('calendarSelectedTitle');if(!el)return;const d=CAL_SELECTED||todayISO();if(ttl)ttl.textContent=new Date(d+'T12:00:00').toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long'});
+  const items=[];
+  S.events.filter(x=>String(x.startAt||'').slice(0,10)===d).forEach(x=>items.push({kind:'event',sort:String(x.startAt||''),html:`<div class="item"><button class="checkbtn ${x.status==='DONE'?'done':''}" onclick="toggleEvent('${x.id}')">${x.status==='DONE'?'✓':'○'}</button><div class="main"><div class="name ${x.status==='DONE'?'done-text':''}">${esc(x.title)}</div><div class="meta">Agenda · ${localDT(x.startAt)}${x.location?' · '+esc(x.location):''}</div></div><button class="btn ghost sm" onclick="openEventModal('${x.id}')">Edit</button></div>`}));
+  S.tasks.filter(x=>String(x.dueDate||'').slice(0,10)===d).forEach(x=>items.push({kind:'task',sort:d+'T23:50',html:`<div class="item"><button class="checkbtn ${x.status==='DONE'?'done':''}" onclick="toggleTask('${x.id}')">${x.status==='DONE'?'✓':'○'}</button><div class="main"><div class="name ${x.status==='DONE'?'done-text':''}">${esc(x.title)}</div><div class="meta">Task · ${esc(userName(x.assignedTo))} · ${esc(x.priority||'')}</div></div></div>`}));
+  S.bills.filter(x=>String(x.dueDate||'').slice(0,10)===d).forEach(x=>items.push({kind:'bill',sort:d+'T23:59',html:`<div class="item"><button class="checkbtn ${x.status==='PAID'?'done':''}" onclick="toggleBill('${x.id}')">${x.status==='PAID'?'✓':'○'}</button><div class="main"><div class="name ${x.status==='PAID'?'done-text':''}">${esc(x.name)}</div><div class="meta">Tagihan · ${rupiah(x.amount)} · ${esc(accountName(x.accountId))}</div></div></div>`}));
+  items.sort((a,b)=>a.sort.localeCompare(b.sort));el.innerHTML=items.length?items.map(x=>x.html).join(''):'<div class="empty small">Belum ada agenda, task, atau tagihan pada tanggal ini.</div>';
+}
+
 function renderShopping(){
   const el=document.getElementById('shoppingList');if(!el)return;if(!S.shopping.length){el.innerHTML='<div class="empty">Daftar belanja kosong.</div>';return}
   el.innerHTML=S.shopping.map(x=>`<div class="item"><button class="iconbtn" style="width:34px;height:34px" onclick="toggleShopping('${x.id}')">${x.status==='DONE'?'✓':'○'}</button><div class="main"><div class="name" style="${x.status==='DONE'?'text-decoration:line-through;opacity:.55':''}">${esc(x.item)}</div><div class="meta">${esc(x.qty||'')} · ditambah ${esc(userName(x.addedBy))}</div></div><button class="btn danger sm" onclick="removeItem('shopping','${x.id}')">Hapus</button></div>`).join('');
@@ -490,9 +542,10 @@ function renderUsers(){
   const el=document.getElementById('usersList');if(!el)return;el.innerHTML=S.users.map(u=>`<div class="item"><div class="main"><div class="name">${esc(u.name)}</div><div class="meta">${esc(u.email)} · ${esc(u.role)}</div></div>${S.user.role==='OWNER'?`<button class="btn ghost sm" onclick="openUserModal('${u.id}')">Edit</button>`:''}</div>`).join('');
 }
 
-function goPage(p,b){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.getElementById('page-'+p).classList.add('active');document.querySelectorAll('.navbtn').forEach(x=>x.classList.remove('active'));b?.classList.add('active');document.querySelector('.fab')?.classList.toggle('hidden-page',p==='ai');window.scrollTo({top:0,behavior:'smooth'})}
+function goPage(p,b){document.body.classList.toggle('chat-mode',p==='ai');document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.getElementById('page-'+p).classList.add('active');document.querySelectorAll('.navbtn').forEach(x=>x.classList.remove('active'));(b||document.querySelector('.navbtn[data-page="'+p+'"]'))?.classList.add('active');document.querySelector('.fab')?.classList.toggle('hidden-page',p==='ai');if(p==='ai')setTimeout(()=>{const c=document.getElementById('chat');if(c)c.scrollTop=c.scrollHeight},60);if(p==='plan')renderCalendar();window.scrollTo({top:0,behavior:'smooth'})}
+function exitChat(){goPage('today',document.querySelector('.navbtn[data-page="today"]'))}
 function moneyTab(p,b){['transactions','accounts','budgets','bills','goals'].forEach(x=>document.getElementById('money-'+x).classList.toggle('hidden',x!==p));b.parentElement.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active')}
-function planTab(p,b){['tasks','events'].forEach(x=>document.getElementById('plan-'+x).classList.toggle('hidden',x!==p));b.parentElement.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active')}
+function planTab(p,b){['tasks','events'].forEach(x=>document.getElementById('plan-'+x).classList.toggle('hidden',x!==p));b.parentElement.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');if(p==='events')renderCalendar()}
 function moreTab(p,b){['shopping','notes','settings'].forEach(x=>document.getElementById('more-'+x).classList.toggle('hidden',x!==p));b.parentElement.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active')}
 function openSettings(){goPage('more',document.querySelector('.navbtn[data-page="more"]'));const btn=[...document.querySelectorAll('#page-more .tab')].find(x=>x.textContent.includes('Pengaturan'));moreTab('settings',btn);setTimeout(()=>checkSystemStatus(false),80)}
 function closeModal(){document.getElementById('modal').classList.add('hidden')}
@@ -547,6 +600,8 @@ function updateConnectionUI(){
   set('stSession',S.session?'Aktif · tetap login sampai logout'+(CONN.activeSessions?' · '+CONN.activeSessions+' perangkat':''):'Tidak aktif');
   set('stCache',cache.at?((Date.now()-cache.at<=CACHE_TTL?'Fresh':'Stale')+' · '+Math.max(0,Math.round((Date.now()-cache.at)/1000))+' dtk · rev '+(S.revision||'-')):'Belum ada snapshot');
   set('stAI',S.settings.aiConfigured?(S.settings.aiProvider+' · '+S.settings.aiModel):'Belum dikonfigurasi');
+  set('stReceipt',S.settings.receiptConfigured?'Aktif · Gemini Vision':'Belum aktif · butuh Gemini API Key');
+  set('stEmail',S.settings.emailEnabled===false?'Nonaktif':((S.settings.notificationTrigger===false?'Trigger belum aktif':'Aktif')+' · '+(S.settings.emailProvider||'GmailApp')+' · '+(S.settings.emailMode==='DIGEST'?'Digest harian':'Digest')+' · ~'+String(S.settings.emailHour??7).padStart(2,'0')+':'+String(S.settings.emailMinute??5).padStart(2,'0')+(S.settings.mailQuota!==undefined&&S.settings.mailQuota>=0?' · kuota '+S.settings.mailQuota:'')));
   set('stSync',(CONN.pendingWrites?CONN.pendingWrites+' perubahan sedang disimpan · ':'')+(CONN.lastSync?new Date(CONN.lastSync).toLocaleTimeString('id-ID'):'Belum sinkron'));
   set('stVersion','App '+VERSION+' · Backend '+(S.settings.version||'-')+(versionMismatch?' · ⚠ versi berbeda':''));
   const pwaText=!C.PWA_ENABLED?'Dinonaktifkan di config':!PWA_STATE.supported?'Tidak didukung browser':PWA_STATE.installed?'Terpasang · standalone':PWA_STATE.controlled?'Aktif · service worker mengontrol':PWA_STATE.registered?'Terdaftar · siap offline':PWA_STATE.error?'Error · '+PWA_STATE.error:'Menunggu registrasi';
@@ -556,7 +611,7 @@ function updateConnectionUI(){
 }
 async function checkSystemStatus(showToast=false){
   if(!S.session)return checkBootstrap(showToast);if(CONN.checking)return;CONN.checking=true;updateConnectionUI();
-  try{const t=performance.now(),r=await api('system.status',{});CONN.backend=true;CONN.latency=Math.round(performance.now()-t);if(r){CONN.activeSessions=Number(r.activeSessions||0);S.settings={...S.settings,version:r.version,databaseName:r.databaseName,spreadsheetId:r.spreadsheetId,aiProvider:r.aiProvider,aiModel:r.aiModel,aiConfigured:r.aiConfigured,legacyGhostBills:Number(r.legacyGhostBills||0)};}updateConnectionUI();if(showToast)toast((r&&r.version!==VERSION)?('Backend masih v'+r.version+'. Deploy backend.gs v'+VERSION+' sebagai New version.'):'Semua koneksi utama terdeteksi ✓',!!(r&&r.version!==VERSION))}
+  try{const t=performance.now(),r=await api('system.status',{});CONN.backend=true;CONN.latency=Math.round(performance.now()-t);if(r){CONN.activeSessions=Number(r.activeSessions||0);S.settings={...S.settings,version:r.version,databaseName:r.databaseName,spreadsheetId:r.spreadsheetId,aiProvider:r.aiProvider,aiModel:r.aiModel,aiConfigured:r.aiConfigured,receiptConfigured:!!r.receiptConfigured,emailEnabled:r.emailEnabled!==false,emailHour:Number(r.emailHour||7),emailMinute:Number(r.emailMinute||5),emailProvider:r.emailProvider||'GmailApp',emailMode:r.emailMode||'DIGEST',emailSender:r.emailSender||'',notificationTrigger:!!r.notificationTrigger,mailQuota:Number(r.mailQuota??-1),legacyGhostBills:Number(r.legacyGhostBills||0)};}updateConnectionUI();if(showToast)toast((r&&r.version!==VERSION)?('Backend masih v'+r.version+'. Deploy backend.gs v'+VERSION+' sebagai New version.'):'Semua koneksi utama terdeteksi ✓',!!(r&&r.version!==VERSION))}
   catch(e){CONN.backend=false;CONN.lastError=e.message;updateConnectionUI();if(showToast)toast(e.message,true)}finally{CONN.checking=false}
 }
 async function runDiagnostics(){if(!S.session)return;try{const r=await api('system.diagnose',{});const issues=r.issues||[];const score=Number(r.score||0);const st=document.getElementById('stDiagnostics');if(st)st.textContent=score+'/100 · '+(issues.length?issues.length+' catatan':'Sehat');const health=document.getElementById('stDataHealth');if(health)health.textContent=issues.length?issues.map(x=>x.label).slice(0,2).join(' · '):'Bersih';modal('Diagnosa Sistem',`<div class="system-score"><div class="scoreball">${score}</div><div><b>Kesehatan RUMA ${score}/100</b><div class="small muted">${issues.length?issues.length+' hal perlu diperhatikan':'Semua pemeriksaan utama sehat'}</div></div></div><div class="list">${issues.length?issues.map(x=>`<div class="item"><div class="main"><div class="name">${esc(x.label)}</div><div class="meta" style="white-space:normal">${esc(x.detail||'')}</div></div><span class="badge ${x.level==='error'?'warn':'gray'}">${esc(x.level||'info')}</span></div>`).join(''):'<div class="alert ok">Semua pemeriksaan utama sehat. Tidak ada referensi rusak atau schema yang hilang.</div>'}</div>`)}catch(e){toast('Diagnostik gagal: '+e.message,true)}}
@@ -789,7 +844,7 @@ function appendChatMessage(role,text,kind='normal',persist=true){const msg={id:i
 function showChatThinking(label='Saya cek…'){const ch=document.getElementById('chat');document.getElementById('chatThinking')?.remove();ch.insertAdjacentHTML('beforeend',`<div id="chatThinking" class="bubble ai"><span class="chattyping">${esc(label)} <i></i><i></i><i></i></span></div>`);ch.scrollTop=ch.scrollHeight}
 function finishChat(text,kind='normal'){document.getElementById('chatThinking')?.remove();CHAT_BUSY=false;appendChatMessage('assistant',text,kind,true);renderChatHistory()}
 
-function openQuick(){modal('Tambah cepat',`<div class="grid" style="margin-top:14px"><button class="btn secondary span6" onclick="closeModal();openTransactionModal()">💸 Transaksi</button><button class="btn secondary span6" onclick="closeModal();openTaskModal()">✅ Task</button><button class="btn secondary span6" onclick="closeModal();openEventModal()">📅 Agenda</button><button class="btn secondary span6" onclick="closeModal();openShoppingModal()">🛒 Belanja</button></div>`)}
+function openQuick(){modal('Tambah cepat',`<div class="grid" style="margin-top:14px"><button class="btn secondary span6" onclick="closeModal();openTransactionModal()">💸 Transaksi</button><button class="btn secondary span6" onclick="closeModal();triggerReceiptPhoto()">📷 Foto Struk</button><button class="btn secondary span6" onclick="closeModal();openTaskModal()">✅ Task</button><button class="btn secondary span6" onclick="closeModal();openEventModal()">📅 Agenda</button><button class="btn secondary span6" onclick="closeModal();openShoppingModal()">🛒 Belanja</button></div>`)}
 function openAccountModal(i=''){const a=S.accounts.find(x=>x.id===i)||{};modal(i?'Edit Rekening':'Tambah Rekening',`
 <div class="field"><label>Nama rekening/wallet</label><input id="mAccName" value="${esc(a.name||'')}"></div>
 <div class="field"><label>Jenis</label><select id="mAccType">${['BANK','EWALLET','CASH','SAVING','CREDIT','INVESTMENT','OTHER'].map(x=>`<option ${a.type===x?'selected':''}>${x}</option>`).join('')}</select></div>
@@ -850,10 +905,30 @@ function openUserModal(i=''){if(S.user.role!=='OWNER'){toast('Hanya owner yang d
 <div class="field"><label>Nama</label><input id="mUserName" value="${esc(u.name||'')}"></div><div class="field"><label>Email</label><input id="mUserEmail" type="email" value="${esc(u.email||'')}"></div><div class="field"><label>Role</label><select id="mUserRole"><option value="PARTNER" ${u.role!=='OWNER'?'selected':''}>PARTNER</option><option value="OWNER" ${u.role==='OWNER'?'selected':''}>OWNER</option></select></div><div class="field"><label>${i?'Password baru (kosong = tetap)':'Password sementara'}</label><input id="mUserPass" type="password"></div><button class="btn" onclick="saveUser('${i}')">Simpan User</button>`)}
 function saveUser(i){const p={id:i,name:formVal('mUserName'),email:formVal('mUserEmail'),role:formVal('mUserRole'),password:formVal('mUserPass')};if(!i&&p.password.length<10)return toast('Password user baru minimal 10 karakter dan mengandung huruf & angka.',true);optimistic('user.save',p,()=>{const tid=i||id('TMPUSR');upsert(S.users,{id:tid,name:p.name,email:p.email,role:p.role},i||tid);return{tempId:i?'':tid}})}
 
-function saveSystemSettings(){const p={aiProvider:formVal('setAiProvider'),aiModel:formVal('setAiModel'),aiKey:formVal('setAiKey'),theme:formVal('setTheme')};S.settings={...S.settings,aiProvider:p.aiProvider,aiModel:p.aiModel,theme:p.theme};applyTheme(p.theme);document.getElementById('setAiKey').value='';persistSnapshot();renderAll();api('settings.save',p).then(()=>{toast('Pengaturan disimpan');scheduleSync(300)}).catch(e=>toast(e.message,true))}
+function saveSystemSettings(){const p={aiProvider:formVal('setAiProvider'),aiModel:formVal('setAiModel'),aiKey:formVal('setAiKey'),receiptModel:formVal('setReceiptModel'),geminiVisionKey:formVal('setGeminiVisionKey'),theme:formVal('setTheme')};S.settings={...S.settings,aiProvider:p.aiProvider,aiModel:p.aiModel,receiptModel:p.receiptModel,theme:p.theme};applyTheme(p.theme);document.getElementById('setAiKey').value='';document.getElementById('setGeminiVisionKey').value='';persistSnapshot();renderAll();api('settings.save',p).then(r=>{if(r&&r.receiptConfigured)S.settings.receiptConfigured=true;updateConnectionUI();toast('Pengaturan disimpan');scheduleSync(300)}).catch(e=>toast(e.message,true))}
+function saveNotificationSettings(){const p={enabled:checked('setEmailEnabled'),bill:checked('setEmailBill'),task:checked('setEmailTask'),event:checked('setEmailEvent'),hour:Number(formVal('setEmailHour')||7)};S.settings={...S.settings,emailEnabled:p.enabled,emailBill:p.bill,emailTask:p.task,emailEvent:p.event,emailHour:p.hour};persistSnapshot();updateConnectionUI();api('notifications.save',p).then(()=>{toast('Notifikasi email disimpan ✓');setTimeout(()=>checkSystemStatus(false),250)}).catch(e=>toast(e.message,true))}
+function sendTestEmail(){api('system.emailTest',{}).then(r=>toast('Email uji dikirim via '+(r.provider||'GmailApp')+' ke '+r.to+' ✓')).catch(e=>toast(e.message,true))}
+function runNotificationNow(){api('system.notificationRun',{}).then(r=>toast('Digest diproses · '+Number(r.sent||0)+' terkirim'+(Number(r.errors||0)?' · '+r.errors+' gagal':''))).catch(e=>toast(e.message,true))}
 function applyTheme(t){document.body.dataset.theme=t||'system'}
 
 function removeItem(type,i){if(!confirm('Yakin menghapus/mengarsipkan data ini?'))return;const map={account:'accounts',transaction:'transactions',budget:'budgets',bill:'bills',goal:'goals',task:'tasks',event:'events',shopping:'shopping',note:'notes'};const k=map[type];if(!k)return;optimistic(type+'.delete',{id:i},()=>{if(type==='transaction'){const old=S.transactions.find(x=>x.id===i);if(old)adjustTx(old,-1)}S[k]=S[k].filter(x=>x.id!==i)})}
+
+function triggerReceiptPhoto(){const f=document.getElementById('receiptFile');if(f){f.value='';f.click()}}
+async function fileToReceiptPayload(file){
+  if(!file)throw new Error('Foto belum dipilih.');if(!/^image\//.test(file.type||''))throw new Error('File harus berupa gambar.');
+  const dataUrl=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=()=>reject(new Error('Gagal membaca foto.'));r.readAsDataURL(file)});
+  const img=await new Promise((resolve,reject)=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=()=>reject(new Error('Format foto tidak dapat dibaca browser.'));i.src=dataUrl});
+  const max=1280,scale=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight)),w=Math.max(1,Math.round(img.naturalWidth*scale)),h=Math.max(1,Math.round(img.naturalHeight*scale)),c=document.createElement('canvas');c.width=w;c.height=h;const ctx=c.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);ctx.drawImage(img,0,0,w,h);const out=c.toDataURL('image/jpeg',.72);return{imageBase64:out.split(',')[1],mimeType:'image/jpeg',preview:out,fileName:file.name||'struk.jpg'}
+}
+async function handleReceiptPhoto(ev){
+  const file=ev.target.files&&ev.target.files[0];if(!file)return;goPage('ai',document.querySelector('.navbtn[data-page="ai"]'));const btn=document.getElementById('receiptBtn');try{btn?.classList.add('loading');appendChatMessage('user','📷 Mengirim foto struk untuk dibaca…','normal',true);CHAT_BUSY=true;showChatThinking('Membaca struk');const data=await fileToReceiptPayload(file);const r=await api('ai.receipt',{imageBase64:data.imageBase64,mimeType:data.mimeType,fileName:data.fileName});document.getElementById('chatThinking')?.remove();CHAT_BUSY=false;const warn=(r.warnings||[]);const line=`Struk terbaca: **${r.merchant||r.description||'Transaksi'}** · **${rupiah(r.total)}** · ${fmtDate(r.date)} · ${r.category}.`+(warn.length?'\n\n⚠ '+warn.join(' '):'');appendChatMessage('assistant',line,warn.length?'feedback':'success',true);openReceiptDraft(r,data.preview)}catch(e){document.getElementById('chatThinking')?.remove();CHAT_BUSY=false;appendChatMessage('assistant','Foto belum bisa diproses. **'+e.message+'**','feedback',true);toast(e.message,true)}finally{btn?.classList.remove('loading');if(ev.target)ev.target.value=''}
+}
+function openReceiptDraft(r,preview){
+  const acc=S.accounts.filter(a=>a.canEdit||a.scope==='JOINT'||a.ownerId===S.user.id);if(!acc.length){toast('Tambahkan rekening/wallet dulu sebelum menyimpan struk.',true);return}
+  const warning=(r.warnings||[]).length?`<div class="alert warn" style="margin:10px 0"><b>Perlu dicek</b><div class="small">${esc((r.warnings||[]).join(' '))}</div></div>`:`<div class="alert ok" style="margin:10px 0">Pembacaan cukup jelas · confidence ${Number(r.confidence||0)}%</div>`;
+  modal('Konfirmasi Foto Struk',`${preview?`<img class="receipt-preview" src="${preview}" alt="Preview struk">`:''}${warning}<div class="field"><label>Keterangan</label><input id="mReceiptDesc" value="${esc(r.description||r.merchant||'Belanja dari struk')}"></div><div class="field"><label>Total</label><input id="mReceiptAmount" type="number" value="${Number(r.total||0)}"></div><div class="field"><label>Tanggal</label><input id="mReceiptDate" type="date" value="${esc(r.date||todayISO())}"></div><div class="field"><label>Kategori</label><input id="mReceiptCategory" value="${esc(r.category||'Belanja')}"></div><div class="field"><label>Rekening / Wallet</label><select id="mReceiptAccount">${accountOptions('')}</select></div><div class="field"><label>Scope</label><select id="mReceiptScope"><option>PERSONAL</option><option>JOINT</option></select></div><button class="btn" style="width:100%" onclick="saveReceiptDraft()">Simpan sebagai Pengeluaran</button>`)
+}
+function saveReceiptDraft(){const accountId=formVal('mReceiptAccount'),acc=S.accounts.find(a=>a.id===accountId);const p={date:formVal('mReceiptDate')||todayISO(),type:'EXPENSE',amount:Number(formVal('mReceiptAmount')||0),accountId:accountId,toAccountId:'',category:formVal('mReceiptCategory')||'Belanja',description:formVal('mReceiptDesc')||'Belanja dari struk',scope:acc&&acc.scope==='JOINT'?'JOINT':(formVal('mReceiptScope')||'PERSONAL')};if(!p.amount||!p.accountId)return toast('Total dan rekening wajib diisi.',true);optimistic('transaction.save',p,()=>{const tid=id('TMPTX'),tx={...p,id:tid,canEdit:true,createdBy:S.user.id};S.transactions.unshift(tx);adjustTx(tx,1);return{tempId:tid}},{message:'Transaksi struk langsung tampil. Menyimpan di background…'})}
 
 function sendChat(){const q=formVal('chatInput').trim();if(!q||CHAT_BUSY)return;document.getElementById('chatInput').value='';askPreset(q)}
 function askPreset(q){
