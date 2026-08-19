@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#ec4899">
-  <title>RUMA.</title>
+  <title>RUMA</title>
   <link rel="manifest" href="manifest.webmanifest">
   <script src="config.js"></script>
   <style>
@@ -277,11 +277,10 @@
                 <div class="switchline"><div><b>1 jam</b><div class="small muted">Popup 60 menit sebelumnya</div></div><input id="setCalendarPopup60" type="checkbox"></div>
                 <div class="switchline"><div><b>15 menit</b><div class="small muted">Popup tambahan untuk agenda penting</div></div><input id="setCalendarPopup15" type="checkbox"></div>
                 <div class="switchline"><div><b>Email H-1</b><div class="small muted">Opsional. Digest email RUMA tetap berjalan terpisah.</div></div><input id="setCalendarEmailH1" type="checkbox"></div>
-                <div class="switchline"><div><b>Kaitkan email user</b><div class="small muted">Email yang terdaftar di RUMA menjadi guest sesuai penanggung jawab aktivitas.</div></div><input id="setCalendarLinkUsers" type="checkbox"></div>
-                <div class="switchline"><div><b>Kirim email undangan</b><div class="small muted">Opsional. Hanya dikirim ke user yang terkait aktivitas.</div></div><input id="setCalendarInvites" type="checkbox"></div>
+                <div class="alert" style="margin-top:10px"><b>Mode Kalender Bersama</b><div class="small">Penanggung jawab tetap mengikuti user RUMA, tetapi email user <b>tidak dijadikan guest</b> dan RUMA <b>tidak mengirim email undangan/konfirmasi</b> per event.</div></div>
               </div>
             </div>
-            <div class="alert" style="margin-top:12px"><b>Akun terdaftar & penanggung jawab</b><div class="small">Task dan agenda dapat diarahkan ke <b>Saya, pasangan, atau Bersama</b>. RUMA mengambil email langsung dari User terdaftar dan mengaitkannya ke event Calendar. Email undangan tetap opsional agar tidak menimbulkan spam.</div><div id="calendarLinkedUsers" class="small" style="margin-top:8px"></div></div>
+            <div class="alert" style="margin-top:12px"><b>Akun terdaftar & penanggung jawab</b><div class="small">Task dan agenda tetap dapat diarahkan ke <b>Saya, Pasangan, atau Bersama</b>. Email terdaftar hanya dipakai sebagai identitas user di RUMA. Agar kalender tampil di HP pasangan tanpa invitation per event, bagikan kalender <b>RUMA Household</b> satu kali melalui Google Calendar.</div><div id="calendarLinkedUsers" class="small" style="margin-top:8px"></div></div>
             <div class="row wrap" style="margin-top:12px"><button class="btn" onclick="saveCalendarSettings()">Simpan Calendar</button><button class="btn secondary" onclick="setupGoogleCalendarUI()">Hubungkan / Buat Kalender</button><button class="btn ghost" onclick="testGoogleCalendarUI()">Tes Koneksi</button><button class="btn ghost" onclick="syncGoogleCalendarUI()">Sinkronkan Sekarang</button></div>
             <div id="calendarSettingsInfo" class="small muted" style="margin-top:10px">Belum diperiksa.</div>
           </div>
@@ -336,7 +335,7 @@
 <script>
 const C = window.RUMA_CONFIG || {};
 const API_URL = (C.API_URL || '').trim();
-const VERSION = '2.8.1';
+const VERSION = '2.8.3';
 const CACHE_TTL = Number(C.CACHE_TTL_MS || 300000);
 const BG_SYNC_MS = Number(C.BACKGROUND_SYNC_MS || 120000);
 const SNAP_KEY='ruma_snapshot_v2_6';
@@ -377,21 +376,20 @@ function fmtDate(v){if(!v)return'-';const d=new Date(v+'T00:00:00');return d.toL
 function formVal(id){return document.getElementById(id)?.value ?? ''}
 function checked(id){return !!document.getElementById(id)?.checked}
 
-const DIRECT_READ_ACTIONS=new Set(['bootstrap.status','app.snapshot','app.revision','system.status','system.diagnose','calendar.status']);
+const DIRECT_READ_ACTIONS=new Set(['system.ping','bootstrap.status','app.snapshot','app.revision','system.status','system.diagnose','calendar.status']);
 const TRANSPORT={read:'Direct JSONP',write:'POST job + poll',last:'-'};
-function directJsonpApi(action,payload={},opts={}){
-  if(!API_URL)return Promise.reject(new Error('API_URL belum diisi di config.js'));
-  if(!navigator.onLine){const e=new Error('Perangkat sedang offline. Data lokal tetap tersedia.');e.code='OFFLINE';return Promise.reject(e)}
+function sleepMs(ms){return new Promise(r=>setTimeout(r,ms))}
+function directJsonpOnce(action,payload={},opts={}){
   const started=performance.now(),requestTimeout=Number(opts.timeout||timeoutForAction(action));
   API_INFLIGHT++;API_STATS.lastAction=action;TRANSPORT.last='READ';
   return new Promise((resolve,reject)=>{
     const cb='__ruma_rpc_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,9);
     const scr=document.createElement('script');let done=false,timer;
     const finish=()=>{API_INFLIGHT=Math.max(0,API_INFLIGHT-1);API_STATS.lastMs=Math.round(performance.now()-started);clearTimeout(timer);try{delete window[cb]}catch(e){};scr.remove()};
-    const success=data=>{if(done)return;done=true;finish();CONN.backend=true;CONN.latency=API_STATS.lastMs;CONN.lastError='';updateConnectionUI();resolve(data)};
-    const failure=err=>{if(done)return;done=true;finish();CONN.lastError=String(err.message||err);if(err.code==='TIMEOUT')API_STATS.timeouts++;if(err.code!=='OFFLINE')CONN.backend=false;updateConnectionUI();reject(err)};
-    window[cb]=(res)=>{if(res&&res.ok)success(res.data);else failure(new Error((res&&res.error)||'Respons backend tidak valid'))};
-    scr.onerror=()=>{const e=new Error('Respons Apps Script tidak dapat dibaca. Periksa deployment /exec.');e.code='NETWORK';failure(e)};
+    const success=data=>{if(done)return;done=true;finish();resolve(data)};
+    const failure=err=>{if(done)return;done=true;finish();reject(err)};
+    window[cb]=(res)=>{if(res&&res.ok)success(res.data);else{const e=new Error((res&&res.error)||'Respons backend tidak valid');e.code=(res&&/session/i.test(String(res.error||'')))?'SESSION':'BACKEND';failure(e)}};
+    scr.onerror=()=>{const e=new Error('Respons Apps Script tidak dapat dibaca.');e.code='NETWORK';failure(e)};
     const q=new URLSearchParams();
     q.set('rpc','1');q.set('action',action);q.set('payload',JSON.stringify(payload||{}));q.set('session',opts.noSession?'':S.session);q.set('deviceId',DEVICE_ID);q.set('callback',cb);q.set('_',String(Date.now()));
     scr.src=API_URL+(API_URL.includes('?')?'&':'?')+q.toString();
@@ -399,6 +397,26 @@ function directJsonpApi(action,payload={},opts={}){
     document.head.appendChild(scr);
   });
 }
+async function directJsonpApi(action,payload={},opts={}){
+  if(!API_URL)throw new Error('API_URL belum diisi di config.js');
+  if(!navigator.onLine){const e=new Error('Perangkat sedang offline. Data lokal tetap tersedia.');e.code='OFFLINE';throw e}
+  const attempts=Math.max(1,Number(opts.attempts||((action==='system.ping'||action==='app.revision')?3:2)));
+  let lastErr=null;
+  for(let i=0;i<attempts;i++){
+    try{
+      const data=await directJsonpOnce(action,payload,opts);
+      CONN.backend=true;CONN.latency=API_STATS.lastMs;CONN.lastError='';updateConnectionUI();return data;
+    }catch(err){
+      lastErr=err;if(err.code==='OFFLINE')break;
+      if(i<attempts-1){await sleepMs(350+350*i);continue;}
+    }
+  }
+  CONN.lastError=String((lastErr&&lastErr.message)||lastErr||'Koneksi gagal');if(lastErr&&lastErr.code==='TIMEOUT')API_STATS.timeouts++;
+  // Hanya heartbeat yang berhak menyatakan backend benar-benar offline.
+  if(action==='system.ping'&&opts.healthNeutral!==true&&(!lastErr||lastErr.code!=='SESSION'))CONN.backend=false;
+  updateConnectionUI();throw lastErr||new Error('Koneksi backend gagal.');
+}
+
 async function api(action,payload={},opts={}){
   if(!API_URL)throw new Error('API_URL belum diisi di config.js');
   if(!navigator.onLine){const e=new Error('Perangkat sedang offline. Data lokal tetap tersedia.');e.code='OFFLINE';throw e}
@@ -420,7 +438,7 @@ function apiLegacy(action,payload={},opts={}){
     const finish=()=>{API_INFLIGHT=Math.max(0,API_INFLIGHT-1);API_STATS.lastMs=Math.round(performance.now()-started)};
     const cleanup=()=>{done=true;clearTimeout(timer);form.remove();setTimeout(()=>iframe.remove(),600)};
     const success=res=>{cleanup();finish();CONN.backend=true;CONN.latency=API_STATS.lastMs;CONN.lastError='';updateConnectionUI();resolve(res)};
-    const failure=err=>{cleanup();finish();CONN.lastError=String(err.message||err);if(err.code==='TIMEOUT')API_STATS.timeouts++;if(err.code!=='OFFLINE')CONN.backend=false;updateConnectionUI();reject(err)};
+    const failure=err=>{cleanup();finish();CONN.lastError=String(err.message||err);if(err.code==='TIMEOUT')API_STATS.timeouts++;updateConnectionUI();setTimeout(()=>{if(navigator.onLine)checkSystemStatus(false)},450);reject(err)};
     const nextDelay=()=>Math.min(2200,700+tries*220);
     const poll=()=>{
       if(done)return;tries++;
@@ -488,14 +506,15 @@ async function syncAll(first=false,opts={}){
   if(syncAll._running)return syncAll._running;
   const job=(async()=>{
     try{
-      const r=await api('app.snapshot',{}), localChats=(S.chatHistory||[]).slice();
+      const r=await api('app.snapshot',{}, {healthNeutral:true}), localChats=(S.chatHistory||[]).slice();
       Object.assign(S,r);S.chatHistory=mergeChatHistory(r.chatHistory||[],localChats);CONN.lastSync=Date.now();persistSnapshot();showApp();renderAll();flushChatQueue();
       if(!first&&!opts.silent)toast('Data terbaru sudah masuk ✓');
       return r;
     }catch(e){
       if(isAuthError(e.message)){
-        localStorage.removeItem('ruma_session');S.session='';
-        document.getElementById('gate').classList.remove('hidden');document.getElementById('mainApp').classList.add('hidden');toast('Session perlu login ulang.',true);
+        // Jangan pernah logout otomatis. Pertahankan session + cache sampai user memilih Logout.
+        CONN.lastError='Session perlu diverifikasi ulang: '+e.message;updateConnectionUI();
+        if(!opts.silent)toast('Data lokal tetap tersedia. Session backend perlu diverifikasi, RUMA tidak mengeluarkan Anda otomatis.',true);
       }else if(!opts.silent)toast(e.message,true);
       throw e;
     }finally{syncAll._running=null;updateConnectionUI()}
@@ -506,7 +525,7 @@ async function smartSync(force=false,opts={}){
   if(!force&&(API_INFLIGHT>0||CHAT_BUSY||CONN.pendingWrites>0))return {deferred:true};
   if(force||!S.user)return syncAll(false,opts);
   try{
-    const r=await api('app.revision',{revision:Number(S.revision||0)});
+    const r=await api('app.revision',{revision:Number(S.revision||0)},{healthNeutral:true});
     CONN.lastSync=Date.now();
     if(r&&Number(r.revision)!==Number(S.revision||0))return syncAll(false,opts);
     if(r&&r.version)S.settings={...S.settings,version:r.version};
@@ -705,7 +724,7 @@ function updateConnectionUI(){
   set('stCache',cache.at?((Date.now()-cache.at<=CACHE_TTL?'Fresh':'Stale')+' · '+Math.max(0,Math.round((Date.now()-cache.at)/1000))+' dtk · rev '+(S.revision||'-')):'Belum ada snapshot');
   set('stAI',S.settings.aiConfigured?(S.settings.aiProvider+' · '+S.settings.aiModel):'Belum dikonfigurasi');
   set('stReceipt',S.settings.receiptConfigured?'Aktif · Gemini Vision':'Belum aktif · butuh Gemini API Key');
-  set('stEmail',S.settings.emailEnabled===false?'Nonaktif':((S.settings.notificationTrigger===false?'Trigger belum aktif':'Aktif')+' · jam '+String(S.settings.emailHour??7).padStart(2,'0')+'.00'+(S.settings.mailQuota!==undefined?' · kuota '+S.settings.mailQuota:'')));
+  set('stEmail',S.settings.emailEnabled===false?'Nonaktif':((S.settings.notificationTrigger===false?'Trigger belum aktif':'Aktif')+' · jam '+String(S.settings.emailHour??7).padStart(2,'0')+'.00'+(Number(S.settings.mailQuota)>=0?' · kuota '+S.settings.mailQuota:'')));
   const calOn=!!S.settings.calendarEnabled,calConnected=!!S.settings.calendarConnected;set('stCalendar',!calOn?'Nonaktif':(calConnected?'Terhubung · '+(S.settings.calendarName||'RUMA Household')+(S.settings.calendarPending?' · '+S.settings.calendarPending+' antrean':''):'Perlu setup'+(S.settings.calendarLastError?' · '+S.settings.calendarLastError:'')));
   set('stSync',(CONN.pendingWrites?CONN.pendingWrites+' perubahan sedang disimpan · ':'')+(CONN.lastSync?new Date(CONN.lastSync).toLocaleTimeString('id-ID'):'Belum sinkron'));
   set('stVersion','App '+VERSION+' · Backend '+(S.settings.version||'-')+(versionMismatch?' · ⚠ versi berbeda':''));
@@ -715,20 +734,28 @@ function updateConnectionUI(){
   set('stEndpoint',API_URL?API_URL.replace(/\/s\/[^/]+\/exec/,'/s/••••/exec'):'Belum diisi');const mini=document.getElementById('miniSync');if(mini)mini.textContent=CONN.pendingWrites?'Menyimpan '+CONN.pendingWrites+' perubahan':CONN.lastSync?'Sinkron '+new Date(CONN.lastSync).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}):'Cache siap';
 }
 async function checkSystemStatus(showToast=false){
-  if(!S.session)return checkBootstrap(showToast);if(CONN.checking)return;if(!showToast&&API_INFLIGHT>0){setTimeout(()=>checkSystemStatus(false),1800);return}CONN.checking=true;updateConnectionUI();
+  if(CONN.checking)return;if(!showToast&&API_INFLIGHT>0){setTimeout(()=>checkSystemStatus(false),1800);return}CONN.checking=true;updateConnectionUI();
   try{
-    const t=performance.now(),r=await api('system.status',{});
-    CONN.backend=true;CONN.latency=Math.round(performance.now()-t);
-    if(r){CONN.activeSessions=Number(r.activeSessions||0);const c=r.calendar||{};S.settings={...S.settings,version:r.version,databaseName:r.databaseName,spreadsheetId:r.spreadsheetId,aiProvider:r.aiProvider,aiModel:r.aiModel,aiConfigured:r.aiConfigured,receiptConfigured:!!r.receiptConfigured,emailEnabled:r.emailEnabled!==false,emailHour:Number(r.emailHour||7),notificationTrigger:!!r.notificationTrigger,mailQuota:Number(r.mailQuota||0),legacyGhostBills:Number(r.legacyGhostBills||0),transport:r.transport||'Direct JSONP read',calendarEnabled:!!c.enabled,calendarConnected:!!c.connected,calendarId:c.id||'',calendarName:c.name||'RUMA Household',calendarTrigger:!!c.trigger,calendarSyncEvents:c.syncEvents!==false,calendarSyncTasks:!!c.syncTasks,calendarSyncBills:c.syncBills!==false,calendarPopupH1:c.popupH1!==false,calendarPopup60:c.popup60!==false,calendarPopup15:!!c.popup15,calendarEmailH1:!!c.emailH1,calendarLinkUsers:c.linkUsers!==false,calendarSendInvites:!!c.sendInvites,calendarLinkedUsers:c.linkedUsers||[],calendarLastSync:c.lastSync||'',calendarLastError:c.lastError||'',calendarPending:Number(c.pending||0)};fillCalendarSettings();}
-    updateConnectionUI();if(showToast)toast((r&&r.version!==VERSION)?('Backend masih v'+r.version+'. Deploy backend.gs v'+VERSION+' sebagai New version.'):'Semua koneksi utama terdeteksi ✓',!!(r&&r.version!==VERSION));
-  }catch(e){
+    // Heartbeat publik sangat ringan: tidak membuka Spreadsheet, Calendar, atau Gmail.
+    const t=performance.now(),ping=await api('system.ping',{}, {noSession:true,timeout:9000,attempts:3,healthNeutral:true});
+    CONN.backend=true;CONN.latency=Math.round(performance.now()-t);CONN.lastError='';
+    if(ping&&ping.version)S.settings={...S.settings,version:ping.version};
+    updateConnectionUI();
+    if(!S.session){if(showToast)toast('Backend aktif ✓');return;}
+    // Status detail hanya diminta ketika user menekan Periksa Semua.
+    if(!showToast)return;
     try{
-      const ping=await directJsonpApi('app.revision',{revision:Number(S.revision||0)},{timeout:18000});
-      CONN.backend=true;CONN.lastError='Status detail tertunda, tetapi backend merespons.';if(ping&&ping.version)S.settings={...S.settings,version:ping.version};updateConnectionUI();
-      if(showToast)toast('Backend terhubung. Status detail belum selesai dimuat.');
-    }catch(pingErr){CONN.backend=false;CONN.lastError=e.message;updateConnectionUI();if(showToast)toast(e.message,true)}
+      const r=await api('system.status',{}, {timeout:18000,attempts:2,healthNeutral:true});
+      if(r){CONN.activeSessions=Number(r.activeSessions||0);const c=r.calendar||{};S.settings={...S.settings,version:r.version,databaseName:r.databaseName,spreadsheetId:r.spreadsheetId,aiProvider:r.aiProvider,aiModel:r.aiModel,aiConfigured:r.aiConfigured,receiptConfigured:!!r.receiptConfigured,emailEnabled:r.emailEnabled!==false,emailHour:Number(r.emailHour||7),notificationTrigger:!!r.notificationTrigger,mailQuota:Number(r.mailQuota||-1),legacyGhostBills:Number(r.legacyGhostBills||0),transport:r.transport||'Heartbeat + Direct JSONP',calendarEnabled:!!c.enabled,calendarConnected:!!c.connected,calendarId:c.id||'',calendarName:c.name||'RUMA Household',calendarTrigger:!!c.trigger,calendarSyncEvents:c.syncEvents!==false,calendarSyncTasks:!!c.syncTasks,calendarSyncBills:c.syncBills!==false,calendarPopupH1:c.popupH1!==false,calendarPopup60:c.popup60!==false,calendarPopup15:!!c.popup15,calendarEmailH1:!!c.emailH1,calendarLinkUsers:true,calendarSendInvites:false,calendarSharedOnly:true,calendarLinkedUsers:c.linkedUsers||S.settings.calendarLinkedUsers||[],calendarLastSync:c.lastSync||'',calendarLastError:c.lastError||'',calendarPending:Number(c.pending||0)};fillCalendarSettings();}
+      updateConnectionUI();toast((r&&r.version!==VERSION)?('Backend masih v'+r.version+'. Deploy backend.gs v'+VERSION+' sebagai New version.'):'Backend dan koneksi utama aktif ✓',!!(r&&r.version!==VERSION));
+    }catch(detailErr){
+      CONN.backend=true;CONN.lastError='Status detail tertunda: '+detailErr.message;updateConnectionUI();toast('Backend aktif. Pemeriksaan detail belum selesai, data lokal tetap aman.');
+    }
+  }catch(e){
+    CONN.backend=false;CONN.lastError=e.message;updateConnectionUI();if(showToast)toast('Backend belum merespons: '+e.message,true);
   }finally{CONN.checking=false}
 }
+
 async function runDiagnostics(){if(!S.session)return;try{const r=await api('system.diagnose',{});const issues=r.issues||[];const score=Number(r.score||0);const st=document.getElementById('stDiagnostics');if(st)st.textContent=score+'/100 · '+(issues.length?issues.length+' catatan':'Sehat');const health=document.getElementById('stDataHealth');if(health)health.textContent=issues.length?issues.map(x=>x.label).slice(0,2).join(' · '):'Bersih';modal('Diagnosa Sistem',`<div class="system-score"><div class="scoreball">${score}</div><div><b>Kesehatan RUMA ${score}/100</b><div class="small muted">${issues.length?issues.length+' hal perlu diperhatikan':'Semua pemeriksaan utama sehat'}</div></div></div><div class="list">${issues.length?issues.map(x=>`<div class="item"><div class="main"><div class="name">${esc(x.label)}</div><div class="meta" style="white-space:normal">${esc(x.detail||'')}</div></div><span class="badge ${x.level==='error'?'warn':'gray'}">${esc(x.level||'info')}</span></div>`).join(''):'<div class="alert ok">Semua pemeriksaan utama sehat. Tidak ada referensi rusak atau schema yang hilang.</div>'}</div>`)}catch(e){toast('Diagnostik gagal: '+e.message,true)}}
 
 async function cleanupLegacyGhostData(){
@@ -1012,7 +1039,7 @@ function openActivityModal(i='',kind='TASK',presetDate=''){
   <div class="field"><label>Jenis</label><select id="mActivityType" ${locked} onchange="updateActivityFields()"><option value="TASK" ${!isEvent?'selected':''}>Task / Tugas</option><option value="AGENDA" ${isEvent?'selected':''}>Agenda / Jadwal</option></select></div>
   <div class="field"><label>Judul</label><input id="mActivityTitle" value="${esc(src.title||'')}" placeholder="Contoh: Bayar pajak / Meeting"></div>
   <div class="field"><label>Tanggal</label><input id="mActivityDate" type="date" value="${date}"></div>
-  <div class="field"><label>Untuk / Penanggung jawab</label><select id="mActivityUser" onchange="syncActivityScope()">${activityAssigneeOptions(src.assignedTo||S.user.id)}</select><div class="small muted">Email user diambil otomatis dari Pengaturan User. Jika Google Calendar aktif, event akan dikaitkan ke email penanggung jawab tanpa perlu mengetik ulang.</div></div>
+  <div class="field"><label>Untuk / Penanggung jawab</label><select id="mActivityUser" onchange="syncActivityScope()">${activityAssigneeOptions(src.assignedTo||S.user.id)}</select><div class="small muted">Penanggung jawab mengikuti User RUMA. Google Calendar memakai kalender bersama tanpa menambahkan email user sebagai guest event.</div></div>
   <div id="activityAgendaFields">
     <div class="grid"><div class="field span6"><label>Mulai</label><input id="mActivityStart" type="time" value="${startTime}"></div><div class="field span6"><label>Selesai</label><input id="mActivityEnd" type="time" value="${endTime}"></div></div>
     <div class="field"><label>Lokasi</label><input id="mActivityLocation" value="${esc(src.location||'')}" placeholder="Opsional"></div>
@@ -1056,15 +1083,15 @@ function saveNotificationSettings(){const p={enabled:checked('setEmailEnabled'),
 
 function fillCalendarSettings(){
   const by=id=>document.getElementById(id);if(!by('setCalendarEnabled'))return;
-  by('setCalendarEnabled').checked=!!S.settings.calendarEnabled;by('setCalendarName').value=S.settings.calendarName||'RUMA Household';by('setCalendarEvents').checked=S.settings.calendarSyncEvents!==false;by('setCalendarTasks').checked=!!S.settings.calendarSyncTasks;by('setCalendarBills').checked=S.settings.calendarSyncBills!==false;by('setCalendarPopupH1').checked=S.settings.calendarPopupH1!==false;by('setCalendarPopup60').checked=S.settings.calendarPopup60!==false;by('setCalendarPopup15').checked=!!S.settings.calendarPopup15;by('setCalendarEmailH1').checked=!!S.settings.calendarEmailH1;by('setCalendarLinkUsers').checked=S.settings.calendarLinkUsers!==false;by('setCalendarInvites').checked=!!S.settings.calendarSendInvites;
+  by('setCalendarEnabled').checked=!!S.settings.calendarEnabled;by('setCalendarName').value=S.settings.calendarName||'RUMA Household';by('setCalendarEvents').checked=S.settings.calendarSyncEvents!==false;by('setCalendarTasks').checked=!!S.settings.calendarSyncTasks;by('setCalendarBills').checked=S.settings.calendarSyncBills!==false;by('setCalendarPopupH1').checked=S.settings.calendarPopupH1!==false;by('setCalendarPopup60').checked=S.settings.calendarPopup60!==false;by('setCalendarPopup15').checked=!!S.settings.calendarPopup15;by('setCalendarEmailH1').checked=!!S.settings.calendarEmailH1;
   const badge=by('calendarStatusBadge'),info=by('calendarSettingsInfo');if(badge){badge.className='badge '+(S.settings.calendarEnabled?(S.settings.calendarConnected?'ok':'warn'):'gray');badge.textContent=!S.settings.calendarEnabled?'Nonaktif':S.settings.calendarConnected?'Terhubung':'Perlu setup'}
   if(info){const bits=[];if(S.settings.calendarId)bits.push((S.settings.calendarName||'RUMA Household')+' · '+S.settings.calendarId.slice(0,18)+'…');if(S.settings.calendarTrigger)bits.push('sync background 5 menit');if(S.settings.calendarPending)bits.push(S.settings.calendarPending+' menunggu sinkron');if(S.settings.calendarLastSync)bits.push('terakhir '+new Date(S.settings.calendarLastSync).toLocaleString('id-ID'));if(S.settings.calendarLastError)bits.push('⚠ '+S.settings.calendarLastError);info.textContent=bits.join(' · ')||'Belum terhubung ke Google Calendar.'}const links=by('calendarLinkedUsers');if(links){const us=S.settings.calendarLinkedUsers?.length?S.settings.calendarLinkedUsers:S.users;links.innerHTML=us.length?us.map(u=>`<span class="badge gray" style="margin:2px 4px 2px 0">${esc(u.name)} · ${esc(u.email||'email belum diisi')}</span>`).join(''):'Belum ada user dengan email aktif.'}
-  const owner=S.user&&S.user.role==='OWNER';['setCalendarEnabled','setCalendarName','setCalendarEvents','setCalendarTasks','setCalendarBills','setCalendarPopupH1','setCalendarPopup60','setCalendarPopup15','setCalendarEmailH1','setCalendarInvites'].forEach(id=>{const e=by(id);if(e)e.disabled=!owner});
+  const owner=S.user&&S.user.role==='OWNER';['setCalendarEnabled','setCalendarName','setCalendarEvents','setCalendarTasks','setCalendarBills','setCalendarPopupH1','setCalendarPopup60','setCalendarPopup15','setCalendarEmailH1'].forEach(id=>{const e=by(id);if(e)e.disabled=!owner});
 }
-function applyCalendarResponse(r){if(!r)return;S.settings={...S.settings,calendarEnabled:!!r.enabled,calendarConnected:!!r.connected,calendarId:r.id||S.settings.calendarId||'',calendarName:r.name||S.settings.calendarName||'RUMA Household',calendarTrigger:!!r.trigger,calendarSyncEvents:r.syncEvents!==false,calendarSyncTasks:!!r.syncTasks,calendarSyncBills:r.syncBills!==false,calendarPopupH1:r.popupH1!==false,calendarPopup60:r.popup60!==false,calendarPopup15:!!r.popup15,calendarEmailH1:!!r.emailH1,calendarLinkUsers:r.linkUsers!==false,calendarSendInvites:!!r.sendInvites,calendarLinkedUsers:r.linkedUsers||S.settings.calendarLinkedUsers||[],calendarLastSync:r.lastSync||'',calendarLastError:r.lastError||'',calendarPending:Number(r.pending||0)};persistSnapshot();fillCalendarSettings();updateConnectionUI()}
+function applyCalendarResponse(r){if(!r)return;S.settings={...S.settings,calendarEnabled:!!r.enabled,calendarConnected:!!r.connected,calendarId:r.id||S.settings.calendarId||'',calendarName:r.name||S.settings.calendarName||'RUMA Household',calendarTrigger:!!r.trigger,calendarSyncEvents:r.syncEvents!==false,calendarSyncTasks:!!r.syncTasks,calendarSyncBills:r.syncBills!==false,calendarPopupH1:r.popupH1!==false,calendarPopup60:r.popup60!==false,calendarPopup15:!!r.popup15,calendarEmailH1:!!r.emailH1,calendarLinkUsers:true,calendarSendInvites:false,calendarSharedOnly:true,calendarLinkedUsers:r.linkedUsers||S.settings.calendarLinkedUsers||[],calendarLastSync:r.lastSync||'',calendarLastError:r.lastError||'',calendarPending:Number(r.pending||0)};persistSnapshot();fillCalendarSettings();updateConnectionUI()}
 async function saveCalendarSettings(){
   if(!S.user||S.user.role!=='OWNER')return toast('Hanya owner yang dapat mengubah Google Calendar.',true);
-  const p={enabled:checked('setCalendarEnabled'),name:formVal('setCalendarName')||'RUMA Household',events:checked('setCalendarEvents'),tasks:checked('setCalendarTasks'),bills:checked('setCalendarBills'),popupH1:checked('setCalendarPopupH1'),popup60:checked('setCalendarPopup60'),popup15:checked('setCalendarPopup15'),emailH1:checked('setCalendarEmailH1'),linkUsers:checked('setCalendarLinkUsers'),sendInvites:checked('setCalendarInvites'),clientMutationId:id('MUTCAL')};
+  const p={enabled:checked('setCalendarEnabled'),name:formVal('setCalendarName')||'RUMA Household',events:checked('setCalendarEvents'),tasks:checked('setCalendarTasks'),bills:checked('setCalendarBills'),popupH1:checked('setCalendarPopupH1'),popup60:checked('setCalendarPopup60'),popup15:checked('setCalendarPopup15'),emailH1:checked('setCalendarEmailH1'),clientMutationId:id('MUTCAL')};
   try{const r=await api('calendar.saveSettings',p,{timeout:65000});applyCalendarResponse(r);toast(p.enabled?'Google Calendar disimpan ✓':'Google Calendar dinonaktifkan');scheduleSync(600)}catch(e){toast('Calendar belum tersimpan: '+e.message,true)}
 }
 async function setupGoogleCalendarUI(){
