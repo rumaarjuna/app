@@ -1,4 +1,4 @@
-const CACHE='ruma-pwa-v2.8.1';
+const CACHE='ruma-pwa-v2.8.1.';
 const STATIC=['./','./index.html','./config.js','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(CACHE).then(c=>c.addAll(STATIC).catch(()=>{})))});
 self.addEventListener('activate',e=>{e.waitUntil(Promise.all([
