@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
   <meta name="theme-color" content="#ec4899">
   <title>RUMA</title>
   <link rel="manifest" href="manifest.webmanifest">
@@ -16,7 +16,7 @@
       --shadow:0 18px 50px rgba(75,35,59,.09);--shadow-sm:0 8px 24px rgba(75,35,59,.065);--radius:24px;--radius-sm:16px;
       --nav-h:74px;
     }
-    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{touch-action:manipulation;-webkit-text-size-adjust:100%}
     html{background:var(--bg);scroll-behavior:smooth}
     html,body{margin:0;color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
     body{min-height:100vh;background:
@@ -71,7 +71,7 @@
 
     .ai-shell{background:linear-gradient(180deg,rgba(255,255,255,.94),rgba(255,250,253,.92));border:1px solid var(--line);border-radius:25px;padding:10px;box-shadow:var(--shadow-sm)}
     .chat{height:min(62dvh,680px);min-height:420px;overflow:auto;background:transparent;border:0;border-radius:18px;padding:7px 5px 12px;display:flex;flex-direction:column;gap:9px;overscroll-behavior:contain}.bubble{max-width:88%;padding:11px 13px;border-radius:18px;line-height:1.5;font-size:13px;box-shadow:0 3px 12px rgba(60,30,48,.035)}.bubble.user{align-self:flex-end;background:linear-gradient(135deg,#ec4899,#d12670);color:#fff;border-bottom-right-radius:6px}.bubble.ai{align-self:flex-start;background:#fff;border:1px solid var(--line-2);border-bottom-left-radius:6px}.bubble.feedback{background:#fff8ed;border-color:#fed7aa;color:#7c2d12}.bubble.success{background:#f0fcf6;border-color:#bbf7d0;color:#075f45}.bubble.pending{background:var(--pink-soft);border-color:#fbcfe8;color:var(--ink)}.bubble.ai strong{font-weight:900;color:#aa1858}.bubble.ai ul{padding-left:18px;margin:7px 0}.bubble.ai p{margin:0 0 7px}.bubble.ai p:last-child{margin-bottom:0}
-    .chatinput{position:sticky;bottom:0;display:flex;gap:8px;margin-top:8px;padding:8px;background:rgba(255,255,255,.88);border:1px solid var(--line);border-radius:20px;backdrop-filter:blur(15px);box-shadow:0 8px 24px rgba(60,30,48,.07)}.chatinput input{flex:1;min-width:0;border:0;outline:none;background:transparent;padding:8px 7px;font-size:14px}.chatinput .btn{width:44px;height:44px;padding:0;border-radius:15px;font-size:18px}
+    .chatinput{position:sticky;bottom:0;display:flex;gap:8px;margin-top:8px;padding:8px;background:rgba(255,255,255,.88);border:1px solid var(--line);border-radius:20px;backdrop-filter:blur(15px);box-shadow:0 8px 24px rgba(60,30,48,.07)}.chatinput input,.chatinput textarea{flex:1;min-width:0;border:0;outline:none;background:transparent;padding:10px 7px;font-size:16px;line-height:1.35;color:var(--ink)}.chatinput textarea{min-height:44px;max-height:116px;resize:none;overflow:auto}.chatinput .btn{width:44px;height:44px;padding:0;border-radius:15px;font-size:18px;align-self:flex-end}
     .chat-history-note{font-size:10px;color:var(--muted);text-align:center;padding:4px 0}.chattyping{display:inline-flex;gap:4px;align-items:center}.chattyping i{width:5px;height:5px;border-radius:50%;background:#b06a8c;animation:blink 1s infinite alternate}.chattyping i:nth-child(2){animation-delay:.2s}.chattyping i:nth-child(3){animation-delay:.4s}@keyframes blink{to{opacity:.25;transform:translateY(-2px)}}
 
     .statusgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.statusbox{border:1px solid var(--line-2);border-radius:17px;padding:12px;background:#fff}.statusbox b{display:block;font-size:11px;margin-bottom:4px}.statusvalue{font-size:11px;color:var(--muted);word-break:break-word}.system-score{display:flex;align-items:center;gap:11px;padding:12px 13px;border-radius:18px;background:linear-gradient(135deg,#fff1f7,#fff);border:1px solid #f5dce8}.scoreball{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--ink);color:#fff;font-size:12px;font-weight:950}
@@ -106,6 +106,8 @@
     .activity-kind{font-size:9px;font-weight:950;letter-spacing:.08em;text-transform:uppercase;padding:5px 8px;border-radius:999px;white-space:nowrap}.activity-kind.task{background:#fff1f2;color:#be185d}.activity-kind.event{background:#fdf2f8;color:#9d174d}.activity-time{min-width:48px;font-size:11px;font-weight:900;color:var(--pink-deep)}
     .syncpulse{display:inline-flex;align-items:center;gap:6px}.syncpulse::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 4px rgba(15,159,110,.08)}
     .receipt-speed{font-size:10px;color:var(--muted);margin-top:4px}
+    .start-guide{display:none;margin:0 0 12px;padding:14px 15px;border:1px solid #f4d9e7;border-radius:20px;background:linear-gradient(135deg,#fff,#fff3f9);box-shadow:var(--shadow-sm)}.start-guide.show{display:flex;align-items:center;gap:12px}.start-icon{width:40px;height:40px;border-radius:14px;background:var(--pink-soft);display:grid;place-items:center;font-size:20px;flex:0 0 auto}.start-copy{flex:1;min-width:0}.start-title{font-weight:950;font-size:14px}.start-desc{font-size:11px;color:var(--muted);margin-top:3px}.personal-summary{padding:12px;border-radius:16px;background:var(--pink-soft);border:1px solid #fbcfe8;margin-bottom:10px}.role-note{font-size:10px;color:var(--muted);margin-top:6px}.receipt-source-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}.receipt-source{border:1px solid var(--line);background:#fff;border-radius:18px;padding:18px 12px;text-align:center;font-weight:900}.receipt-source span{display:block;font-size:28px;margin-bottom:7px}.chat-enter-hint{font-size:9px;color:var(--muted);text-align:right;margin:3px 5px 0}.owner-hidden{display:none!important}
+
 </style>
 </head>
 <body data-theme="system">
@@ -131,7 +133,7 @@
       <div class="field"><label>Password</label><input id="ownerPassword" type="password" placeholder="Minimal 10 karakter + huruf & angka"></div>
       <button class="btn" style="width:100%" onclick="createOwner()">Aktifkan RUMA</button>
     </div>
-    <div class="small muted" style="margin-top:16px">v<span id="gateVersion">2.6.1</span> · Pink Edition</div>
+    <div class="small muted" style="margin-top:16px">v<span id="gateVersion">2.8.5</span> · Pink Edition</div>
   </div>
 </section>
 
@@ -152,6 +154,8 @@
         <div><div class="eyebrow" id="todayDate"></div><h1 id="hello">Selamat datang</h1><p id="dailyLine">Fokus pada yang penting hari ini.</p></div>
         <div class="syncmini" id="miniSync">Cache siap</div>
       </div>
+
+      <div id="startGuide" class="start-guide"><div class="start-icon" id="startGuideIcon">✨</div><div class="start-copy"><div class="start-title" id="startGuideTitle">Mulai dari sini</div><div class="start-desc" id="startGuideDesc"></div></div><button id="startGuideBtn" class="btn secondary sm">Mulai</button></div>
 
       <div class="money-hero">
         <div class="label">Saldo pribadi tersedia</div>
@@ -200,7 +204,7 @@
     </section>
 
     <section id="page-ai" class="page" data-chat-page="1">
-      <div class="sectionhead"><div class="row"><button class="iconbtn chatback" onclick="exitChat()" title="Kembali">←</button><div><h2>RUMA AI</h2><div class="sectionhint">Full screen · chat tersimpan · foto struk aktif.</div></div></div><div class="row"><button class="iconbtn" onclick="triggerReceiptPhoto()" title="Kirim foto struk">📷</button><button class="iconbtn" onclick="openChatSearch()" title="Cari chat"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button><span class="badge" id="aiStatus">Belum dikonfigurasi</span></div></div>
+      <div class="sectionhead"><div class="row"><button class="iconbtn chatback" onclick="exitChat()" title="Kembali">←</button><div><h2>RUMA AI</h2><div class="sectionhint">Full screen · chat tersimpan · kamera & galeri struk aktif.</div></div></div><div class="row"><button class="iconbtn" onclick="triggerReceiptPhoto()" title="Struk dari kamera atau galeri">📷</button><button class="iconbtn" onclick="openChatSearch()" title="Cari chat"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button><span class="badge" id="aiStatus">Belum dikonfigurasi</span></div></div>
       <div class="pillbar" style="margin-bottom:8px">
         <button class="pill" onclick="askPreset('Bulan ini saya paling boros di kategori apa? Berikan saran konkret.')">Keuangan bulan ini</button>
         <button class="pill" onclick="askPreset('Apa saja yang harus saya perhatikan dalam 7 hari ke depan?')">7 hari ke depan</button>
@@ -209,7 +213,7 @@
       </div>
       <div class="ai-shell">
         <div id="chat" class="chat"><div class="bubble ai">Hai. Tulis command, tanya kondisi rumah tangga, atau kirim foto struk. Riwayat chat tetap tersimpan.</div></div>
-        <div class="chatinput"><input id="receiptFile" type="file" accept="image/*" capture="environment" class="hidden" onchange="handleReceiptPhoto(event)"><button id="receiptBtn" class="iconbtn chatphoto" onclick="triggerReceiptPhoto()" title="Foto struk">📷</button><input id="chatInput" placeholder="Tulis pesan atau command…" onkeydown="if(event.key==='Enter')sendChat()"><button class="btn" onclick="sendChat()">➜</button></div>
+        <input id="receiptCameraFile" type="file" accept="image/*" capture="environment" class="hidden" onchange="handleReceiptPhoto(event)"><input id="receiptGalleryFile" type="file" accept="image/*" class="hidden" onchange="handleReceiptPhoto(event)"><div class="chatinput"><button id="receiptBtn" class="iconbtn chatphoto" onclick="triggerReceiptPhoto()" title="Kamera / Galeri struk">📷</button><textarea id="chatInput" rows="1" enterkeyhint="send" placeholder="Tulis pesan atau command…" onkeydown="handleChatKeydown(event)" oninput="autoGrowChat(this)"></textarea><button class="btn" onclick="sendChat()" title="Enter / Kirim">↵</button></div><div class="chat-enter-hint">Enter untuk kirim · Shift+Enter untuk baris baru</div>
       </div>
     </section>
 
@@ -243,17 +247,17 @@
       <div id="more-notes" class="hidden"><div class="sectionhead"><h2>Catatan</h2><button class="btn sm" onclick="openNoteModal()">+ Catatan</button></div><div id="notesList" class="grid"></div></div>
       <div id="more-settings" class="hidden">
         <div class="grid">
-          <div class="card span6"><div class="sectionhead" style="margin-top:0"><h2>User</h2><button class="btn sm" onclick="openUserModal()">+ User</button></div><div id="usersList" class="list"></div></div>
-          <div class="card span6"><h2 style="margin-top:0">AI & Tampilan</h2>
+          <div class="card span12" id="personalSettingsCard"><div class="row between wrap"><div><h2 style="margin:0">Akun Saya</h2><div class="small muted">Pengaturan pribadi perangkat dan akun yang sedang login.</div></div><span id="myRoleBadge" class="badge gray">User</span></div><div class="personal-summary" style="margin-top:12px"><b id="myProfileName">-</b><div class="small muted" id="myProfileEmail">-</div></div><div class="grid"><div class="span6"><div class="field"><label>Nama tampilan</label><input id="setMyName" maxlength="80"></div><div class="field"><label>Password baru (opsional)</label><input id="setMyPassword" type="password" autocomplete="new-password" placeholder="Kosong = tetap"></div><div class="field"><label>Konfirmasi password baru</label><input id="setMyPassword2" type="password" autocomplete="new-password" placeholder="Ulangi password"></div></div><div class="span6"><div class="field"><label>Tema pribadi perangkat ini</label><select id="setMyTheme"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></div><div class="role-note">Tema disimpan di perangkat ini dan tidak mengubah tampilan pasangan.</div><div class="row wrap" style="margin-top:14px"><button class="btn" onclick="savePersonalSettings()">Simpan Pribadi</button><button class="btn ghost" onclick="installPWA()">Install RUMA</button><button class="btn danger" onclick="logout()">Logout perangkat ini</button></div></div></div></div>
+          <div class="card span6" data-owner-only="1"><div class="sectionhead" style="margin-top:0"><h2>User & Household</h2><button class="btn sm" onclick="openUserModal()">+ User</button></div><div id="usersList" class="list"></div></div>
+          <div class="card span6" data-owner-only="1"><h2 style="margin-top:0">AI & Foto Struk</h2>
             <div class="field"><label>AI Provider</label><select id="setAiProvider"><option value="GEMINI">Gemini</option><option value="GROQ">Groq</option></select></div>
             <div class="field"><label>Model Chat</label><input id="setAiModel"></div>
             <div class="field"><label>API Key provider baru (opsional)</label><input id="setAiKey" type="password" placeholder="Tidak pernah ditampilkan kembali"></div>
             <div class="field"><label>Model Foto Struk</label><select id="setReceiptModel"><option value="gemini-3.5-flash-lite">Cepat · Gemini 3.5 Flash-Lite</option><option value="gemini-3.6-flash">Seimbang · Gemini 3.6 Flash</option><option value="gemini-3.7-flash">Akurat · Gemini 3.7 Flash</option></select><div class="small muted">Mode cepat direkomendasikan untuk OCR struk.</div></div>
             <div class="field"><label>Gemini Vision API Key (opsional)</label><input id="setGeminiVisionKey" type="password" placeholder="Dibutuhkan jika chat memakai Groq"></div>
-            <div class="field"><label>Tema</label><select id="setTheme"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></div>
             <button class="btn" onclick="saveSystemSettings()">Simpan Pengaturan</button>
           </div>
-          <div class="card span6"><h2 style="margin-top:0">Notifikasi Email</h2><div class="small muted">Dikirim otomatis ke email user yang terdaftar. Trigger dibuat saat setupRuma().</div>
+          <div class="card span6" data-owner-only="1"><h2 style="margin-top:0">Notifikasi Email</h2><div class="small muted">Dikirim otomatis ke email user yang terdaftar. Trigger dibuat saat setupRuma().</div>
             <div class="switchline"><div><b>Aktifkan email</b><div class="small muted">Reminder otomatis harian</div></div><input id="setEmailEnabled" type="checkbox"></div>
             <div class="switchline"><div><b>Tagihan</b><div class="small muted">H-2, H-1, dan hari H</div></div><input id="setEmailBill" type="checkbox"></div>
             <div class="switchline"><div><b>Task</b><div class="small muted">Task jatuh tempo hari ini</div></div><input id="setEmailTask" type="checkbox"></div>
@@ -261,7 +265,7 @@
             <div class="field"><label>Jam kirim (0–23)</label><input id="setEmailHour" type="number" min="0" max="23" value="7"></div>
             <div class="row wrap"><button class="btn" onclick="saveNotificationSettings()">Simpan Notifikasi</button><button class="btn secondary" onclick="sendTestEmail()">Kirim Email Uji</button><button class="btn ghost" onclick="runNotificationNow()">Jalankan Sekarang</button></div>
           </div>
-          <div class="card span12" id="calendarSettingsCard">
+          <div class="card span12" id="calendarSettingsCard" data-owner-only="1">
             <div class="row between wrap"><div><h2 style="margin:0">Google Calendar</h2><div class="small muted">Sinkronisasi berjalan di background agar CRUD RUMA tetap cepat.</div></div><span id="calendarStatusBadge" class="badge gray">Belum aktif</span></div>
             <div class="grid" style="margin-top:12px">
               <div class="span6">
@@ -281,10 +285,10 @@
               </div>
             </div>
             <div class="alert" style="margin-top:12px"><b>Akun terdaftar & penanggung jawab</b><div class="small">Task dan agenda tetap dapat diarahkan ke <b>Saya, Pasangan, atau Bersama</b>. Email terdaftar hanya dipakai sebagai identitas user di RUMA. Agar kalender tampil di HP pasangan tanpa invitation per event, bagikan kalender <b>RUMA Household</b> satu kali melalui Google Calendar.</div><div id="calendarLinkedUsers" class="small" style="margin-top:8px"></div></div>
-            <div class="row wrap" style="margin-top:12px"><button class="btn" onclick="saveCalendarSettings()">Simpan Calendar</button><button class="btn secondary" onclick="setupGoogleCalendarUI()">Hubungkan / Buat Kalender</button><button class="btn ghost" onclick="testGoogleCalendarUI()">Tes Koneksi</button><button class="btn ghost" onclick="syncGoogleCalendarUI()">Sinkronkan Sekarang</button></div>
+            <div id="calendarSetupHelp" class="alert hidden" style="margin-top:12px"><b>Google Calendar belum dihubungkan</b><div class="small">Tekan <b>Hubungkan / Buat Kalender</b> sekali. Jika Google meminta izin Calendar, izinkan lalu kembali ke RUMA.</div></div><div class="row wrap" style="margin-top:12px"><button class="btn" onclick="saveCalendarSettings()">Simpan Calendar</button><button class="btn secondary" onclick="setupGoogleCalendarUI()">Hubungkan / Buat Kalender</button><button class="btn ghost" onclick="testGoogleCalendarUI()">Tes Koneksi</button><button class="btn ghost" onclick="syncGoogleCalendarUI()">Sinkronkan Sekarang</button></div>
             <div id="calendarSettingsInfo" class="small muted" style="margin-top:10px">Belum diperiksa.</div>
           </div>
-          <div class="card span12">
+          <div class="card span12" data-owner-only="1">
             <div class="row between wrap"><div><h2 style="margin:0">Status Sistem</h2><div class="small muted">Koneksi, cache, session, database, dan AI.</div></div><button class="btn ghost sm" onclick="checkSystemStatus(true)">Periksa Semua</button></div>
             <div class="statusgrid" style="margin-top:14px">
               <div class="statusbox"><b>Internet</b><div id="stInternet" class="statusvalue">Memeriksa...</div></div>
@@ -335,7 +339,7 @@
 <script>
 const C = window.RUMA_CONFIG || {};
 const API_URL = (C.API_URL || '').trim();
-const VERSION = '2.8.4';
+const VERSION = '2.8.5';
 const CACHE_TTL = Number(C.CACHE_TTL_MS || 300000);
 const BG_SYNC_MS = Number(C.BACKGROUND_SYNC_MS || 120000);
 const SNAP_KEY='ruma_snapshot_v2_6';
@@ -343,6 +347,7 @@ const CHAT_QUEUE_KEY='ruma_chat_queue_v2_6';
 const DEVICE_KEY='ruma_device_id';
 const DEVICE_ID=localStorage.getItem(DEVICE_KEY)||id('DEV');
 localStorage.setItem(DEVICE_KEY,DEVICE_ID);
+const PERSONAL_THEME_PREFIX='ruma_personal_theme_';
 let CONN={online:navigator.onLine,backend:null,latency:null,lastSync:0,lastError:'',checking:false,pendingWrites:0,activeSessions:0};
 let syncTimer=null;
 const AI_CACHE=new Map();
@@ -551,7 +556,7 @@ function renderAll(){
   renderTodayActivities();
   renderTodayBills();
   document.getElementById('aiStatus').textContent=S.settings.aiConfigured?(S.settings.aiProvider+' · '+S.settings.aiModel):'Belum dikonfigurasi';
-  document.getElementById('setAiProvider').value=S.settings.aiProvider||'GEMINI';document.getElementById('setAiModel').value=S.settings.aiModel||'gemini-3.6-flash';const rm=document.getElementById('setReceiptModel'),rv=S.settings.receiptModel||'gemini-3.5-flash-lite';if(rm){rm.value=[...rm.options].some(o=>o.value===rv)?rv:'gemini-3.5-flash-lite';}document.getElementById('setTheme').value=S.settings.theme||'system';document.getElementById('setEmailEnabled').checked=S.settings.emailEnabled!==false;document.getElementById('setEmailBill').checked=S.settings.emailBill!==false;document.getElementById('setEmailTask').checked=S.settings.emailTask!==false;document.getElementById('setEmailEvent').checked=S.settings.emailEvent!==false;document.getElementById('setEmailHour').value=Number(S.settings.emailHour??7);fillCalendarSettings();applyTheme(S.settings.theme||'system');
+  document.getElementById('setAiProvider').value=S.settings.aiProvider||'GEMINI';document.getElementById('setAiModel').value=S.settings.aiModel||'gemini-3.6-flash';const rm=document.getElementById('setReceiptModel'),rv=S.settings.receiptModel||'gemini-3.5-flash-lite';if(rm){rm.value=[...rm.options].some(o=>o.value===rv)?rv:'gemini-3.5-flash-lite';}document.getElementById('setEmailEnabled').checked=S.settings.emailEnabled!==false;document.getElementById('setEmailBill').checked=S.settings.emailBill!==false;document.getElementById('setEmailTask').checked=S.settings.emailTask!==false;document.getElementById('setEmailEvent').checked=S.settings.emailEvent!==false;document.getElementById('setEmailHour').value=Number(S.settings.emailHour??7);fillCalendarSettings();fillPersonalSettings();applySettingsRoleVisibility();applyTheme(personalTheme());renderStartGuide();
   document.getElementById('dbInfo').textContent=(S.settings.databaseName||'RUMA Database')+' · '+(S.settings.spreadsheetId||'');updateConnectionUI();
   renderAccounts();renderTransactions();renderBudgets();renderBills();renderGoals();renderTasks();renderEvents();renderActivities();renderCalendar();renderShopping();renderNotes();renderUsers();if(!CHAT_BUSY)renderChatHistory();
 }
@@ -667,7 +672,7 @@ function exitChat(){goPage('today',document.querySelector('.navbtn[data-page="to
 function moneyTab(p,b){['transactions','accounts','budgets','bills','goals'].forEach(x=>document.getElementById('money-'+x).classList.toggle('hidden',x!==p));b.parentElement.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active')}
 function planTab(p,b){['activities','calendar'].forEach(x=>document.getElementById('plan-'+x)?.classList.toggle('hidden',x!==p));b.parentElement.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');if(p==='calendar')renderCalendar();else renderActivities()}
 function moreTab(p,b){['shopping','notes','settings'].forEach(x=>document.getElementById('more-'+x).classList.toggle('hidden',x!==p));b.parentElement.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active')}
-function openSettings(){goPage('more',document.querySelector('.navbtn[data-page="more"]'));const btn=[...document.querySelectorAll('#page-more .tab')].find(x=>x.textContent.includes('Pengaturan'));moreTab('settings',btn);setTimeout(()=>checkSystemStatus(false),80)}
+function openSettings(){goPage('more',document.querySelector('.navbtn[data-page="more"]'));const btn=[...document.querySelectorAll('#page-more .tab')].find(x=>x.textContent.includes('Pengaturan'));moreTab('settings',btn);applySettingsRoleVisibility();fillPersonalSettings();if(S.user&&S.user.role==='OWNER')setTimeout(()=>checkSystemStatus(false),80)}
 function closeModal(){document.getElementById('modal').classList.add('hidden')}
 function modal(title,html){document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').innerHTML=html;document.getElementById('modal').classList.remove('hidden')}
 function accountOptions(sel=''){const active=S.accounts.filter(a=>a.active!==false&&(a.canEdit||a.scope==='JOINT'||a.ownerId===S.user.id));let out=active.map(a=>`<option value="${a.id}" ${a.id===sel?'selected':''}>${esc(a.name)} · ${esc(a.scope)}</option>`).join('');const old=sel&&S.accounts.find(a=>a.id===sel&&a.active===false);if(old)out=`<option value="${old.id}" selected>${esc(old.name)} · ARSIP</option>`+out;return out}
@@ -1097,17 +1102,25 @@ function openNoteModal(i=''){const n=S.notes.find(x=>x.id===i)||{};modal(i?'Edit
 <div class="field"><label>Judul</label><input id="mNoteTitle" value="${esc(n.title||'')}"></div><div class="field"><label>Catatan</label><textarea id="mNoteBody">${esc(n.body||'')}</textarea></div><div class="field"><label>Scope</label><select id="mNoteScope"><option ${n.scope!=='JOINT'?'selected':''}>PERSONAL</option><option ${n.scope==='JOINT'?'selected':''}>JOINT</option></select></div><div class="row"><button class="btn" onclick="saveNote('${i}')">Simpan</button>${i?`<button class="btn danger" onclick="removeItem('note','${i}')">Hapus</button>`:''}</div>`)}
 function saveNote(i){const p={id:i,title:formVal('mNoteTitle'),body:formVal('mNoteBody'),scope:formVal('mNoteScope')};optimistic('note.save',p,()=>{const tid=i||id('TMPNOTE');upsert(S.notes,{...p,id:tid,ownerId:S.user.id},i||tid);return{tempId:i?'':tid}})}
 
+function personalTheme(){if(!S.user)return S.settings.theme||'system';return localStorage.getItem(PERSONAL_THEME_PREFIX+S.user.id)||S.settings.theme||'system'}
+function fillPersonalSettings(){if(!S.user)return;const n=document.getElementById('setMyName'),e=document.getElementById('myProfileEmail'),nm=document.getElementById('myProfileName'),rb=document.getElementById('myRoleBadge'),th=document.getElementById('setMyTheme');if(n)n.value=S.user.name||'';if(e)e.textContent=S.user.email||((S.users.find(u=>u.id===S.user.id)||{}).email||'-');if(nm)nm.textContent=S.user.name||'-';if(rb){rb.textContent=S.user.role==='OWNER'?'Owner':'Partner';rb.className='badge '+(S.user.role==='OWNER'?'ok':'gray')}if(th)th.value=personalTheme()}
+function applySettingsRoleVisibility(){const owner=!!(S.user&&S.user.role==='OWNER');document.querySelectorAll('[data-owner-only="1"]').forEach(el=>el.classList.toggle('owner-hidden',!owner))}
+async function savePersonalSettings(){if(!S.user)return;const name=formVal('setMyName').trim(),p1=formVal('setMyPassword'),p2=formVal('setMyPassword2'),theme=formVal('setMyTheme')||'system';if(!name)return toast('Nama tampilan wajib diisi.',true);if(p1&&p1!==p2)return toast('Konfirmasi password belum sama.',true);if(p1&&(p1.length<10||!/[A-Za-z]/.test(p1)||!/\d/.test(p1)))return toast('Password baru minimal 10 karakter dan mengandung huruf & angka.',true);localStorage.setItem(PERSONAL_THEME_PREFIX+S.user.id,theme);applyTheme(theme);try{const r=await api('profile.save',{name,password:p1},{timeout:40000});S.user={...S.user,name:r.name||name,email:r.email||S.user.email};const u=S.users.find(x=>x.id===S.user.id);if(u)u.name=S.user.name;document.getElementById('setMyPassword').value='';document.getElementById('setMyPassword2').value='';persistSnapshot();renderAll();toast('Pengaturan pribadi disimpan ✓')}catch(e){toast(e.message,true)}}
+function startRecommendation(){if(!S.user)return null;const mine=(S.accounts||[]).filter(a=>a.active!==false&&(a.ownerId===S.user.id||a.scope==='JOINT')&&a.canEdit!==false);if(!mine.length)return{icon:'💳',title:'Tambahkan rekening pertama',desc:'RUMA butuh rekening/wallet agar transaksi, struk, dan saldo bisa dicatat.',label:'Tambah',action:'account'};if(!(S.transactions||[]).length)return{icon:'↗️',title:'Catat transaksi pertama',desc:'Mulai dari satu pemasukan atau pengeluaran agar ringkasan Money mulai terbentuk.',label:'Catat',action:'transaction'};if(!(S.budgets||[]).length)return{icon:'🎯',title:'Buat budget bulanan',desc:'Budget membuat feedback AI lebih akurat saat menilai pengeluaran.',label:'Buat',action:'budget'};if(!(S.bills||[]).length)return{icon:'🧾',title:'Tambahkan tagihan rutin',desc:'RUMA bisa mengingatkan H-2, H-1, hari H, dan keterlambatan.',label:'Tambah',action:'bill'};if(!((S.tasks||[]).length+(S.events||[]).length))return{icon:'📅',title:'Buat aktivitas pertama',desc:'Satukan task dan agenda agar Today dan Calendar mulai berguna.',label:'Buat',action:'activity'};if(S.user.role==='OWNER'&&!S.settings.aiConfigured)return{icon:'✨',title:'Aktifkan RUMA AI',desc:'Tambahkan API AI agar analisis, command natural, dan foto struk lebih lengkap.',label:'Atur AI',action:'settings'};if(S.user.role==='OWNER'&&S.settings.calendarEnabled&&!S.settings.calendarConnected)return{icon:'🗓️',title:'Hubungkan Google Calendar',desc:'Integrasi sudah aktif, tetapi kalender RUMA Household belum selesai dihubungkan.',label:'Hubungkan',action:'calendar'};return null}
+function renderStartGuide(){const box=document.getElementById('startGuide');if(!box)return;const r=startRecommendation();if(!r){box.classList.remove('show');return}box.classList.add('show');document.getElementById('startGuideIcon').textContent=r.icon;document.getElementById('startGuideTitle').textContent=r.title;document.getElementById('startGuideDesc').textContent=r.desc;const b=document.getElementById('startGuideBtn');b.textContent=r.label;b.onclick=()=>runStartAction(r.action)}
+function runStartAction(a){if(a==='account')return openAccountModal();if(a==='transaction')return openTransactionModal();if(a==='budget')return openBudgetModal();if(a==='bill')return openBillModal();if(a==='activity')return openActivityModal();openSettings();if(a==='calendar')setTimeout(()=>document.getElementById('calendarSettingsCard')?.scrollIntoView({behavior:'smooth',block:'start'}),120)}
+
 function openUserModal(i=''){if(S.user.role!=='OWNER'){toast('Hanya owner yang dapat mengelola user.',true);return}const u=S.users.find(x=>x.id===i)||{};modal(i?'Edit User':'Tambah User',`
 <div class="field"><label>Nama</label><input id="mUserName" value="${esc(u.name||'')}"></div><div class="field"><label>Email</label><input id="mUserEmail" type="email" value="${esc(u.email||'')}"></div><div class="field"><label>Role</label><select id="mUserRole"><option value="PARTNER" ${u.role!=='OWNER'?'selected':''}>PARTNER</option><option value="OWNER" ${u.role==='OWNER'?'selected':''}>OWNER</option></select></div><div class="field"><label>${i?'Password baru (kosong = tetap)':'Password sementara'}</label><input id="mUserPass" type="password"></div><button class="btn" onclick="saveUser('${i}')">Simpan User</button>`)}
 function saveUser(i){const p={id:i,name:formVal('mUserName'),email:formVal('mUserEmail'),role:formVal('mUserRole'),password:formVal('mUserPass')};if(!i&&p.password.length<10)return toast('Password user baru minimal 10 karakter dan mengandung huruf & angka.',true);optimistic('user.save',p,()=>{const tid=i||id('TMPUSR');upsert(S.users,{id:tid,name:p.name,email:p.email,role:p.role},i||tid);return{tempId:i?'':tid}})}
 
-function saveSystemSettings(){const p={aiProvider:formVal('setAiProvider'),aiModel:formVal('setAiModel'),aiKey:formVal('setAiKey'),receiptModel:formVal('setReceiptModel'),geminiVisionKey:formVal('setGeminiVisionKey'),theme:formVal('setTheme')};S.settings={...S.settings,aiProvider:p.aiProvider,aiModel:p.aiModel,receiptModel:p.receiptModel,theme:p.theme};applyTheme(p.theme);document.getElementById('setAiKey').value='';document.getElementById('setGeminiVisionKey').value='';persistSnapshot();renderAll();api('settings.save',p).then(r=>{if(r&&r.receiptConfigured)S.settings.receiptConfigured=true;updateConnectionUI();toast('Pengaturan disimpan');scheduleSync(300)}).catch(e=>toast(e.message,true))}
+function saveSystemSettings(){if(!S.user||S.user.role!=='OWNER')return toast('Hanya Owner yang dapat mengubah AI dan Foto Struk.',true);const p={aiProvider:formVal('setAiProvider'),aiModel:formVal('setAiModel'),aiKey:formVal('setAiKey'),receiptModel:formVal('setReceiptModel'),geminiVisionKey:formVal('setGeminiVisionKey')};S.settings={...S.settings,aiProvider:p.aiProvider,aiModel:p.aiModel,receiptModel:p.receiptModel};document.getElementById('setAiKey').value='';document.getElementById('setGeminiVisionKey').value='';persistSnapshot();renderAll();api('settings.save',p).then(r=>{if(r&&r.receiptConfigured)S.settings.receiptConfigured=true;updateConnectionUI();toast('Pengaturan disimpan');scheduleSync(300)}).catch(e=>toast(e.message,true))}
 function saveNotificationSettings(){const p={enabled:checked('setEmailEnabled'),bill:checked('setEmailBill'),task:checked('setEmailTask'),event:checked('setEmailEvent'),hour:Number(formVal('setEmailHour')||7)};S.settings={...S.settings,emailEnabled:p.enabled,emailBill:p.bill,emailTask:p.task,emailEvent:p.event,emailHour:p.hour};persistSnapshot();updateConnectionUI();api('notifications.save',p).then(()=>{toast('Notifikasi email disimpan ✓');setTimeout(()=>checkSystemStatus(false),250)}).catch(e=>toast(e.message,true))}
 
 function fillCalendarSettings(){
   const by=id=>document.getElementById(id);if(!by('setCalendarEnabled'))return;
   by('setCalendarEnabled').checked=!!S.settings.calendarEnabled;by('setCalendarName').value=S.settings.calendarName||'RUMA Household';by('setCalendarEvents').checked=S.settings.calendarSyncEvents!==false;by('setCalendarTasks').checked=!!S.settings.calendarSyncTasks;by('setCalendarBills').checked=S.settings.calendarSyncBills!==false;by('setCalendarPopupH1').checked=S.settings.calendarPopupH1!==false;by('setCalendarPopup60').checked=S.settings.calendarPopup60!==false;by('setCalendarPopup15').checked=!!S.settings.calendarPopup15;by('setCalendarEmailH1').checked=!!S.settings.calendarEmailH1;
-  const badge=by('calendarStatusBadge'),info=by('calendarSettingsInfo');if(badge){badge.className='badge '+(S.settings.calendarEnabled?(S.settings.calendarConnected?'ok':'warn'):'gray');badge.textContent=!S.settings.calendarEnabled?'Nonaktif':S.settings.calendarConnected?'Terhubung':'Perlu setup'}
+  const badge=by('calendarStatusBadge'),info=by('calendarSettingsInfo'),help=by('calendarSetupHelp');if(badge){badge.className='badge '+(S.settings.calendarEnabled?(S.settings.calendarConnected?'ok':'warn'):'gray');badge.textContent=!S.settings.calendarEnabled?'Nonaktif':S.settings.calendarConnected?'Terhubung':'Belum terhubung'}if(help)help.classList.toggle('hidden',!S.settings.calendarEnabled||!!S.settings.calendarConnected)
   if(info){const bits=[];if(S.settings.calendarId)bits.push((S.settings.calendarName||'RUMA Household')+' · '+S.settings.calendarId.slice(0,18)+'…');if(S.settings.calendarTrigger)bits.push('sync background 5 menit');if(S.settings.calendarPending)bits.push(S.settings.calendarPending+' menunggu sinkron');if(S.settings.calendarLastSync)bits.push('terakhir '+new Date(S.settings.calendarLastSync).toLocaleString('id-ID'));if(S.settings.calendarLastError)bits.push('⚠ '+S.settings.calendarLastError);info.textContent=bits.join(' · ')||'Belum terhubung ke Google Calendar.'}const links=by('calendarLinkedUsers');if(links){const us=S.settings.calendarLinkedUsers?.length?S.settings.calendarLinkedUsers:S.users;links.innerHTML=us.length?us.map(u=>`<span class="badge gray" style="margin:2px 4px 2px 0">${esc(u.name)} · ${esc(u.email||'email belum diisi')}</span>`).join(''):'Belum ada user dengan email aktif.'}
   const owner=S.user&&S.user.role==='OWNER';['setCalendarEnabled','setCalendarName','setCalendarEvents','setCalendarTasks','setCalendarBills','setCalendarPopupH1','setCalendarPopup60','setCalendarPopup15','setCalendarEmailH1'].forEach(id=>{const e=by(id);if(e)e.disabled=!owner});
 }
@@ -1133,7 +1146,8 @@ function applyTheme(t){document.body.dataset.theme=t||'system'}
 
 function removeItem(type,i){if(!confirm('Yakin menghapus/mengarsipkan data ini?'))return;const map={account:'accounts',transaction:'transactions',budget:'budgets',bill:'bills',goal:'goals',task:'tasks',event:'events',shopping:'shopping',note:'notes'};const k=map[type];if(!k)return;optimistic(type+'.delete',{id:i},()=>{if(type==='transaction'){const old=S.transactions.find(x=>x.id===i);if(old)adjustTx(old,-1)}S[k]=S[k].filter(x=>x.id!==i)})}
 
-function triggerReceiptPhoto(){const f=document.getElementById('receiptFile');if(f){f.value='';f.click()}}
+function triggerReceiptPhoto(){modal('Pilih sumber struk',`<div class="small muted">Gunakan kamera untuk foto langsung atau pilih struk yang sudah tersimpan di galeri.</div><div class="receipt-source-grid"><button class="receipt-source" onclick="openReceiptSource('camera')"><span>📷</span>Kamera</button><button class="receipt-source" onclick="openReceiptSource('gallery')"><span>🖼️</span>Galeri</button></div>`)}
+function openReceiptSource(source){const target=document.getElementById(source==='camera'?'receiptCameraFile':'receiptGalleryFile');closeModal();if(!target)return toast('Input foto belum siap.',true);target.value='';setTimeout(()=>target.click(),80)}
 async function fileToReceiptPayload(file){
   if(!file)throw new Error('Foto belum dipilih.');if(!/^image\//.test(file.type||''))throw new Error('File harus berupa gambar.');
   const started=performance.now();
@@ -1175,7 +1189,9 @@ function openReceiptDraft(r,preview){
 }
 function saveReceiptDraft(){const accountId=formVal('mReceiptAccount'),acc=S.accounts.find(a=>a.id===accountId);const p={date:formVal('mReceiptDate')||todayISO(),type:'EXPENSE',amount:Number(formVal('mReceiptAmount')||0),accountId:accountId,toAccountId:'',category:formVal('mReceiptCategory')||'Belanja',description:formVal('mReceiptDesc')||'Belanja dari struk',scope:acc&&acc.scope==='JOINT'?'JOINT':(formVal('mReceiptScope')||'PERSONAL'),items:(RECEIPT_DRAFT&&Array.isArray(RECEIPT_DRAFT.items))?RECEIPT_DRAFT.items:[],source:'RECEIPT'};if(!p.amount||!p.accountId)return toast('Total dan rekening wajib diisi.',true);optimistic('transaction.save',p,()=>{const tid=id('TMPTX'),tx={...p,id:tid,canEdit:true,createdBy:S.user.id};S.transactions.unshift(tx);adjustTx(tx,1);return{tempId:tid}},{message:'Transaksi struk langsung tampil. Menyimpan di background…'});RECEIPT_DRAFT=null}
 
-function sendChat(){const q=formVal('chatInput').trim();if(!q||CHAT_BUSY)return;document.getElementById('chatInput').value='';askPreset(q)}
+function handleChatKeydown(event){if(event.key!=='Enter')return;if(event.shiftKey)return;event.preventDefault();sendChat()}
+function autoGrowChat(el){if(!el)return;el.style.height='auto';el.style.height=Math.min(116,Math.max(44,el.scrollHeight))+'px'}
+function sendChat(){const q=formVal('chatInput').trim();if(!q||CHAT_BUSY)return;const input=document.getElementById('chatInput');input.value='';autoGrowChat(input);askPreset(q)}
 function askPreset(q){
   q=String(q||'').trim();if(!q||CHAT_BUSY)return;goPage('ai',document.querySelector('.navbtn[data-page="ai"]'));appendChatMessage('user',q,'normal',true);
   if(CHAT_PENDING&&CHAT_PENDING.kind==='transaction'){
@@ -1217,6 +1233,8 @@ function initPWA(){
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&S.session&&Date.now()-CONN.lastSync>45000)scheduleSync(200)});
   setInterval(()=>{if(S.session&&navigator.onLine&&document.visibilityState==='visible'&&Date.now()-CONN.lastSync>BG_SYNC_MS)smartSync(false,{silent:true}).catch(()=>{})},Math.max(60000,BG_SYNC_MS));
 })();
+// Solid mobile app feel: cegah pinch/double-tap zoom tanpa mengganggu scroll vertikal.
+if('ontouchstart' in window){document.addEventListener('gesturestart',e=>e.preventDefault(),{passive:false});document.addEventListener('gesturechange',e=>e.preventDefault(),{passive:false});document.addEventListener('gestureend',e=>e.preventDefault(),{passive:false});}
 </script>
 </body>
 </html>
