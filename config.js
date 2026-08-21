@@ -5,7 +5,7 @@
 */
 window.RUMA_CONFIG = {
   API_URL: "https://script.google.com/macros/s/AKfycbwsWLNR7NB2MQTe173VQPfRM3nf1rpg5pqoNk2btgUfPq3YvSe463FmLE8xNLpDNgaI/exec",
-  APP_VERSION: "2.12.2",
+  APP_VERSION: "2.15.0",
   REQUEST_TIMEOUT: 32000,
   CACHE_TTL_MS: 300000,
   BACKGROUND_SYNC_MS: 120000,
