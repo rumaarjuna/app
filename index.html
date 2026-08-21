@@ -30,6 +30,7 @@
     .grow{flex:1;min-width:0}.title{font-size:17px;font-weight:900;letter-spacing:-.02em}.sub{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .iconbtn{border:1px solid var(--line);background:rgba(255,255,255,.92);width:40px;height:40px;border-radius:14px;display:grid;place-items:center;color:var(--ink);transition:.18s ease;box-shadow:0 3px 12px rgba(60,30,48,.04)}
     .iconbtn:active{transform:scale(.95)}.iconbtn svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .notifybtn{position:relative}.notifybadge{position:absolute;right:-5px;top:-6px;min-width:19px;height:19px;padding:0 5px;border-radius:999px;background:#be123c;color:#fff;font-size:10px;font-weight:950;display:grid;place-items:center;border:2px solid #fff}.notify-section{margin-top:16px}.notify-section h3{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 8px}.notify-item{border:1px solid var(--line);border-radius:18px;padding:12px;margin:8px 0;background:#fff}.notify-item.unread{border-color:#f4b6d5;background:#fff8fc}.notify-title{font-size:13px;font-weight:900}.notify-msg{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.45}.notify-meta{font-size:10px;color:var(--muted-2);margin-top:6px}.notify-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.insight-strip{display:flex;gap:8px;overflow:auto;margin:11px 0 0;scrollbar-width:none}.insight-chip{min-width:min(290px,80vw);border:1px solid var(--line);background:rgba(255,255,255,.86);padding:11px 12px;border-radius:16px;font-size:12px;line-height:1.4}.pushline{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid var(--line-2);border-radius:16px;padding:11px 12px;margin-top:12px;background:#fff}
     .connpill{display:flex;align-items:center;gap:7px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 10px;font-size:11px;font-weight:850;color:var(--muted);white-space:nowrap}
     .conndot{width:8px;height:8px;border-radius:50%;background:#9ca3af}.conndot.ok{background:var(--ok);box-shadow:0 0 0 4px rgba(15,159,110,.10)}.conndot.warn{background:var(--warn);box-shadow:0 0 0 4px rgba(217,119,6,.08)}.conndot.bad{background:var(--danger);box-shadow:0 0 0 4px rgba(220,38,38,.08)}
 
@@ -134,7 +135,7 @@
       <div class="field"><label>Password</label><input id="ownerPassword" type="password" placeholder="Minimal 10 karakter + huruf & angka"></div>
       <button class="btn" style="width:100%" onclick="createOwner()">Aktifkan RUMA</button>
     </div>
-    <div class="small muted" style="margin-top:16px">v<span id="gateVersion">2.11.2</span> · Pink Edition</div>
+    <div class="small muted" style="margin-top:16px">v<span id="gateVersion">2.12.0</span> · Pink Edition</div>
   </div>
 </section>
 
@@ -145,6 +146,7 @@
         <div class="brand">R</div>
         <div class="grow"><div class="title">RUMA</div><div class="sub" id="userLine">Memuat...</div></div>
         <div class="connpill" onclick="openSettings()" title="Status koneksi"><span id="topConnDot" class="conndot"></span><span id="topConnText">Cek...</span></div>
+        <button class="iconbtn notifybtn" onclick="openNotifications()" title="Notifikasi"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg><span id="notifyBadge" class="notifybadge hidden">0</span></button>
         <button class="iconbtn" onclick="smartSync(true,{silent:false})" title="Sinkronkan"><svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0 2 5.5"/><path d="M20 4v7h-7"/></svg></button>
         <button class="iconbtn" onclick="openSettings()" title="Pengaturan"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.12 2.12-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.55V20.3h-3v-.09a1.7 1.7 0 0 0-1.03-1.55 1.7 1.7 0 0 0-1.88.34l-.06.06-2.12-2.12.06-.06A1.7 1.7 0 0 0 7 15a1.7 1.7 0 0 0-1.55-1.03H5.3v-3h.15A1.7 1.7 0 0 0 7 9.94a1.7 1.7 0 0 0-.34-1.88L6.6 8l2.12-2.12.06.06a1.7 1.7 0 0 0 1.88.34A1.7 1.7 0 0 0 11.7 4.7V4.6h3v.1a1.7 1.7 0 0 0 1.03 1.55 1.7 1.7 0 0 0 1.88-.34l.06-.06L19.8 8l-.06.06a1.7 1.7 0 0 0-.34 1.88 1.7 1.7 0 0 0 1.55 1.03h.15v3h-.15A1.7 1.7 0 0 0 19.4 15Z"/></svg></button>
       </div>
@@ -172,6 +174,7 @@
         <div class="statbox"><div class="label">Pemasukan</div><div class="statvalue good" id="monthIncome">Rp0</div></div>
         <div class="statbox"><div class="label">Arus kas</div><div class="statvalue" id="monthNet">Rp0</div></div>
       </div>
+      <div id="proactiveInsights" class="insight-strip hidden"></div>
 
       <div class="quick-actions">
         <button class="quick-action primary" onclick="openTransactionModal()">＋ Transaksi</button>
@@ -261,7 +264,7 @@
       <div id="more-notes" class="hidden"><div class="sectionhead"><h2>Catatan</h2><button class="btn sm" onclick="openNoteModal()">+ Catatan</button></div><div id="notesList" class="grid"></div></div>
       <div id="more-settings" class="hidden">
         <div class="grid">
-          <div class="card span12" id="personalSettingsCard"><div class="row between wrap"><div><h2 style="margin:0">Akun Saya</h2><div class="small muted">Pengaturan pribadi perangkat dan akun yang sedang login.</div></div><span id="myRoleBadge" class="badge gray">User</span></div><div class="personal-summary" style="margin-top:12px"><b id="myProfileName">-</b><div class="small muted" id="myProfileEmail">-</div></div><div class="grid"><div class="span6"><div class="field"><label>Nama tampilan</label><input id="setMyName" maxlength="80"></div><div class="field"><label>Password baru (opsional)</label><input id="setMyPassword" type="password" autocomplete="new-password" placeholder="Kosong = tetap"></div><div class="field"><label>Konfirmasi password baru</label><input id="setMyPassword2" type="password" autocomplete="new-password" placeholder="Ulangi password"></div></div><div class="span6"><div class="field"><label>Tema pribadi perangkat ini</label><select id="setMyTheme"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></div><div class="role-note">Tema disimpan di perangkat ini dan tidak mengubah tampilan pasangan.</div><div class="row wrap" style="margin-top:14px"><button class="btn" onclick="savePersonalSettings()">Simpan Pribadi</button><button class="btn ghost" onclick="installPWA()">Install RUMA</button><button class="btn danger" onclick="logout()">Logout perangkat ini</button></div></div></div></div>
+          <div class="card span12" id="personalSettingsCard"><div class="row between wrap"><div><h2 style="margin:0">Akun Saya</h2><div class="small muted">Pengaturan pribadi perangkat dan akun yang sedang login.</div></div><span id="myRoleBadge" class="badge gray">User</span></div><div class="personal-summary" style="margin-top:12px"><b id="myProfileName">-</b><div class="small muted" id="myProfileEmail">-</div></div><div class="grid"><div class="span6"><div class="field"><label>Nama tampilan</label><input id="setMyName" maxlength="80"></div><div class="field"><label>Password baru (opsional)</label><input id="setMyPassword" type="password" autocomplete="new-password" placeholder="Kosong = tetap"></div><div class="field"><label>Konfirmasi password baru</label><input id="setMyPassword2" type="password" autocomplete="new-password" placeholder="Ulangi password"></div></div><div class="span6"><div class="field"><label>Tema pribadi perangkat ini</label><select id="setMyTheme"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></div><div class="role-note">Tema disimpan di perangkat ini dan tidak mengubah tampilan pasangan.</div><div class="pushline"><div><b>Push Notification</b><div id="pushStatus" class="small muted">Mengikuti izin perangkat</div></div><div class="row wrap"><button class="btn secondary sm" onclick="enablePushNotifications()">Aktifkan</button><button class="btn ghost sm" onclick="disablePushNotifications()">Matikan</button></div></div><div class="row wrap" style="margin-top:14px"><button class="btn" onclick="savePersonalSettings()">Simpan Pribadi</button><button class="btn ghost" onclick="installPWA()">Install RUMA</button><button class="btn danger" onclick="logout()">Logout perangkat ini</button></div></div></div></div>
           <div class="card span6" data-owner-only="1"><div class="sectionhead" style="margin-top:0"><h2>User & Household</h2><button class="btn sm" onclick="openUserModal()">+ User</button></div><div id="usersList" class="list"></div></div>
           <div class="card span6" data-owner-only="1"><h2 style="margin-top:0">AI & Foto Struk</h2>
             <div class="field"><label>AI Provider</label><select id="setAiProvider"><option value="GEMINI">Gemini</option><option value="GROQ">Groq</option></select></div>
@@ -355,7 +358,7 @@
 <script>
 const C = window.RUMA_CONFIG || {};
 const API_URL = (C.API_URL || '').trim();
-const VERSION = '2.11.2';
+const VERSION = '2.12.0';
 const CACHE_TTL = Number(C.CACHE_TTL_MS || 300000);
 const BG_SYNC_MS = Number(C.BACKGROUND_SYNC_MS || 120000);
 const SNAP_KEY='ruma_snapshot_v2_6';
@@ -381,14 +384,14 @@ let LOCAL_STATE_SEQ=0;
 const API_STATS={timeouts:0,lastAction:'',lastMs:0};
 function timeoutForAction(action){
   if(action==='ai.receipt')return Math.max(TIMEOUT,80000);
-  if(action==='ai.chat')return Math.max(TIMEOUT,70000);
+  if(action==='ai.chat'||action==='ai.command')return Math.max(TIMEOUT,70000);
   if(action==='app.snapshot')return Math.max(TIMEOUT,45000);
   if(action.startsWith('calendar.'))return Math.max(TIMEOUT,65000);
   if(/\.(save|delete|toggle)$/.test(action)||action==='account.reconcile')return Math.max(TIMEOUT,38000);
   return TIMEOUT;
 }
 function isTimeoutLike(e){return !!(e&&((e.code==='TIMEOUT')||/timeout|tidak merespons/i.test(String(e.message||''))))}
-let S = {session:localStorage.getItem('ruma_session')||'', user:null, users:[], accounts:[], transactions:[], budgets:[], bills:[], goals:[], tasks:[], events:[], shopping:[], notes:[], chatHistory:[], summary:{}, settings:{}, revision:0, serverTime:''};
+let S = {session:localStorage.getItem('ruma_session')||'', user:null, users:[], accounts:[], transactions:[], budgets:[], bills:[], goals:[], tasks:[], events:[], shopping:[], notes:[], notifications:[], chatHistory:[], summary:{}, settings:{}, revision:0, serverTime:''};
 document.getElementById('gateVersion').textContent=VERSION;
 
 function rupiah(n){return new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(Number(n||0))}
@@ -408,10 +411,10 @@ function fmtDate(v){
 function formVal(id){return document.getElementById(id)?.value ?? ''}
 function checked(id){return !!document.getElementById(id)?.checked}
 
-const DIRECT_READ_ACTIONS=new Set(['system.ping','bootstrap.status','app.snapshot','app.revision','system.status','system.diagnose','calendar.status','mutation.status']);
+const DIRECT_READ_ACTIONS=new Set(['system.ping','bootstrap.status','app.snapshot','app.revision','system.status','system.diagnose','calendar.status','mutation.status','context.get','notifications.list']);
 const TRANSPORT={read:'Direct JSONP',write:'Direct Bridge',fallback:'POST job + poll',ai:'Direct Bridge',last:'-'};
 const BRIDGE={frame:null,ready:false,booting:false,pending:new Map(),listener:false,failures:0};
-function isClientMutationAction(action){return /\.(save|delete|toggle|pay|unpay|cost|contribute)$/.test(action)||['shopping.post','account.reconcile','settings.save','user.save','system.cleanupLegacyGhosts','system.moneyRepair','calendar.saveSettings','calendar.setup','calendar.sync','calendar.test'].includes(action)}
+function isClientMutationAction(action){return /\.(save|delete|toggle|pay|unpay|cost|contribute)$/.test(action)||['shopping.post','account.reconcile','settings.save','user.save','system.cleanupLegacyGhosts','system.moneyRepair','calendar.saveSettings','calendar.setup','calendar.sync','calendar.test','notifications.read','notifications.readAll','notifications.action','notifications.deviceSave','notifications.deviceDelete','ai.command','file.receiptSave'].includes(action)}
 function ensureMutationId(action,payload){if(!isClientMutationAction(action)||payload.clientMutationId)return payload;return {...payload,clientMutationId:id('MUTAPI')}}
 function shouldUseBridge(action){return !DIRECT_READ_ACTIONS.has(action)}
 function resetBridge(){
@@ -620,7 +623,7 @@ async function logoutAllDevices(){
 }
 function isAuthError(msg){return /(session tidak valid|session tidak ditemukan|session sudah tidak berlaku|session tidak cocok|user tidak aktif)/i.test(String(msg||''))}
 function persistSnapshot(){
-  try{localStorage.setItem(SNAP_KEY,JSON.stringify({at:Date.now(),data:{user:S.user,users:S.users,accounts:S.accounts,transactions:S.transactions,budgets:S.budgets,bills:S.bills,goals:S.goals,tasks:S.tasks,events:S.events,shopping:S.shopping,notes:S.notes,chatHistory:S.chatHistory,summary:S.summary,settings:S.settings,revision:S.revision,serverTime:S.serverTime}}))}catch(e){}
+  try{localStorage.setItem(SNAP_KEY,JSON.stringify({at:Date.now(),data:{user:S.user,users:S.users,accounts:S.accounts,transactions:S.transactions,budgets:S.budgets,bills:S.bills,goals:S.goals,tasks:S.tasks,events:S.events,shopping:S.shopping,notes:S.notes,notifications:S.notifications,chatHistory:S.chatHistory,summary:S.summary,settings:S.settings,revision:S.revision,serverTime:S.serverTime}}))}catch(e){}
   updateConnectionUI();
 }
 async function syncAll(first=false,opts={}){
@@ -676,9 +679,28 @@ function renderAll(){
   renderTodayBills();
   document.getElementById('aiStatus').textContent=S.settings.aiConfigured?(S.settings.aiProvider+' · '+S.settings.aiModel):'Belum dikonfigurasi';
   document.getElementById('setAiProvider').value=S.settings.aiProvider||'GEMINI';document.getElementById('setAiModel').value=S.settings.aiModel||'gemini-3.6-flash';const rm=document.getElementById('setReceiptModel'),rv=S.settings.receiptModel||'gemini-3.5-flash-lite';if(rm){rm.value=[...rm.options].some(o=>o.value===rv)?rv:'gemini-3.5-flash-lite';}document.getElementById('setEmailEnabled').checked=S.settings.emailEnabled!==false;document.getElementById('setEmailBill').checked=S.settings.emailBill!==false;document.getElementById('setEmailTask').checked=S.settings.emailTask!==false;document.getElementById('setEmailEvent').checked=S.settings.emailEvent!==false;document.getElementById('setEmailHour').value=Number(S.settings.emailHour??7);fillCalendarSettings();fillPersonalSettings();applySettingsRoleVisibility();applyTheme(personalTheme());renderStartGuide();
-  document.getElementById('dbInfo').textContent=(S.settings.databaseName||'RUMA Database')+' · '+(S.settings.spreadsheetId||'');updateConnectionUI();
+  document.getElementById('dbInfo').textContent=(S.settings.databaseName||'RUMA Database')+' · '+(S.settings.spreadsheetId||'');updateConnectionUI();renderNotificationBadge();renderProactiveInsights();renderPushStatus();
   renderMoneyOverview();renderAccounts();renderTransactions();renderBudgets();renderBills();renderGoals();renderTasks();renderEvents();renderActivities();renderCalendar();renderShopping();renderNotes();renderUsers();if(!CHAT_BUSY)renderChatHistory();
 }
+
+function renderNotificationBadge(){const b=document.getElementById('notifyBadge');if(!b)return;const n=(S.notifications||[]).filter(x=>!x.read&&x.status!=='CANCELLED').length;b.textContent=n>99?'99+':String(n);b.classList.toggle('hidden',!n)}
+function notificationTimeLabel(n){const v=n.sentAt||n.scheduledAt||'';if(!v)return'';const d=new Date(v);return Number.isNaN(d.getTime())?'':d.toLocaleString('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}
+function notificationGroup(n){const v=n.sentAt||n.scheduledAt||new Date().toISOString(),d=new Date(v),now=new Date(),key=x=>x.getFullYear()+'-'+x.getMonth()+'-'+x.getDate(),y=new Date();y.setDate(now.getDate()-1);return key(d)===key(now)?'Hari ini':key(d)===key(y)?'Kemarin':'Sebelumnya'}
+function notificationActionButtons(n){const a=String(n.actionType||'').toUpperCase(),buttons=[];if(a==='COMPLETE_TASK')buttons.push(`<button class="btn sm" onclick="notificationAction('${n.id}','COMPLETE_TASK')">Selesai</button>`);if(a==='PAY_BILL')buttons.push(`<button class="btn sm" onclick="notificationAction('${n.id}','PAY_BILL')">Sudah Dibayar</button>`);buttons.push(`<button class="btn secondary sm" onclick="notificationAction('${n.id}','OPEN')">Buka</button>`);if(['TASK','BILL','CALENDAR'].includes(n.type))buttons.push(`<button class="btn ghost sm" onclick="notificationAction('${n.id}','SNOOZE',{minutes:60})">Ingatkan Lagi</button>`);return buttons.join('')}
+function renderNotificationCenter(){const el=document.getElementById('notificationCenterList');if(!el)return;const arr=(S.notifications||[]).filter(x=>x.status!=='CANCELLED').sort((a,b)=>String(b.scheduledAt||'').localeCompare(String(a.scheduledAt||'')));if(!arr.length){el.innerHTML='<div class="empty">Belum ada notifikasi penting. RUMA akan menghubungi Anda hanya ketika perlu.</div>';return}const groups=['Hari ini','Kemarin','Sebelumnya'];el.innerHTML=groups.map(g=>{const rows=arr.filter(x=>notificationGroup(x)===g);if(!rows.length)return'';return `<div class="notify-section"><h3>${g}</h3>${rows.map(n=>`<div class="notify-item ${n.read?'':'unread'}"><div class="row between"><div class="notify-title">${esc(n.title)}</div><span class="badge ${n.priority==='URGENT'?'warn':'gray'}">${esc(n.priority||'NORMAL')}</span></div><div class="notify-msg">${esc(n.message)}</div><div class="notify-meta">${esc(n.sourceType||n.type)} · ${esc(notificationTimeLabel(n))}</div><div class="notify-actions">${notificationActionButtons(n)}</div></div>`).join('')}</div>`}).join('')}
+async function refreshNotifications(){if(!S.session)return;try{const r=await api('notifications.list',{}, {healthNeutral:true});S.notifications=Array.isArray(r)?r:[];persistSnapshot();renderNotificationBadge();renderNotificationCenter()}catch(e){toast('Notifikasi memakai cache lokal. '+e.message,true)}}
+function openNotifications(){modal('Notifikasi',`<div class="row between wrap" style="margin-top:10px"><div class="small muted">Prioritas tinggi dipush. Yang tidak mendesak disimpan di sini atau diringkas.</div><button class="btn ghost sm" onclick="markAllNotificationsRead()">Tandai semua dibaca</button></div><div id="notificationCenterList"></div>`);renderNotificationCenter();refreshNotifications()}
+async function markAllNotificationsRead(){(S.notifications||[]).forEach(n=>n.read=true);renderNotificationBadge();renderNotificationCenter();persistSnapshot();try{await api('notifications.readAll',{})}catch(e){toast(e.message,true)}}
+async function notificationAction(id,action,data={}){const n=(S.notifications||[]).find(x=>x.id===id);if(n)n.read=true;renderNotificationBadge();renderNotificationCenter();try{const r=await api('notifications.action',{id,action,actionData:data});if(r&&r.needsAccount){closeModal();openBillModal(r.sourceId);toast('Pilih rekening pembayaran agar tagihan bisa dicatat sebagai transaksi.');return}if(action==='OPEN'){closeModal();if(n?.sourceType==='BILL')return openBillModal(n.sourceId);if(n?.sourceType==='TASK')return openActivityModal(n.sourceId,'TASK');if(n?.sourceType==='EVENT')return openActivityModal(n.sourceId,'AGENDA');}toast(action==='SNOOZE'?'Akan diingatkan lagi ✓':'Sudah diperbarui ✓');scheduleSync(250)}catch(e){toast(e.message,true)}}
+function renderProactiveInsights(){const el=document.getElementById('proactiveInsights');if(!el)return;const out=[],monthExp=Number(S.summary?.monthExpense||0);(S.budgets||[]).forEach(b=>{const pct=b.amount?Math.round(Number(b.spent||0)/Number(b.amount||1)*100):0;if(pct>=85&&out.length<2)out.push(`Budget ${b.category} sudah ${pct}% · sisa ${rupiah(Math.max(0,b.amount-b.spent))}.`)});const tomorrow=new Date();tomorrow.setDate(tomorrow.getDate()+1);const tk=tomorrow.getFullYear()+'-'+String(tomorrow.getMonth()+1).padStart(2,'0')+'-'+String(tomorrow.getDate()).padStart(2,'0'),acts=(S.events||[]).filter(e=>String(e.startAt||'').slice(0,10)===tk).length+(S.tasks||[]).filter(t=>t.dueDate===tk&&t.status!=='DONE').length;if(acts>=3&&out.length<3)out.push(`Besok ada ${acts} aktivitas. Cek jarak waktunya agar tidak bertabrakan.`);const overdue=(S.tasks||[]).filter(t=>t.status!=='DONE'&&t.dueDate&&daysTo(t.dueDate)<0).length;if(overdue&&out.length<3)out.push(`${overdue} task sudah melewati tenggat.`);el.innerHTML=out.map(x=>`<div class="insight-chip">✨ ${esc(x)}</div>`).join('');el.classList.toggle('hidden',!out.length)}
+let FCM_RUNTIME=null;
+function renderPushStatus(){const el=document.getElementById('pushStatus');if(!el)return;const cfg=C.FIREBASE||{};if(!cfg.enabled){el.textContent='FCM belum dikonfigurasi di config.js; Notification Center tetap aktif.';return}if(!('Notification'in window)){el.textContent='Push tidak didukung browser ini.';return}el.textContent=Notification.permission==='granted'?'Diizinkan di perangkat ini':Notification.permission==='denied'?'Ditolak oleh browser; Notification Center tetap aktif.':'Belum diaktifkan di perangkat ini'}
+async function firebaseMessagingRuntime(){if(FCM_RUNTIME)return FCM_RUNTIME;const f=C.FIREBASE||{};if(!f.enabled||!f.projectId||!f.messagingSenderId||!f.appId||!f.apiKey||!f.vapidKey)throw new Error('Firebase Web config belum lengkap.');const v=f.sdkVersion||'12.17.1',[appMod,msgMod]=await Promise.all([import(`https://www.gstatic.com/firebasejs/${v}/firebase-app.js`),import(`https://www.gstatic.com/firebasejs/${v}/firebase-messaging.js`)]),app=appMod.getApps().length?appMod.getApps()[0]:appMod.initializeApp({apiKey:f.apiKey,authDomain:f.authDomain||`${f.projectId}.firebaseapp.com`,projectId:f.projectId,storageBucket:f.storageBucket||'',messagingSenderId:f.messagingSenderId,appId:f.appId}),messaging=msgMod.getMessaging(app);FCM_RUNTIME={messaging,getToken:msgMod.getToken,deleteToken:msgMod.deleteToken};return FCM_RUNTIME}
+async function enablePushNotifications(){try{if(!('Notification'in window))throw new Error('Browser ini tidak mendukung push notification.');const permission=await Notification.requestPermission();if(permission!=='granted')throw new Error('Izin push belum diberikan. Notification Center internal tetap aktif.');const rt=await firebaseMessagingRuntime(),reg=await navigator.serviceWorker.ready,token=await rt.getToken(rt.messaging,{vapidKey:C.FIREBASE.vapidKey,serviceWorkerRegistration:reg});if(!token)throw new Error('FCM token belum tersedia.');await api('notifications.deviceSave',{deviceId:DEVICE_ID,fcmToken:token,platform:(PWA_STATE.installed?'PWA':'WEB'),enabled:true});renderPushStatus();toast('Push notification aktif di perangkat ini ✓')}catch(e){renderPushStatus();toast(e.message,true)}}
+async function disablePushNotifications(){try{await api('notifications.deviceDelete',{deviceId:DEVICE_ID});if(FCM_RUNTIME?.deleteToken)try{await FCM_RUNTIME.deleteToken(FCM_RUNTIME.messaging)}catch(e){}renderPushStatus();toast('Push RUMA dimatikan untuk perangkat ini.')}catch(e){toast(e.message,true)}}
+function shouldTryAiCommand(q){return S.settings.aiConfigured&&/(buat|bikin|catat|tambah|tambahkan|ingatkan|ingetin|bayar|lunas|pindah|pindahin|transfer|selesaikan|tandai|set budget|atur budget)/i.test(String(q||''))}
+function runAiCommandFallback(q){CHAT_BUSY=true;showChatThinking('RUMA menyiapkan tindakan…');api('ai.command',{prompt:q},{timeout:70000}).then(r=>{document.getElementById('chatThinking')?.remove();CHAT_BUSY=false;appendChatMessage('assistant',r.text|| (r.handled?'Tindakan selesai ✓':'Saya belum cukup yakin untuk menjalankan tindakan itu.'),r.handled?'success':'feedback',true);if(r.handled)scheduleSync(250)}).catch(e=>{document.getElementById('chatThinking')?.remove();CHAT_BUSY=false;appendChatMessage('assistant','Saya belum menjalankan tindakan karena **'+e.message+'**. Tidak ada data yang diubah.','feedback',true);toast(e.message,true)})}
+
 function daysTo(dateStr){if(!dateStr)return 9999;const a=new Date(todayISO()+'T12:00:00'),s=String(dateStr).trim(),b=/^\d{4}-\d{2}-\d{2}/.test(s)?new Date(s.slice(0,10)+'T12:00:00'):new Date(dateStr);if(Number.isNaN(b.getTime()))return 9999;return Math.round((b-a)/86400000)}
 function dueLabel(d){const n=daysTo(d);if(n===2)return ['H-2','h2'];if(n===1)return ['H-1','h1'];if(n===0)return ['Hari ini','today'];if(n<0)return ['Terlambat '+Math.abs(n)+' hari','overdue'];return ['H-'+n,'h2']}
 function activityDateKey(a){return a.kind==='EVENT'?String(a.startAt||'').slice(0,10):String(a.dueDate||'')}
@@ -1087,6 +1109,9 @@ function inferExpenseCategory(text){
 }
 function extractTxDescription(text,type){
   const q=String(text||'').replace(/\s+/g,' ').trim();
+  // Format singkat: "Transaksi Belanja Dapur: -Rp10.000" / "TX Gaji: +5jt".
+  let shorthand=q.match(/^(?:transaksi|tx)\s+(.+?)\s*[:=]\s*[+-]?\s*(?:rp\.?\s*)?\d/i);
+  if(shorthand&&shorthand[1])return shorthand[1].trim().slice(0,80);
   let m=q.match(/(?:beli|membeli|jajan|bayar|membayar|buat|untuk)\s+(.+?)\s+(?:(?:rp\.?\s*)?\d[\d.,]*\s*(?:k|ribu|rb|rebu|ewu|juta|jt|mio)?)(?:\b|\s)/i);
   if(m&&m[1])return m[1].replace(/\b(?:seharga|sebesar|senilai|harga)\b/gi,'').trim().slice(0,80);
   if(type==='INCOME'){
@@ -1107,7 +1132,11 @@ function chatIntentProfile(raw){
   const startsWrite=/^(?:tolong\s+)?(?:jangan lupa|catat|catetin|catet|catatkan|simpan|simpen|masukkan|masukan|masukin|masukkin|input|rekam|record|tambahkan|tambah|tambahin|buat|bikin|gawe|jadwalkan|jadwalin|agendakan|masukin kalender|ingatkan|ingetin|reminder(?:kan)?|set reminder|transfer|transferin|pindahkan|pindahin|kirim|bayarkan|bayarin)\b/.test(l);
   const recentWrite=/\b(?:tadi|barusan|baru saja|baru aja|habis|abis|tadi pagi|tadi siang|tadi sore|tadi malam)\b/.test(l)&&/\b(?:beli|membeli|bayar|membayar|jajan|belanja|terima|menerima|dapat|dapet|keluar)\b/.test(l);
   const directMoney=/^(?:saya|aku|gue|kami|kita)?\s*(?:habis|abis)?\s*(?:beli|membeli|bayar|membayar|jajan|belanja|terima|menerima|dapet|dapat|keluar)\b/.test(l);
-  return {questionLike,hypothetical,mutationAllowed:!questionLike&&!hypothetical&&(startsWrite||recentWrite||directMoney)};
+  // v2.11.3: dukung format ledger singkat seperti "Transaksi Belanja Dapur: -Rp10.000".
+  // Tanda +/- atau kata transaksi hanya dianggap perintah jika kalimat bukan pertanyaan/hipotetis.
+  const shorthandLedger=/^(?:transaksi|tx)\b/.test(l)&&/(?:rp\.?\s*)?[+-]?\s*\d[\d.,]*\s*(?:k|rb|ribu|rebu|ewu|jt|juta|mio)?\b/.test(l);
+  const signedLedger=/(?:^|[\s:])[+-]\s*(?:rp\.?\s*)?\d/.test(l)&&/\b(?:transaksi|belanja|makan|bbm|bensin|tagihan|gaji|honor|pemasukan|pengeluaran)\b/.test(l);
+  return {questionLike,hypothetical,mutationAllowed:!questionLike&&!hypothetical&&(startsWrite||recentWrite||directMoney||shorthandLedger||signedLedger)};
 }
 function parseMultiExpenseItems(raw){
   let body=String(raw||'').trim();
@@ -1140,12 +1169,14 @@ function parseChatTransaction(q){
     if(from.id===to.id)return {recognized:true,needs:'Rekening sumber dan tujuan transfer harus berbeda.'};
     return {recognized:true,payload:{type:'TRANSFER',date:todayISO(),amount,accountId:from.id,toAccountId:to.id,category:'Transfer',description:'Transfer '+from.name+' ke '+to.name,scope:(from.scope==='JOINT'||to.scope==='JOINT')?'JOINT':'PERSONAL'},account:from,toAccount:to};
   }
-  const expenseIntent=/(pengeluaran|expense|habis beli|abis beli|habis membeli|\bbeli\b|membeli|\bbayar\b|membayar|bayarin|\bkeluar\b|keluar(?:in)? uang|duit keluar|uang keluar|keluar buat|belanja|jajan|kopi|bakso|makan|bensin|bbm|parkir|pulsa|ongkir|spent|spend)/i.test(l);
-  const incomeIntent=/(pemasukan|income|terima gaji|menerima|dapet|dapat|\bgaji\b|uang masuk|duit masuk|masuk rekening|masuk ke rekening|dibayar|honor|fee|bonus)/i.test(l);
+  const signedExpense=/(?:^|[\s:])-\s*(?:rp\.?\s*)?\d/i.test(l),signedIncome=/(?:^|[\s:])\+\s*(?:rp\.?\s*)?\d/i.test(l);
+  const expenseIntent=signedExpense||/(pengeluaran|expense|habis beli|abis beli|habis membeli|\bbeli\b|membeli|\bbayar\b|membayar|bayarin|\bkeluar\b|keluar(?:in)? uang|duit keluar|uang keluar|keluar buat|belanja|jajan|kopi|bakso|makan|bensin|bbm|parkir|pulsa|ongkir|spent|spend)/i.test(l);
+  const incomeIntent=signedIncome||/(pemasukan|income|terima gaji|menerima|dapet|dapat|\bgaji\b|uang masuk|duit masuk|masuk rekening|masuk ke rekening|dibayar|honor|fee|bonus)/i.test(l);
   const intent=chatIntentProfile(raw);
   const writeIntent=intent.mutationAllowed;
   if(!writeIntent||(!expenseIntent&&!incomeIntent))return null;
-  const type=incomeIntent&&!expenseIntent?'INCOME':'EXPENSE';
+  // Tanda eksplisit +/- menang atas kata kategori agar shorthand ledger tidak ambigu.
+  const type=signedExpense?'EXPENSE':signedIncome?'INCOME':(incomeIntent&&!expenseIntent?'INCOME':'EXPENSE');
   if(!amount)return {recognized:true,needs:'Nominalnya belum terbaca. Tulis misalnya: **“tadi beli bakso 10 ribu pakai BCA”**.'};
   if(!usable.length)return {recognized:true,needs:'Belum ada rekening/wallet yang bisa dipakai. Tambahkan rekening dulu di **Money → Rekening**.'};
   let account=null;
@@ -1281,13 +1312,16 @@ function runChatTransaction(cmd){
   CONN.pendingWrites++;updateConnectionUI();
   // Mulai write terlebih dahulu, tetapi chat tidak menunggu ACK server. Respons terasa instan.
   const writePromise=api('transaction.save',mutationPayload);
-  let instantText;if(p.type==='TRANSFER')instantText=`✓ **Dicatat** · Transfer ${rupiah(p.amount)} dari **${account.name}** ke **${cmd.toAccount.name}**.
-
-_Sinkronisasi server berjalan otomatis di belakang._`;else{const lines=(p.items||[]).map(i=>`- ${i.name} · ${rupiah(i.amount)}`).join('\n');instantText=`✓ **Dicatat**
-**${p.description||'Transaksi'} · ${rupiah(p.amount)}**
-Rekening: **${account.name}**${lines?'\n\n'+lines:''}
-
-_Sinkronisasi server berjalan otomatis di belakang._`;}
+  let instantText;
+  if(p.type==='TRANSFER'){
+    const from=S.accounts.find(a=>a.id===p.accountId),to=S.accounts.find(a=>a.id===p.toAccountId);
+    instantText=`✓ **Dicatat** · Transfer ${rupiah(p.amount)} dari **${account.name}** ke **${cmd.toAccount.name}**.${from&&to?`\nSaldo: **${from.name} ${rupiah(from.balance)}** · **${to.name} ${rupiah(to.balance)}**`:''}\n\n_Sinkronisasi server berjalan otomatis di belakang._`;
+  }else{
+    const lines=(p.items||[]).map(i=>`- ${i.name} · ${rupiah(i.amount)}`).join('\n'),matchedBudget=p.type==='EXPENSE'?budgetsForTx(item)[0]:null;
+    const balanceLine=account?`\nSaldo **${account.name}**: ${rupiah(account.balance)}`:'';
+    const budgetLine=matchedBudget?`\nBudget **${matchedBudget.category}**: ${rupiah(matchedBudget.spent)} / ${rupiah(matchedBudget.amount)} · sisa **${rupiah(Number(matchedBudget.amount||0)-Number(matchedBudget.spent||0))}**`:'';
+    instantText=`✓ **Dicatat**\n**${p.description||'Transaksi'} · ${p.type==='EXPENSE'?'-':p.type==='INCOME'?'+':''}${rupiah(p.amount)}**\nRekening: **${account.name}**${lines?'\n\n'+lines:''}${balanceLine}${budgetLine}\n\n_Sinkronisasi server berjalan otomatis di belakang._`;
+  }
   CHAT_PENDING=null;finishChat(instantText,'success');
   writePromise.then(r=>{
     if(r&&r.duplicatePrevented){removeOptimisticTransaction(tempId);setChatTxGuard(p,'SAVED',r.id||'');scheduleSync(120);return;}
@@ -1324,7 +1358,6 @@ function chatClarification(q){
   if(/^(cek|check|gimana|gmn|bagaimana|aman|analisis|analisa|tolong cek|menurutmu|menurut anda|lihat)[?!. ]*$/i.test(x))return 'Bisa. Mau dicek bagian **keuangan, tagihan, aktivitas, rekening, atau daftar belanja**?';
   if(/(aman|boleh|bisa|cukup).*(beli|ambil|keluar|pakai|belanja)/i.test(l)&&!/(\d|ribu|juta|rb|jt|k)/i.test(l))return 'Bisa saya nilai, tapi nominalnya belum ada. Contoh: **“aman beli laptop 8 juta bulan ini?”**';
   if(/(rekening|wallet|dompet|akun).*(ini|itu|tersebut)/i.test(l)&&S.accounts.length>1&&!S.accounts.some(a=>l.includes(String(a.name||'').toLowerCase())))return 'Rekeningnya belum jelas. Sebutkan nama rekening/wallet yang dimaksud agar saya tidak salah membaca data.';
-  if(/^iya|^ya$|^oke?$|^sip$|^lanjut$/.test(l)&&!CHAT_PENDING)return 'Siap. Sebutkan yang mau dilanjutkan, misalnya **cek saldo**, **lihat tagihan**, **catat pengeluaran**, atau **buat aktivitas**.';
   return null;
 }
 function fastLocalAnswer(q){
@@ -1546,8 +1579,9 @@ async function fileToReceiptPayload(file){
     const ctx=c.getContext('2d',{alpha:false});ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.drawImage(source,0,0,w,h);out=c.toDataURL('image/jpeg',quality);
     if(out.length<520000)break;max=Math.round(max*.84);quality=Math.max(.44,quality-.06);
   }
+  const archiveScale=Math.min(1,1800/Math.max(sw,sh)),aw=Math.max(1,Math.round(sw*archiveScale)),ah=Math.max(1,Math.round(sh*archiveScale)),ac=document.createElement('canvas');ac.width=aw;ac.height=ah;const actx=ac.getContext('2d',{alpha:false});actx.fillStyle='#fff';actx.fillRect(0,0,aw,ah);actx.imageSmoothingEnabled=true;actx.imageSmoothingQuality='high';actx.drawImage(source,0,0,aw,ah);let archive=ac.toDataURL('image/jpeg',.82);if(archive.length>5200000)archive=ac.toDataURL('image/jpeg',.68);
   release();
-  return{imageBase64:out.split(',')[1],mimeType:'image/jpeg',preview:out,fileName:file.name||'struk.jpg',clientProcessMs:Math.round(performance.now()-started),compressedKB:Math.round((out.length*3/4)/1024)}
+  return{imageBase64:out.split(',')[1],mimeType:'image/jpeg',preview:out,fileName:file.name||'struk.jpg',archiveBase64:archive.split(',')[1],archiveMimeType:'image/jpeg',clientProcessMs:Math.round(performance.now()-started),compressedKB:Math.round((out.length*3/4)/1024),archiveKB:Math.round((archive.length*3/4)/1024)}
 }
 async function handleReceiptPhoto(ev){
   const file=ev.target.files&&ev.target.files[0];if(!file)return;goPage('ai',document.querySelector('.navbtn[data-page="ai"]'));const btn=document.getElementById('receiptBtn'),started=performance.now();
@@ -1557,24 +1591,33 @@ async function handleReceiptPhoto(ev){
     const r=await api('ai.receipt',{imageBase64:data.imageBase64,mimeType:data.mimeType,fileName:data.fileName},{timeout:65000});
     document.getElementById('chatThinking')?.remove();CHAT_BUSY=false;const warn=(r.warnings||[]),elapsed=Math.round(performance.now()-started);
     const line=`Struk terbaca: **${r.merchant||r.description||'Transaksi'}** · **${rupiah(r.total)}** · ${fmtDate(r.date)} · ${r.category}.`+(warn.length?'\n\n⚠ '+warn.join(' '):'')+`\n\n_${data.compressedKB} KB · ${Math.max(1,Math.round(elapsed/100)/10)} dtk_`;
-    appendChatMessage('assistant',line,warn.length?'feedback':'success',true);openReceiptDraft(r,data.preview);
+    appendChatMessage('assistant',line,warn.length?'feedback':'success',true);openReceiptDraft(r,data.preview,{archiveBase64:data.archiveBase64,archiveMimeType:data.archiveMimeType,fileName:data.fileName});
   }catch(e){document.getElementById('chatThinking')?.remove();CHAT_BUSY=false;appendChatMessage('assistant','Foto belum bisa diproses. **'+e.message+'**\n\nTips: pastikan struk terang, memenuhi frame, dan tidak blur.','feedback',true);toast(e.message,true)}finally{btn?.classList.remove('loading');if(ev.target)ev.target.value=''}
 }
 function openReceiptDraft(r,preview){
   const acc=S.accounts.filter(a=>a.active!==false&&(a.canEdit||a.scope==='JOINT'||a.ownerId===S.user.id));if(!acc.length){toast('Tambahkan rekening/wallet dulu sebelum menyimpan struk.',true);return}
-  RECEIPT_DRAFT={...r,items:Array.isArray(r.items)?r.items:[]};
+  RECEIPT_DRAFT={...r,receiptId:id('RCPT'),items:Array.isArray(r.items)?r.items:[],filePayload:arguments[2]||null};
   const warning=(r.warnings||[]).length?`<div class="alert warn" style="margin:10px 0"><b>Perlu dicek</b><div class="small">${esc((r.warnings||[]).join(' '))}</div></div>`:`<div class="alert ok" style="margin:10px 0">Pembacaan cukup jelas · confidence ${Number(r.confidence||0)}%</div>`;
   const itemHtml=RECEIPT_DRAFT.items.length?`<div class="field"><label>Item terbaca (${RECEIPT_DRAFT.items.length})</label><div class="panel" style="padding:10px">${RECEIPT_DRAFT.items.slice(0,12).map(i=>`<div style="display:flex;justify-content:space-between;gap:12px;padding:5px 0"><span>${esc(i.name)}</span><b>${rupiah(i.amount)}</b></div>`).join('')}${RECEIPT_DRAFT.items.length>12?`<div class="small">+${RECEIPT_DRAFT.items.length-12} item lainnya</div>`:''}</div></div>`:'',first=acc[0],cats=budgetCategoryList(),catList=cats.length?`<datalist id="receiptCategoryList">${cats.map(x=>`<option value="${esc(x)}"></option>`).join('')}</datalist>`:'',receiptCategory=budgetAwareCategory((r.description||'')+' '+(r.merchant||'')+' '+(r.category||''),r.category||'Belanja',first?.scope||'',r.date||todayISO());
   modal('Konfirmasi Foto Struk',`${preview?`<img class="receipt-preview" src="${preview}" alt="Preview struk">`:''}${warning}<div class="field"><label>Keterangan</label><input id="mReceiptDesc" value="${esc(r.description||r.merchant||'Belanja dari struk')}"></div><div class="field"><label>Total</label><input id="mReceiptAmount" type="number" value="${Number(r.total||0)}"></div><div class="field"><label>Tanggal</label><input id="mReceiptDate" type="date" value="${esc(r.date||todayISO())}" onchange="syncBudgetCategoryField('mReceiptCategory','mReceiptAccount','mReceiptDate')"></div><div class="field"><label>Kategori / Budget</label><input id="mReceiptCategory" list="receiptCategoryList" data-budget-text="${esc((r.description||'')+' '+(r.merchant||'')+' '+(r.category||''))}" data-budget-fallback="${esc(r.category||'Belanja')}" value="${esc(receiptCategory)}">${catList}</div>${itemHtml}<div class="field"><label>Rekening / Wallet</label><select id="mReceiptAccount" onchange="syncBudgetCategoryField('mReceiptCategory','mReceiptAccount','mReceiptDate')">${accountOptions('')}</select></div><div class="small muted" style="margin:-4px 0 12px">Scope mengikuti rekening secara otomatis agar Budget dan privasi konsisten.</div><button class="btn" style="width:100%" onclick="saveReceiptDraft()">Simpan sebagai Pengeluaran</button>`)
 }
-function saveReceiptDraft(){const accountId=formVal('mReceiptAccount'),acc=S.accounts.find(a=>a.id===accountId);const p={date:formVal('mReceiptDate')||todayISO(),type:'EXPENSE',amount:Number(formVal('mReceiptAmount')||0),accountId:accountId,toAccountId:'',category:formVal('mReceiptCategory')||'Belanja',description:formVal('mReceiptDesc')||'Belanja dari struk',scope:transactionScopeFromAccounts('EXPENSE',accountId),items:(RECEIPT_DRAFT&&Array.isArray(RECEIPT_DRAFT.items))?RECEIPT_DRAFT.items:[],source:'RECEIPT',sourceType:'RECEIPT'};if(!p.amount||!p.accountId)return toast('Total dan rekening wajib diisi.',true);optimistic('transaction.save',p,()=>{const tid=id('TMPTX'),tx={...p,id:tid,canEdit:true,createdBy:S.user.id};S.transactions.unshift(tx);adjustTx(tx,1);return{tempId:tid}},{message:'Transaksi struk langsung tampil. Menyimpan di background…'});RECEIPT_DRAFT=null}
+function saveReceiptDraft(){const accountId=formVal('mReceiptAccount'),acc=S.accounts.find(a=>a.id===accountId),draft=RECEIPT_DRAFT,receiptId=draft?.receiptId||id('RCPT');const p={date:formVal('mReceiptDate')||todayISO(),type:'EXPENSE',amount:Number(formVal('mReceiptAmount')||0),accountId:accountId,toAccountId:'',category:formVal('mReceiptCategory')||'Belanja',description:formVal('mReceiptDesc')||'Belanja dari struk',scope:transactionScopeFromAccounts('EXPENSE',accountId),items:(draft&&Array.isArray(draft.items))?draft.items:[],source:'RECEIPT',sourceType:'RECEIPT',sourceId:receiptId};if(!p.amount||!p.accountId)return toast('Total dan rekening wajib diisi.',true);optimistic('transaction.save',p,()=>{const tid=id('TMPTX'),tx={...p,id:tid,canEdit:true,createdBy:S.user.id};S.transactions.unshift(tx);adjustTx(tx,1);return{tempId:tid}},{message:'Transaksi struk langsung tampil. Menyimpan di background…'});if(draft?.filePayload?.archiveBase64)queueReceiptUpload({sourceType:'RECEIPT',sourceId:receiptId,imageBase64:draft.filePayload.archiveBase64,mimeType:draft.filePayload.archiveMimeType||'image/jpeg',fileName:draft.filePayload.fileName||('struk-'+todayISO()+'.jpg')}).catch(e=>toast('Transaksi tersimpan, arsip Drive menunggu retry: '+e.message,true));RECEIPT_DRAFT=null}
+
+
+const RECEIPT_UPLOAD_DB='ruma_receipt_uploads_v1';
+function receiptUploadDb(){return new Promise((resolve,reject)=>{const q=indexedDB.open(RECEIPT_UPLOAD_DB,1);q.onupgradeneeded=()=>{const db=q.result;if(!db.objectStoreNames.contains('uploads'))db.createObjectStore('uploads',{keyPath:'sourceId'})};q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error||new Error('IndexedDB tidak tersedia'))})}
+async function receiptUploadPut(payload){const db=await receiptUploadDb();return new Promise((resolve,reject)=>{const tx=db.transaction('uploads','readwrite');tx.objectStore('uploads').put({...payload,queuedAt:Date.now(),attempts:Number(payload.attempts||0)});tx.oncomplete=()=>resolve(true);tx.onerror=()=>reject(tx.error)})}
+async function receiptUploadList(){const db=await receiptUploadDb();return new Promise((resolve,reject)=>{const q=db.transaction('uploads','readonly').objectStore('uploads').getAll();q.onsuccess=()=>resolve(q.result||[]);q.onerror=()=>reject(q.error)})}
+async function receiptUploadDelete(sourceId){const db=await receiptUploadDb();return new Promise((resolve,reject)=>{const tx=db.transaction('uploads','readwrite');tx.objectStore('uploads').delete(sourceId);tx.oncomplete=()=>resolve(true);tx.onerror=()=>reject(tx.error)})}
+async function queueReceiptUpload(payload){await receiptUploadPut(payload);if(navigator.onLine)flushReceiptUploads().catch(()=>{});return true}
+async function flushReceiptUploads(){if(!S.session||!navigator.onLine||!('indexedDB'in window))return;const list=await receiptUploadList();for(const item of list.slice(0,3)){try{await api('file.receiptSave',{...item,clientMutationId:'MUTFILE_'+item.sourceId},{timeout:90000});await receiptUploadDelete(item.sourceId)}catch(e){await receiptUploadPut({...item,attempts:Number(item.attempts||0)+1,lastError:String(e.message||e).slice(0,180)});if(Number(item.attempts||0)>=2)break}}}
 
 function handleChatKeydown(event){if(event.key!=='Enter')return;if(event.shiftKey)return;event.preventDefault();sendChat()}
 function autoGrowChat(el){if(!el)return;el.style.height='auto';el.style.height=Math.min(116,Math.max(44,el.scrollHeight))+'px'}
 function sendChat(){const q=formVal('chatInput').trim();if(!q||CHAT_BUSY)return;const input=document.getElementById('chatInput');input.value='';autoGrowChat(input);askPreset(q)}
 function buildAiClientContext(message,history){
   const q=String(message||'').toLowerCase(),finance=/(uang|saldo|rekening|wallet|pengeluaran|pemasukan|budget|anggaran|tagihan|beli|belanja|boros|goal|tabung)/.test(q),plan=/(agenda|jadwal|task|tugas|kalender|besok|hari ini|minggu)/.test(q),household=/(rumah|suami|istri|pasangan|belanja|shopping|bagi tugas)/.test(q);
-  const mo=moneyOverviewData(),data={user:{name:S.user?.name||'',role:S.user?.role||''},moneyQuick:{saldoTersedia:mo.balance,arusKasBulan:mo.net,sisaBudget:mo.budgetRemaining,tagihan7Hari:mo.billTotal,jumlahTagihan7Hari:mo.bills.length,progressGoalPersen:mo.goalPct,syncQueue:queuedMutationCount()},anggotaKeluarga:(S.users||[]).slice(0,8).map(u=>({name:u.name,role:u.role})),recentChat:(history||[]).slice(-5).map(x=>({role:x.role==='user'?'user':'assistant',text:String(x.text||'').slice(0,260)})),dataQuality:{transactions:(S.transactions||[]).length,budgets:(S.budgets||[]).length,bills:(S.bills||[]).length,tasks:(S.tasks||[]).length,events:(S.events||[]).length,accounts:(S.accounts||[]).length}};
+  const mo=moneyOverviewData(),data={executionPolicy:'AI_CHAT_READ_ONLY_UNLESS_FRONTEND_ACTION_ALREADY_EXECUTED',user:{name:S.user?.name||'',role:S.user?.role||''},moneyQuick:{saldoTersedia:mo.balance,arusKasBulan:mo.net,sisaBudget:mo.budgetRemaining,tagihan7Hari:mo.billTotal,jumlahTagihan7Hari:mo.bills.length,progressGoalPersen:mo.goalPct,syncQueue:queuedMutationCount()},anggotaKeluarga:(S.users||[]).slice(0,8).map(u=>({name:u.name,role:u.role})),recentChat:(history||[]).slice(-5).map(x=>({role:x.role==='user'?'user':'assistant',text:String(x.text||'').slice(0,260)})),dataQuality:{transactions:(S.transactions||[]).length,budgets:(S.budgets||[]).length,bills:(S.bills||[]).length,tasks:(S.tasks||[]).length,events:(S.events||[]).length,accounts:(S.accounts||[]).length}};
   if(finance||(!plan&&!household)){
     data.balances=(S.accounts||[]).filter(a=>a.active!==false).slice(0,12).map(a=>({rekening:a.name,pemilik:a.ownerName||userName(a.ownerId)||((a.scope==='JOINT')?'Bersama':'Pribadi'),jenis:a.scope,saldo:Number(a.balance||0),visibilitas:a.visibility}));
     data.month={income:Number((S.summary||{}).monthIncome||0),expense:Number((S.summary||{}).monthExpense||0),expenseByCategory:(S.summary||{}).expenseByCategory||{}};
@@ -1593,16 +1636,29 @@ function buildAiClientContext(message,history){
   }
   const out=JSON.stringify(data);return out.length>16000?out.slice(0,16000):out;
 }
+function shortChatFollowup(q){
+  const l=String(q||'').trim().toLowerCase();
+  if(!/^(?:iya|ya|y|ok|oke|okay|sip|siap|mantap|baik|lanjut|nggak|ngga|tidak|gak|ga|batal)$/i.test(l))return '';
+  const hist=usableChatHistory(),lastAssistant=[...hist].reverse().find(m=>m.role!=='user');
+  if(/^(?:nggak|ngga|tidak|gak|ga|batal)$/i.test(l))return 'Baik, tidak saya lanjutkan. Tidak ada perubahan baru yang dibuat.';
+  const text=String(lastAssistant?.text||'');
+  if(/(?:✓|Dicatat|sudah dicatat|sudah tercatat|sinkronisasi server berjalan)/i.test(text))return 'Siap. **Transaksi terakhir sudah tercatat**; tidak ada konfirmasi tambahan yang diperlukan. Kalau mau koreksi, cukup tulis misalnya **“ubah transaksi tadi jadi 15 ribu”** atau **“hapus transaksi tadi”**.';
+  if(/(?:Tagihan .*dibayar|dibayar .*otomatis masuk Money|Goal .*transfer|item belanja .*masuk ke Money|Task .*selesai|Agenda .*selesai|dibuat untuk|sudah dicatat)/i.test(text))return 'Siap. Perubahan terakhir sudah saya catat. Kalau ingin mengubah atau membatalkannya, sebutkan saja data yang tadi.';
+  if(/\?$|yang mana|sebutkan|pilih|berapa|kapan|rekening\/wallet mana/i.test(text))return 'Saya masih perlu jawaban yang spesifik dari pertanyaan terakhir. Sebutkan pilihannya agar saya tidak menebak.';
+  return 'Siap 👍';
+}
 function askPreset(q){
   q=String(q||'').trim();if(!q||CHAT_BUSY)return;goPage('ai',document.querySelector('.navbtn[data-page="ai"]'));appendChatMessage('user',q,'normal',true);
   if(CHAT_PENDING&&CHAT_PENDING.kind==='transaction'){
     const acc=matchPendingAccount(q);if(acc){const cmd={payload:{...CHAT_PENDING.payload,accountId:acc.id,scope:acc.scope==='JOINT'?'JOINT':'PERSONAL'},account:acc};CHAT_PENDING=null;runChatTransaction(cmd);return;}
+    if(/^(?:batal|tidak|nggak|ngga|gak|ga)$/i.test(q)){CHAT_PENDING=null;appendChatMessage('assistant','Baik, transaksi belum saya catat.','normal',true);return;}
     if(/^(?:iya|ya|ok|oke|lanjut|jadi)$/i.test(q)){appendChatMessage('assistant',pendingTransactionPrompt(CHAT_PENDING),'feedback',true);return;}
     CHAT_PENDING=null;
   }
   const action=parseChatAction(q);if(action){runChatAction(action);return}
   const tx=parseChatTransaction(q);if(tx){if(tx.pending){CHAT_PENDING={kind:'transaction',payload:tx.payload,items:tx.items||[],amount:tx.amount,accounts:tx.accounts||[]};appendChatMessage('assistant',pendingTransactionPrompt(CHAT_PENDING),'feedback',true);return}if(tx.needs){appendChatMessage('assistant',tx.needs,'feedback',true);return}runChatTransaction(tx);return}
-  if(/^(?:iya|ya|ok|oke)$/i.test(q)){appendChatMessage('assistant','Siap. Sebutkan yang ingin dilanjutkan, misalnya **cek saldo**, **catat transaksi**, atau **lihat tagihan**.','normal',true);return}
+  if(shouldTryAiCommand(q)){runAiCommandFallback(q);return}
+  const shortReply=shortChatFollowup(q);if(shortReply){appendChatMessage('assistant',shortReply,'normal',true);return}
   const feedback=chatClarification(q);if(feedback){appendChatMessage('assistant',feedback,'feedback',true);return}
   const fast=fastLocalAnswer(q);if(fast){appendChatMessage('assistant',fast,'normal',true);return}
   const contextual=usableChatHistory().slice(-3).map(m=>m.role+':'+m.text).join('|');const ck=(S.revision||0)+'|'+q.trim().toLowerCase()+'|'+contextual.slice(-800),cached=AI_CACHE.get(ck);if(cached&&Date.now()-cached.at<180000){appendChatMessage('assistant',cached.text,'normal',true);return}
@@ -1610,6 +1666,8 @@ function askPreset(q){
   CHAT_BUSY=true;showChatThinking('RUMA AI menjawab…');api('ai.chat',{message:q,history:aiHistory,context:aiContext},{timeout:70000}).then(r=>{AI_CACHE.set(ck,{at:Date.now(),text:r.text});document.getElementById('aiInsight').innerHTML=chatHtml(r.text);finishChat(r.text,'normal')}).catch(e=>{finishChat('Saya belum bisa menyelesaikan pengecekan ini. **'+e.message+'**\n\nCoba kirim ulang. Data lokal tetap aman dan RUMA akan memakai jalur koneksi cadangan bila direct bridge belum siap.','feedback');toast(e.message,true)})
 }
 
+
+function handleNotificationLaunch(){const u=new URL(location.href),nid=u.searchParams.get('notification'),action=u.searchParams.get('action');if(!nid)return;history.replaceState({},document.title,location.pathname+location.hash);openNotifications();if(action&&action!=='OPEN')setTimeout(()=>notificationAction(nid,action),180)}
 
 async function installPWA(){
   if(PWA_STATE.installed){toast('RUMA sudah terpasang sebagai aplikasi.');return}
@@ -1621,17 +1679,19 @@ function initPWA(){
   window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;updateConnectionUI()});
   window.addEventListener('appinstalled',()=>{PWA_STATE.installed=true;deferredInstallPrompt=null;updateConnectionUI();toast('RUMA terpasang sebagai aplikasi ✓')});
   navigator.serviceWorker.addEventListener('controllerchange',()=>{PWA_STATE.controlled=true;updateConnectionUI()});
+  navigator.serviceWorker.addEventListener('message',e=>{const d=e.data||{};if(d.type==='RUMA_NOTIFICATION_ACTION'&&d.notificationId){const run=()=>notificationAction(d.notificationId,d.action||'OPEN');if(S.user)run();else setTimeout(run,1200)}});
   navigator.serviceWorker.register('./sw.js',{scope:'./'}).then(reg=>{PWA_STATE.registered=true;PWA_STATE.controlled=!!navigator.serviceWorker.controller;reg.update().catch(()=>{});reg.addEventListener('updatefound',()=>{const w=reg.installing;if(w)w.addEventListener('statechange',()=>{if(w.state==='installed'&&navigator.serviceWorker.controller){PWA_STATE.updateAvailable=true;toast('Versi RUMA baru siap. Buka ulang aplikasi untuk memakai update.')}})});updateConnectionUI()}).catch(e=>{PWA_STATE.error=e.message;updateConnectionUI()});
 }
 
 (async function init(){
   initPWA();
   initBridge();
+  if('indexedDB'in window)flushReceiptUploads().catch(()=>{});
   updateConnectionUI();
   const cachedRaw=localStorage.getItem(SNAP_KEY)||localStorage.getItem('ruma_snapshot_v2_4')||localStorage.getItem('ruma_snapshot_v2_3')||localStorage.getItem('ruma_snapshot_v2_1')||localStorage.getItem('ruma_snapshot');
   if(S.session&&cachedRaw){try{const c=JSON.parse(cachedRaw);Object.assign(S,c.data);showApp();renderAll();CONN.lastSync=Number(c.at||0)}catch(e){}}
-  if(S.session){flushMutationQueue({silent:true}).catch(()=>{}).finally(()=>smartSync(!S.user,{silent:true}).catch(()=>{}).finally(()=>setTimeout(()=>checkSystemStatus(false),1200)))}else await checkBootstrap(false);
-  window.addEventListener('online',()=>{CONN.online=true;resetBridge();initBridge();updateConnectionUI();if(S.session){flushMutationQueue({silent:true}).catch(()=>{});scheduleSync(350)}});
+  if(S.session){flushMutationQueue({silent:true}).catch(()=>{}).finally(()=>smartSync(!S.user,{silent:true}).catch(()=>{}).finally(()=>{setTimeout(()=>checkSystemStatus(false),1200);setTimeout(handleNotificationLaunch,500)}))}else await checkBootstrap(false);
+  window.addEventListener('online',()=>{CONN.online=true;resetBridge();initBridge();updateConnectionUI();if(S.session){flushMutationQueue({silent:true}).catch(()=>{});flushReceiptUploads().catch(()=>{});scheduleSync(350)}});
   window.addEventListener('offline',()=>{CONN.online=false;CONN.backend=null;updateConnectionUI()});
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&S.session&&Date.now()-CONN.lastSync>45000)scheduleSync(200)});
   setInterval(()=>{if(S.session&&navigator.onLine&&document.visibilityState==='visible'){if(queuedMutationCount())flushMutationQueue({silent:true}).catch(()=>{});else if(Date.now()-CONN.lastSync>BG_SYNC_MS)smartSync(false,{silent:true}).catch(()=>{})}},Math.max(45000,BG_SYNC_MS));
