@@ -133,7 +133,7 @@
       <div class="field"><label>Password</label><input id="ownerPassword" type="password" placeholder="Minimal 10 karakter + huruf & angka"></div>
       <button class="btn" style="width:100%" onclick="createOwner()">Aktifkan RUMA</button>
     </div>
-    <div class="small muted" style="margin-top:16px">v<span id="gateVersion">2.10.0</span> · Pink Edition</div>
+    <div class="small muted" style="margin-top:16px">v<span id="gateVersion">2.10.1</span> · Pink Edition</div>
   </div>
 </section>
 
@@ -339,7 +339,7 @@
 <script>
 const C = window.RUMA_CONFIG || {};
 const API_URL = (C.API_URL || '').trim();
-const VERSION = '2.10.0';
+const VERSION = '2.10.1';
 const CACHE_TTL = Number(C.CACHE_TTL_MS || 300000);
 const BG_SYNC_MS = Number(C.BACKGROUND_SYNC_MS || 120000);
 const SNAP_KEY='ruma_snapshot_v2_6';
@@ -485,14 +485,16 @@ async function directJsonpApi(action,payload={},opts={}){
   updateConnectionUI();throw lastErr||new Error('Koneksi backend gagal.');
 }
 
-async function mutationReceipt(clientMutationId,attempts=2){
+async function mutationReceipt(clientMutationId,attempts=2,action='',mutationPayload=null){
   if(!clientMutationId||!navigator.onLine)return null;
+  const statusPayload={clientMutationId};
+  if(action){statusPayload.action=action;statusPayload.mutationPayload=mutationPayload||{}}
   for(let i=0;i<Math.max(1,attempts);i++){
     try{
-      const r=await directJsonpApi('mutation.status',{clientMutationId},{timeout:6500,attempts:1,healthNeutral:true});
+      const r=await directJsonpApi('mutation.status',statusPayload,{timeout:7500,attempts:1,healthNeutral:true});
       if(r&&r.found&&r.data)return r.data;
     }catch(e){}
-    if(i<attempts-1)await sleepMs(260+(i*420));
+    if(i<attempts-1)await sleepMs(240+(i*380));
   }
   return null;
 }
@@ -507,14 +509,14 @@ async function api(action,payload={},opts={}){
       const safeRetry=isClientMutationAction(action)&&payload.clientMutationId;
       const transportFail=e&&['BRIDGE_UNAVAILABLE','BRIDGE_ERROR','TIMEOUT','NETWORK'].includes(e.code);
       if(transportFail){resetBridge();setTimeout(initBridge,120);}
-      // v2.10.0: sebelum menyebut timeout, cek ACK server. Sering kali write sudah sukses
+      // v2.10.1: sebelum menyebut timeout, cek ACK server. Sering kali write sudah sukses
       // tetapi browser terlambat menerima respons Apps Script.
       if(safeRetry&&transportFail){
-        const ack=await mutationReceipt(payload.clientMutationId,e.code==='TIMEOUT'?3:1);
+        const ack=await mutationReceipt(payload.clientMutationId,e.code==='TIMEOUT'?3:1,action,payload);
         if(ack)return ack;
         try{return await apiLegacy(action,payload,{...opts,bridge:false})}
         catch(fallbackErr){
-          const finalAck=await mutationReceipt(payload.clientMutationId,3);
+          const finalAck=await mutationReceipt(payload.clientMutationId,3,action,payload);
           if(finalAck)return finalAck;
           throw fallbackErr;
         }
@@ -713,7 +715,7 @@ function transactionLinkText(t){const links=Array.isArray(t.links)?t.links:[];if
 function renderTransactions(){
   const el=document.getElementById('transactionsList');if(!el)return;const f=document.getElementById('txFilter')?.value||'ALL',sf=document.getElementById('txSourceFilter')?.value||'ALL';
   const all=S.transactions||[],linkedCount=all.filter(t=>Array.isArray(t.links)&&t.links.length).length,sourceCount=all.filter(t=>transactionSourceKey(t)!=='MANUAL').length,pending=queuedMutationCount();
-  const ov=document.getElementById('transactionIntegrationOverview');if(ov)ov.innerHTML=`<b>Unified Ledger aktif</b> · ${linkedCount} transaksi tertaut modul · ${sourceCount} transaksi otomatis · ${pending?`<b>${pending} menunggu sinkronisasi</b>`:'sinkronisasi bersih'}.<br><span class="small">Saldo hanya berubah dari Transaksi. Tagihan, Belanja, Goal, Task/Agenda, Struk dan AI hanya membuat atau menautkan transaksi ke ledger yang sama.</span>`;
+  const ov=document.getElementById('transactionIntegrationOverview');if(ov)ov.innerHTML=`<b>Unified Ledger aktif</b> · ${linkedCount} transaksi tertaut modul · ${sourceCount} transaksi otomatis · ${pending?`<b>${pending} antrean sedang dipulihkan otomatis</b>`:'sinkronisasi bersih'}.<br><span class="small">Saldo hanya berubah dari Transaksi. Tagihan, Belanja, Goal, Task/Agenda, Struk dan AI hanya membuat atau menautkan transaksi ke ledger yang sama.</span>`;
   const arr=all.filter(t=>(f==='ALL'||t.type===f)&&(sf==='ALL'||transactionSourceKey(t)===sf));
   if(!arr.length){el.innerHTML='<div class="empty">Belum ada transaksi sesuai filter.</div>';return}
   el.innerHTML=arr.slice(0,150).map(t=>{const src=transactionSourceLabel(t),link=transactionLinkText(t);return `<div class="item"><div class="main"><div class="row wrap" style="gap:6px"><div class="name">${esc(t.description||t.category||t.type)}</div><span class="badge gray">${esc(src)}</span>${Array.isArray(t.links)&&t.links.length?'<span class="badge ok">Terintegrasi</span>':''}</div><div class="meta">${fmtDate(t.date)} · ${esc(accountName(t.accountId))}${t.type==='TRANSFER'?' → '+esc(accountName(t.toAccountId)):''} · ${esc(t.category||'')}${Array.isArray(t.items)&&t.items.length?' · '+t.items.length+' item':''}${link?' · '+esc(link):''}</div></div><div class="amount ${t.type==='EXPENSE'?'expense':t.type==='INCOME'?'income':''}">${t.type==='EXPENSE'?'-':t.type==='INCOME'?'+':''}${rupiah(t.amount)}</div>${t.canEdit?`<button class="btn ghost sm" onclick="openTransactionModal('${t.id}')">Edit</button>`:''}</div>`}).join('');
@@ -818,21 +820,34 @@ function queueMutation(action,payload){
 let MUTATION_FLUSHING=false;
 async function flushMutationQueue(opts={}){
   if(MUTATION_FLUSHING||!S.session||!navigator.onLine)return {pending:queuedMutationCount()};
-  let q=readMutationQueue();if(!q.length)return {pending:0};MUTATION_FLUSHING=true;let changed=false,done=0,failed=0;
+  let q=readMutationQueue();if(!q.length)return {pending:0};MUTATION_FLUSHING=true;updateConnectionUI();let changed=false,done=0,failed=0,recovered=0;
   try{
     const keep=[];
     for(let qi=0;qi<q.length;qi++){
       const item=q[qi];if(item.userId&&S.user&&item.userId!==S.user.id){keep.push(item);continue}
+      const mid=item.clientMutationId||(item.payload&&item.payload.clientMutationId)||'';
       try{
-        const r=await api(item.action,item.payload,{timeout:Math.max(timeoutForAction(item.action),50000)});done++;changed=true;if(r&&r._revision)S.revision=Number(r._revision);
+        // ACK-first: bersihkan antrean lama yang sebenarnya sudah sukses di server.
+        if(mid){
+          const priorAck=await mutationReceipt(mid,1,item.action,item.payload);
+          if(priorAck){done++;recovered++;changed=true;if(priorAck._revision)S.revision=Number(priorAck._revision);continue}
+        }
+        const r=await api(item.action,item.payload,{timeout:Math.max(timeoutForAction(item.action),50000)});
+        done++;changed=true;if(r&&r._revision)S.revision=Number(r._revision);
       }catch(e){
-        if(isTransientConnectionError(e)){item.attempts=Number(item.attempts||0)+1;item.lastError=String(e.message||e).slice(0,180);keep.push(item,...q.slice(qi+1));break;}
-        else{failed++;changed=true;if(!opts.silent)toast('Server menolak perubahan tertunda: '+e.message,true);}
+        if(isTransientConnectionError(e)){
+          // Respons browser boleh timeout setelah write sukses. Cek ACK sekali lagi sebelum menyimpan antrean.
+          const ack=mid?await mutationReceipt(mid,2,item.action,item.payload):null;
+          if(ack){done++;recovered++;changed=true;if(ack._revision)S.revision=Number(ack._revision);continue}
+          item.attempts=Number(item.attempts||0)+1;item.lastError=String(e.message||e).slice(0,180);item.lastAttemptAt=Date.now();
+          keep.push(item,...q.slice(qi+1));break;
+        }else{failed++;changed=true;if(!opts.silent)toast('Server menolak perubahan tertunda: '+e.message,true)}
       }
     }
-    writeMutationQueue(keep);if(changed){persistSnapshot();if(!keep.length)scheduleSync(250)}
-    if(done&&!opts.silent)toast('Sinkronisasi tertunda selesai ✓');
-    return {done,failed,pending:keep.length};
+    writeMutationQueue(keep);
+    if(changed){persistSnapshot();if(!keep.length)scheduleSync(250)}
+    if((done||recovered)&&!opts.silent)toast(recovered?'Sinkronisasi dipulihkan ✓':'Sinkronisasi tertunda selesai ✓');
+    return {done,failed,recovered,pending:keep.length};
   }finally{MUTATION_FLUSHING=false;updateConnectionUI()}
 }
 function retryMutationBackground(action,payload){
@@ -877,7 +892,7 @@ function updateConnectionUI(){
   CONN.online=navigator.onLine;
   const queued=queuedMutationCount(),pendingTotal=CONN.pendingWrites+queued;
   const dot=document.getElementById('topConnDot'),text=document.getElementById('topConnText'),versionMismatch=!!(S.settings.version&&S.settings.version!==VERSION);
-  if(dot&&text){dot.className='conndot '+(!CONN.online?'bad':CONN.backend===false?'bad':(pendingTotal||versionMismatch)?'warn':CONN.backend===true?'ok':'warn');text.textContent=!CONN.online?'Offline':CONN.backend===false?'Backend error':queued?('Menunggu sinkron '+queued):CONN.pendingWrites?'Menyimpan…':versionMismatch?('Backend '+(S.settings.version||'?')+' → '+VERSION):CONN.backend===true?'Online':'Online'}
+  if(dot&&text){dot.className='conndot '+(!CONN.online?'bad':CONN.backend===false?'bad':(pendingTotal||versionMismatch)?'warn':CONN.backend===true?'ok':'warn');text.textContent=!CONN.online?'Offline':CONN.backend===false?'Backend error':queued?(MUTATION_FLUSHING?'Menyinkronkan…':('Menunggu sinkron '+queued)):CONN.pendingWrites?'Menyimpan…':versionMismatch?('Backend '+(S.settings.version||'?')+' → '+VERSION):CONN.backend===true?'Online':'Online'}
   const cacheRaw=localStorage.getItem(SNAP_KEY),cache=(()=>{try{return JSON.parse(cacheRaw||'{}')}catch(e){return{}}})();
   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};
   set('stInternet',CONN.online?'Online':'Offline');
