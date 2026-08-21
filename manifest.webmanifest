@@ -6,15 +6,39 @@
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#fff8fc",
+  "background_color": "#fbf8fb",
   "theme_color": "#ec4899",
-  "description": "Asisten personal dan rumah tangga untuk pasangan.",
-  "categories": ["finance", "productivity", "lifestyle"],
+  "description": "Asisten personal dan rumah tangga modern untuk pasangan: finance, aktivitas, kalender, tagihan, dan AI.",
+  "categories": [
+    "finance",
+    "productivity",
+    "lifestyle"
+  ],
   "icons": [
-    {"src":"./icon-192.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},
-    {"src":"./icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
   ],
   "shortcuts": [
-    {"name":"Buka RUMA","short_name":"RUMA","url":"./","icons":[{"src":"./icon-192.png","sizes":"192x192"}]}
+    {
+      "name": "Buka RUMA",
+      "short_name": "RUMA",
+      "url": "./",
+      "icons": [
+        {
+          "src": "./icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
   ]
 }
