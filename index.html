@@ -133,7 +133,7 @@
       <div class="field"><label>Password</label><input id="ownerPassword" type="password" placeholder="Minimal 10 karakter + huruf & angka"></div>
       <button class="btn" style="width:100%" onclick="createOwner()">Aktifkan RUMA</button>
     </div>
-    <div class="small muted" style="margin-top:16px">v<span id="gateVersion">2.8.7</span> · Pink Edition</div>
+    <div class="small muted" style="margin-top:16px">v<span id="gateVersion">2.9.1</span> · Pink Edition</div>
   </div>
 </section>
 
@@ -339,7 +339,7 @@
 <script>
 const C = window.RUMA_CONFIG || {};
 const API_URL = (C.API_URL || '').trim();
-const VERSION = '2.8.7';
+const VERSION = '2.9.1';
 const CACHE_TTL = Number(C.CACHE_TTL_MS || 300000);
 const BG_SYNC_MS = Number(C.BACKGROUND_SYNC_MS || 120000);
 const SNAP_KEY='ruma_snapshot_v2_6';
@@ -363,7 +363,7 @@ let API_INFLIGHT=0;
 const API_STATS={timeouts:0,lastAction:'',lastMs:0};
 function timeoutForAction(action){
   if(action==='ai.receipt')return Math.max(TIMEOUT,80000);
-  if(action==='ai.chat')return Math.max(TIMEOUT,55000);
+  if(action==='ai.chat')return Math.max(TIMEOUT,70000);
   if(action==='app.snapshot')return Math.max(TIMEOUT,45000);
   if(action.startsWith('calendar.'))return Math.max(TIMEOUT,65000);
   if(/\.(save|delete|toggle)$/.test(action)||action==='account.reconcile')return Math.max(TIMEOUT,38000);
@@ -391,8 +391,53 @@ function formVal(id){return document.getElementById(id)?.value ?? ''}
 function checked(id){return !!document.getElementById(id)?.checked}
 
 const DIRECT_READ_ACTIONS=new Set(['system.ping','bootstrap.status','app.snapshot','app.revision','system.status','system.diagnose','calendar.status']);
-const TRANSPORT={read:'Direct JSONP',write:'POST job + poll',last:'-'};
+const BRIDGE_ACTIONS=new Set(['ai.chat','chat.append','chat.search']);
+const TRANSPORT={read:'Direct JSONP',write:'POST job + poll',ai:'Direct Bridge',last:'-'};
+const BRIDGE={frame:null,ready:false,booting:false,pending:new Map(),listener:false};
 function sleepMs(ms){return new Promise(r=>setTimeout(r,ms))}
+function initBridge(){
+  if(!API_URL||API_URL.includes('PASTE_APPS_SCRIPT')||BRIDGE.frame)return;
+  if(!BRIDGE.listener){
+    BRIDGE.listener=true;
+    window.addEventListener('message',ev=>{
+      const d=ev.data||{};if(!d||d.rumaBridge!==1)return;
+      if(BRIDGE.frame&&ev.source!==BRIDGE.frame.contentWindow)return;
+      if(d.type==='ready'){BRIDGE.ready=true;BRIDGE.booting=false;updateConnectionUI();return}
+      if(!d.id)return;const req=BRIDGE.pending.get(d.id);if(!req)return;
+      BRIDGE.pending.delete(d.id);clearTimeout(req.timer);
+      if(d.error){const e=new Error(String(d.error||'Direct bridge gagal.'));e.code='BRIDGE_ERROR';req.reject(e);return}
+      const res=d.result;
+      if(res&&res.ok)req.resolve(res.data);
+      else{const e=new Error((res&&res.error)||'Respons bridge tidak valid.');e.code=(res&&/session/i.test(String(res.error||'')))?'SESSION':'BACKEND';req.reject(e)}
+    });
+  }
+  BRIDGE.booting=true;
+  const f=document.createElement('iframe');f.style.display='none';f.setAttribute('aria-hidden','true');f.src=API_URL+(API_URL.includes('?')?'&':'?')+'bridge=1&_='+Date.now();
+  f.onerror=()=>{BRIDGE.ready=false;BRIDGE.booting=false};
+  document.body.appendChild(f);BRIDGE.frame=f;
+}
+async function ensureBridge(timeout=3500){
+  initBridge();if(BRIDGE.ready&&BRIDGE.frame)return true;
+  const started=Date.now();
+  while(Date.now()-started<timeout){if(BRIDGE.ready&&BRIDGE.frame)return true;await sleepMs(70)}
+  const e=new Error('Direct bridge belum siap.');e.code='BRIDGE_UNAVAILABLE';throw e;
+}
+async function bridgeApi(action,payload={},opts={}){
+  if(!navigator.onLine){const e=new Error('Perangkat sedang offline. Data lokal tetap tersedia.');e.code='OFFLINE';throw e}
+  await ensureBridge(Number(opts.bridgeReadyTimeout||3500));
+  const started=performance.now(),requestTimeout=Number(opts.timeout||timeoutForAction(action));API_INFLIGHT++;API_STATS.lastAction=action;TRANSPORT.last='BRIDGE';
+  try{
+    const data=await new Promise((resolve,reject)=>{
+      const rid=id('BRG'),timer=setTimeout(()=>{BRIDGE.pending.delete(rid);const e=new Error(action==='ai.chat'?'RUMA AI masih memproses terlalu lama. Koneksi tetap aktif; coba kirim ulang bila jawaban belum muncul.':'Direct bridge timeout.');e.code='TIMEOUT';reject(e)},requestTimeout);
+      BRIDGE.pending.set(rid,{resolve,reject,timer});
+      try{BRIDGE.frame.contentWindow.postMessage({rumaBridge:1,id:rid,action,payload:payload||{},session:opts.noSession?'':S.session,deviceId:DEVICE_ID},'*')}
+      catch(err){clearTimeout(timer);BRIDGE.pending.delete(rid);const e=new Error(err.message||'Gagal mengirim request ke bridge.');e.code='BRIDGE_UNAVAILABLE';reject(e)}
+    });
+    API_STATS.lastMs=Math.round(performance.now()-started);CONN.backend=true;CONN.latency=API_STATS.lastMs;CONN.lastError='';updateConnectionUI();return data;
+  }catch(err){
+    API_STATS.lastMs=Math.round(performance.now()-started);CONN.lastError=String(err.message||err);if(err.code==='TIMEOUT')API_STATS.timeouts++;updateConnectionUI();throw err;
+  }finally{API_INFLIGHT=Math.max(0,API_INFLIGHT-1)}
+}
 function directJsonpOnce(action,payload={},opts={}){
   const started=performance.now(),requestTimeout=Number(opts.timeout||timeoutForAction(action));
   API_INFLIGHT++;API_STATS.lastAction=action;TRANSPORT.last='READ';
@@ -435,6 +480,10 @@ async function api(action,payload={},opts={}){
   if(!API_URL)throw new Error('API_URL belum diisi di config.js');
   if(!navigator.onLine){const e=new Error('Perangkat sedang offline. Data lokal tetap tersedia.');e.code='OFFLINE';throw e}
   if(DIRECT_READ_ACTIONS.has(action))return directJsonpApi(action,payload,opts);
+  if(BRIDGE_ACTIONS.has(action)&&opts.bridge!==false){
+    try{return await bridgeApi(action,payload,opts)}
+    catch(e){if(e&&e.code==='BRIDGE_UNAVAILABLE')return apiLegacy(action,payload,{...opts,bridge:false});throw e}
+  }
   return apiLegacy(action,payload,opts);
 }
 function apiLegacy(action,payload={},opts={}){
@@ -453,7 +502,7 @@ function apiLegacy(action,payload={},opts={}){
     const cleanup=()=>{done=true;clearTimeout(timer);form.remove();setTimeout(()=>iframe.remove(),600)};
     const success=res=>{cleanup();finish();CONN.backend=true;CONN.latency=API_STATS.lastMs;CONN.lastError='';updateConnectionUI();resolve(res)};
     const failure=err=>{cleanup();finish();CONN.lastError=String(err.message||err);if(err.code==='TIMEOUT')API_STATS.timeouts++;updateConnectionUI();setTimeout(()=>{if(navigator.onLine)checkSystemStatus(false)},450);reject(err)};
-    const nextDelay=()=>Math.min(2200,700+tries*220);
+    const nextDelay=()=>Math.min(1600,480+tries*170);
     const poll=()=>{
       if(done)return;tries++;
       const cb='__ruma_'+rid+'_'+tries,scr=document.createElement('script');
@@ -464,7 +513,7 @@ function apiLegacy(action,payload={},opts={}){
       document.head.appendChild(scr);
     };
     timer=setTimeout(()=>{if(!done){const e=new Error(action==='ai.receipt'?'Pembacaan struk masih diproses. Coba lagi; foto yang sama akan memakai cache bila hasil sudah tersedia.':'Koneksi Apps Script timeout. Data lokal tetap aman.');e.code='TIMEOUT';failure(e)}},requestTimeout);
-    try{form.submit();setTimeout(poll,850)}catch(err){failure(err)}
+    try{form.submit();setTimeout(poll,420)}catch(err){failure(err)}
   });
 }
 async function checkBootstrap(force=false){
@@ -580,8 +629,8 @@ function combinedActivities(){
 function activityRow(a,opts={}){
   const done=a.status==='DONE',isEvent=a.kind==='EVENT',time=isEvent?(String(a.startAt||'').slice(11,16)||'Agenda'):(a.dueDate?fmtDate(a.dueDate):'Fleksibel');
   const toggle=isEvent?`toggleEvent('${a.id}')`:`toggleTask('${a.id}')`,edit=isEvent?`openActivityModal('${a.id}','AGENDA')`:`openActivityModal('${a.id}','TASK')`;
-  const who=a.assignedTo==='HOUSEHOLD'?'Bersama':userName(a.assignedTo),meta=isEvent?`${localDT(a.startAt)} · ${esc(who)}${a.location?' · '+esc(a.location):''}`:`${a.dueDate?fmtDate(a.dueDate):'Tanpa tanggal'} · ${esc(who)}${a.priority?' · '+esc(a.priority):''}`;
-  return `<div class="item"><button class="checkbtn ${done?'done':''}" onclick="${toggle}">${done?'✓':'○'}</button>${opts.timeline?`<div class="activity-time">${esc(isEvent?(String(a.startAt||'').slice(11,16)||'—'):(a.dueDate===todayISO()?'Hari ini':'Task'))}</div>`:''}<div class="main"><div class="row wrap" style="gap:6px"><span class="activity-kind ${isEvent?'event':'task'}">${isEvent?'Agenda':'Task'}</span><div class="name ${done?'done-text':''}">${esc(a.title)}</div></div><div class="meta">${meta}</div></div>${opts.edit===false?'':`<button class="btn ghost sm" onclick="${edit}">Edit</button>`}</div>`;
+  const who=a.assignedTo==='HOUSEHOLD'?'Bersama':userName(a.assignedTo),cost=Number(a.actualCost||0),meta=(isEvent?`${localDT(a.startAt)} · ${esc(who)}${a.location?' · '+esc(a.location):''}`:`${a.dueDate?fmtDate(a.dueDate):'Tanpa tanggal'} · ${esc(who)}${a.priority?' · '+esc(a.priority):''}`)+(cost?` · Biaya ${rupiah(cost)}`:'');
+  return `<div class="item"><button class="checkbtn ${done?'done':''}" onclick="${toggle}">${done?'✓':'○'}</button>${opts.timeline?`<div class="activity-time">${esc(isEvent?(String(a.startAt||'').slice(11,16)||'—'):(a.dueDate===todayISO()?'Hari ini':'Task'))}</div>`:''}<div class="main"><div class="row wrap" style="gap:6px"><span class="activity-kind ${isEvent?'event':'task'}">${isEvent?'Agenda':'Task'}</span><div class="name ${done?'done-text':''}">${esc(a.title)}</div></div><div class="meta">${meta}</div></div>${opts.edit===false?'':`<div class="row wrap"><button class="btn secondary sm" onclick="openActivityCost('${isEvent?'EVENT':'TASK'}','${a.id}')">+ Biaya</button><button class="btn ghost sm" onclick="${edit}">Edit</button></div>`}</div>`;
 }
 function renderTodayActivities(){
   const el=document.getElementById('todayActivities'),badge=document.getElementById('todayActivityCount');if(!el)return;const today=todayISO();
@@ -596,7 +645,12 @@ function renderActivities(){
 }
 function renderTodayEvents(data){const e=document.getElementById('todayEvents');if(!data.length){e.innerHTML='<div class="empty small">Belum ada agenda hari ini.</div>';return}e.innerHTML=data.map(x=>`<div class="item"><button class="checkbtn ${x.status==='DONE'?'done':''}" onclick="toggleEvent('${x.id}')">${x.status==='DONE'?'✓':'○'}</button><div class="main"><div class="name ${x.status==='DONE'?'done-text':''}">${esc(x.title)}</div><div class="meta">${localDT(x.startAt)}${x.location?' · '+esc(x.location):''}</div></div></div>`).join('')}
 function renderTodayTasks(data){const e=document.getElementById('todayTasks');if(!data.length){e.innerHTML='<div class="empty small">Semua task selesai ✓</div>';return}e.innerHTML=data.map(x=>`<div class="item"><button class="checkbtn" onclick="toggleTask('${x.id}')">○</button><div class="main"><div class="name">${esc(x.title)}</div><div class="meta">${x.dueDate?fmtDate(x.dueDate):'Tanpa jatuh tempo'} · ${esc(userName(x.assignedTo))}${x.recurring&&x.recurring!=='NO'?' · '+esc(x.recurring):''}</div></div></div>`).join('')}
-function renderTodayBills(){const e=document.getElementById('todayBills'),badge=document.getElementById('billReminderCount');if(!e)return;const arr=S.bills.filter(b=>{const d=daysTo(b.dueDate);return (d>=0&&d<=2)||(b.status!=='PAID'&&d<0)}).sort((a,b)=>String(a.dueDate).localeCompare(String(b.dueDate))).slice(0,8);const unpaid=arr.filter(b=>b.status!=='PAID').length;badge.textContent=unpaid+' perlu dibayar';if(!arr.length){e.innerHTML='<div class="empty small">Tidak ada tagihan H-2/H-1 yang perlu dibayar.</div>';return}e.innerHTML=arr.map(b=>{const d=b.status==='PAID'?['Lunas','']:dueLabel(b.dueDate);return `<div class="item"><button class="checkbtn ${b.status==='PAID'?'done':''}" onclick="toggleBill('${b.id}')" title="${b.status==='PAID'?'Batalkan status lunas':'Tandai sudah dibayar'}">${b.status==='PAID'?'✓':'○'}</button><div class="main"><div class="name ${b.status==='PAID'?'done-text':''}">${esc(b.name)}</div><div class="meta">${rupiah(b.amount)} · ${fmtDate(b.dueDate)} · ${esc(accountName(b.accountId))}</div></div>${b.status==='PAID'?'<span class="badge ok">Lunas</span>':`<span class="duechip ${d[1]}">${d[0]}</span>`}</div>`}).join('')}
+function renderTodayBills(){
+  const e=document.getElementById('todayBills'),badge=document.getElementById('billReminderCount');if(!e)return;
+  const arr=S.bills.filter(b=>{const d=daysTo(b.dueDate);return (d>=0&&d<=2)||(b.status!=='PAID'&&d<0)}).sort((a,b)=>String(a.dueDate).localeCompare(String(b.dueDate))).slice(0,8),unpaid=arr.filter(b=>b.status!=='PAID').length;if(badge)badge.textContent=unpaid+' perlu dibayar';
+  if(!arr.length){e.innerHTML='<div class="empty small">Tidak ada tagihan H-2/H-1 yang perlu dibayar.</div>';return}
+  e.innerHTML=arr.map(b=>{const d=b.status==='PAID'?['Lunas','']:dueLabel(b.dueDate),linked=!!b.linkedTransactionId;return `<div class="item"><div class="main"><div class="name ${b.status==='PAID'?'done-text':''}">${esc(b.name)}</div><div class="meta">${rupiah(b.amount)} · ${fmtDate(b.dueDate)} · ${esc(accountName(b.accountId))}${linked?' · TX terhubung':b.legacyPaid?' · lunas lama belum terhubung':''}</div></div>${b.status==='PAID'?`<span class="badge ${linked?'ok':'warn'}">${linked?'Lunas · Money':'Lunas lama'}</span><button class="btn ${linked?'ghost':'secondary'} sm" onclick="${linked?`undoBillPayment('${b.id}')`:`openBillPayment('${b.id}')`}">${linked?'Batalkan':'Catat transaksi'}</button>`:`<span class="duechip ${d[1]}">${d[0]}</span><button class="btn sm" onclick="openBillPayment('${b.id}')">Bayar</button>`}</div>`}).join('');
+}
 function renderSmallList(el,data,map){
   const e=document.getElementById(el);if(!data.length){e.innerHTML='<div class="empty small">Belum ada data.</div>';return}
   e.innerHTML=data.map(x=>{const m=map(x);return `<div class="item"><span class="pinkdot"></span><div class="main"><div class="name">${esc(m.name)}</div><div class="meta">${esc(m.meta||'')}</div></div></div>`}).join('');
@@ -609,11 +663,12 @@ function renderAccounts(){
   if(!S.accounts.length){el.innerHTML='<div class="empty span12">Belum ada rekening/wallet.</div>';return}
   el.innerHTML=S.accounts.map(a=>{const st=a.summaryOnly?{incoming:Number(a.summaryMonthIncome||0),outgoing:Number(a.summaryMonthExpense||0)}:accountMonthStats(a.id);return `<div class="card span4 account-card"><div class="row between"><span class="badge ${a.scope==='JOINT'?'':'gray'}">${a.scope==='JOINT'?'BERSAMA':'PRIBADI'}</span><span class="small muted">${esc(a.type)}</span></div><div style="font-weight:900;font-size:17px;margin-top:10px">${esc(a.name)}</div><div class="metric">${a.summaryOnly?'Ringkasan':rupiah(a.balance)}</div><div class="small muted">${a.scope==='JOINT'?'Household':esc(a.ownerName||userName(a.ownerId))} · ${esc(a.visibility||'PRIVATE')}</div><div class="account-stats"><div class="account-stat"><span>Masuk bulan ini</span><b class="amount income">${rupiah(st.incoming)}</b></div><div class="account-stat"><span>Keluar bulan ini</span><b class="amount expense">${rupiah(st.outgoing)}</b></div></div>${a.summaryOnly?'<div class="small muted" style="margin-top:8px">Saldo dan detail transaksi disembunyikan oleh pemilik rekening.</div>':''}${a.active===false?'<div class="small muted" style="margin-top:8px">Diarsipkan · histori tetap dihitung</div>':''}${a.canEdit?`<div class="row wrap" style="margin-top:12px"><button class="btn ghost sm" onclick="openAccountModal('${a.id}')">Edit</button><button class="btn secondary sm" onclick="openReconcileModal('${a.id}')">Sesuaikan saldo</button><button class="btn danger sm" onclick="removeItem('account','${a.id}')">Arsip</button></div>`:''}</div>`}).join('');
 }
+function transactionSourceLabel(t){const type=String(t.sourceType||'').toUpperCase(),channel=String(t.source||'').toUpperCase();const map={BILL:'Tagihan',SHOPPING:'Belanja',GOAL:'Goal',TASK:'Task',EVENT:'Agenda',RECEIPT:'Struk'};return map[type]||map[channel]||(channel==='AI_CHAT'?'AI Chat':'')}
 function renderTransactions(){
   const el=document.getElementById('transactionsList');if(!el)return;const f=document.getElementById('txFilter')?.value||'ALL';
   const arr=S.transactions.filter(t=>f==='ALL'||t.type===f);
   if(!arr.length){el.innerHTML='<div class="empty">Belum ada transaksi.</div>';return}
-  el.innerHTML=arr.slice(0,150).map(t=>`<div class="item"><div class="main"><div class="name">${esc(t.description||t.category||t.type)}</div><div class="meta">${fmtDate(t.date)} · ${esc(accountName(t.accountId))}${t.type==='TRANSFER'?' → '+esc(accountName(t.toAccountId)):''} · ${esc(t.category||'')}${Array.isArray(t.items)&&t.items.length?' · '+t.items.length+' item':''}</div></div><div class="amount ${t.type==='EXPENSE'?'expense':t.type==='INCOME'?'income':''}">${t.type==='EXPENSE'?'-':t.type==='INCOME'?'+':''}${rupiah(t.amount)}</div>${t.canEdit?`<button class="btn ghost sm" onclick="openTransactionModal('${t.id}')">Edit</button>`:''}</div>`).join('');
+  el.innerHTML=arr.slice(0,150).map(t=>{const src=transactionSourceLabel(t);return `<div class="item"><div class="main"><div class="row wrap" style="gap:6px"><div class="name">${esc(t.description||t.category||t.type)}</div>${src?`<span class="badge gray">${esc(src)}</span>`:''}</div><div class="meta">${fmtDate(t.date)} · ${esc(accountName(t.accountId))}${t.type==='TRANSFER'?' → '+esc(accountName(t.toAccountId)):''} · ${esc(t.category||'')}${Array.isArray(t.items)&&t.items.length?' · '+t.items.length+' item':''}</div></div><div class="amount ${t.type==='EXPENSE'?'expense':t.type==='INCOME'?'income':''}">${t.type==='EXPENSE'?'-':t.type==='INCOME'?'+':''}${rupiah(t.amount)}</div>${t.canEdit?`<button class="btn ghost sm" onclick="openTransactionModal('${t.id}')">Edit</button>`:''}</div>`}).join('');
 }
 function renderBudgets(){
   const el=document.getElementById('budgetsList');if(!el)return;if(!S.budgets.length){el.innerHTML='<div class="empty span12">Belum ada budget.</div>';return}
@@ -621,11 +676,11 @@ function renderBudgets(){
 }
 function renderBills(){
   const el=document.getElementById('billsList');if(!el)return;if(!S.bills.length){el.innerHTML='<div class="empty">Belum ada tagihan.</div>';return}
-  el.innerHTML=S.bills.map(b=>{const d=b.status==='PAID'?['Lunas','']:dueLabel(b.dueDate);return `<div class="item"><button class="checkbtn ${b.status==='PAID'?'done':''}" onclick="toggleBill('${b.id}')">${b.status==='PAID'?'✓':'○'}</button><div class="main"><div class="name ${b.status==='PAID'?'done-text':''}">${esc(b.name)}</div><div class="meta">${fmtDate(b.dueDate)} · ${esc(accountName(b.accountId))}${b.status==='PAID'?' · sudah dibayar':''}</div></div><div class="amount">${rupiah(b.amount)}</div>${b.status!=='PAID'&&daysTo(b.dueDate)<=2?`<span class="duechip ${d[1]}">${d[0]}</span>`:''}<button class="btn ghost sm" onclick="openBillModal('${b.id}')">Edit</button></div>`}).join('');
+  el.innerHTML=S.bills.map(b=>{const d=b.status==='PAID'?['Lunas','']:dueLabel(b.dueDate),linked=!!b.linkedTransactionId;return `<div class="item"><div class="main"><div class="row wrap" style="gap:6px"><div class="name ${b.status==='PAID'?'done-text':''}">${esc(b.name)}</div>${b.status==='PAID'?`<span class="badge ${linked?'ok':'warn'}">${linked?'Lunas · TX':'Lunas lama'}</span>`:''}</div><div class="meta">${fmtDate(b.dueDate)} · ${esc(accountName(b.accountId))}${linked?` · dibayar ${rupiah(b.paidAmount||b.amount)} · transaksi terhubung`:b.legacyPaid?' · belum punya transaksi pembayaran':''}</div></div><div class="amount">${rupiah(b.amount)}</div>${b.status!=='PAID'&&daysTo(b.dueDate)<=2?`<span class="duechip ${d[1]}">${d[0]}</span>`:''}<div class="row wrap">${b.status==='PAID'?(linked?`<button class="btn ghost sm" onclick="undoBillPayment('${b.id}')">Batalkan bayar</button>`:`<button class="btn secondary sm" onclick="openBillPayment('${b.id}')">Hubungkan pembayaran</button>`):`<button class="btn sm" onclick="openBillPayment('${b.id}')">Bayar</button>`}<button class="btn ghost sm" onclick="openBillModal('${b.id}')">Edit</button></div></div>`}).join('');
 }
 function renderGoals(){
   const el=document.getElementById('goalsList');if(!el)return;if(!S.goals.length){el.innerHTML='<div class="empty span12">Belum ada goal.</div>';return}
-  el.innerHTML=S.goals.map(g=>{const pct=Math.min(100,Math.round(Number(g.current||0)/Math.max(1,Number(g.target||0))*100));return `<div class="card span4"><div class="row between"><b>${esc(g.name)}</b><span class="badge">${pct}%</span></div><div class="metric">${rupiah(g.current)}</div><div class="small muted">Target ${rupiah(g.target)} ${g.dueDate?'· '+fmtDate(g.dueDate):''}</div><div class="progress"><span style="width:${pct}%"></span></div><button class="btn ghost sm" style="margin-top:10px" onclick="openGoalModal('${g.id}')">Edit</button></div>`}).join('');
+  el.innerHTML=S.goals.map(g=>{const pct=Math.min(100,Math.round(Number(g.current||0)/Math.max(1,Number(g.target||0))*100));return `<div class="card span4"><div class="row between"><b>${esc(g.name)}</b><span class="badge">${pct}%</span></div><div class="metric">${rupiah(g.current)}</div><div class="small muted">Target ${rupiah(g.target)} ${g.dueDate?'· '+fmtDate(g.dueDate):''}${g.accountId?' · '+esc(accountName(g.accountId)):''}</div>${Number(g.baseCurrent||0)>0?`<div class="small muted">Progress lama ${rupiah(g.baseCurrent)} · kontribusi via transaksi ${rupiah(g.contributionTotal||0)}</div>`:`<div class="small muted">Kontribusi via transaksi ${rupiah(g.contributionTotal||0)}</div>`}<div class="progress"><span style="width:${pct}%"></span></div><div class="row wrap" style="margin-top:10px"><button class="btn sm" onclick="openGoalContribution('${g.id}')">+ Dana</button><button class="btn ghost sm" onclick="openGoalModal('${g.id}')">Edit</button></div></div>`}).join('');
 }
 function renderTasks(){
   const el=document.getElementById('tasksList');if(!el)return;if(!S.tasks.length){el.innerHTML='<div class="empty">Belum ada task.</div>';return}
@@ -654,7 +709,7 @@ function renderCalendarDay(){
   const items=[];
   S.events.filter(x=>String(x.startAt||'').slice(0,10)===d).forEach(x=>items.push({kind:'event',sort:String(x.startAt||''),html:`<div class="item"><button class="checkbtn ${x.status==='DONE'?'done':''}" onclick="toggleEvent('${x.id}')">${x.status==='DONE'?'✓':'○'}</button><div class="main"><div class="name ${x.status==='DONE'?'done-text':''}">${esc(x.title)}</div><div class="meta">Agenda · ${localDT(x.startAt)}${x.location?' · '+esc(x.location):''}</div></div><button class="btn ghost sm" onclick="openEventModal('${x.id}')">Edit</button></div>`}));
   S.tasks.filter(x=>String(x.dueDate||'').slice(0,10)===d).forEach(x=>items.push({kind:'task',sort:d+'T23:50',html:`<div class="item"><button class="checkbtn ${x.status==='DONE'?'done':''}" onclick="toggleTask('${x.id}')">${x.status==='DONE'?'✓':'○'}</button><div class="main"><div class="name ${x.status==='DONE'?'done-text':''}">${esc(x.title)}</div><div class="meta">Task · ${esc(userName(x.assignedTo))} · ${esc(x.priority||'')}</div></div></div>`}));
-  S.bills.filter(x=>String(x.dueDate||'').slice(0,10)===d).forEach(x=>items.push({kind:'bill',sort:d+'T23:59',html:`<div class="item"><button class="checkbtn ${x.status==='PAID'?'done':''}" onclick="toggleBill('${x.id}')">${x.status==='PAID'?'✓':'○'}</button><div class="main"><div class="name ${x.status==='PAID'?'done-text':''}">${esc(x.name)}</div><div class="meta">Tagihan · ${rupiah(x.amount)} · ${esc(accountName(x.accountId))}</div></div></div>`}));
+  S.bills.filter(x=>String(x.dueDate||'').slice(0,10)===d).forEach(x=>items.push({kind:'bill',sort:d+'T23:59',html:`<div class="item"><div class="main"><div class="name ${x.status==='PAID'?'done-text':''}">${esc(x.name)}</div><div class="meta">Tagihan · ${rupiah(x.amount)} · ${esc(accountName(x.accountId))}${x.linkedTransactionId?' · TX terhubung':''}</div></div>${x.status==='PAID'?`<span class="badge ${x.linkedTransactionId?'ok':'warn'}">Lunas</span>`:`<button class="btn sm" onclick="openBillPayment('${x.id}')">Bayar</button>`}</div>`}));
   items.sort((a,b)=>a.sort.localeCompare(b.sort));el.innerHTML=items.length?items.map(x=>x.html).join(''):'<div class="empty small">Belum ada agenda, task, atau tagihan pada tanggal ini.</div>';
 }
 
@@ -663,7 +718,7 @@ function renderShopping(){
   const purchased=rows.filter(x=>x.status==='PURCHASED');
   el.innerHTML=rows.map(x=>`<div class="listitem"><button class="check ${x.status!=='OPEN'?'done':''}" ${x.status==='POSTED'?'disabled':''} onclick="toggleShopping('${x.id}')">${x.status==='OPEN'?'○':'✓'}</button><div class="grow"><b>${esc(x.item)}</b><div class="small muted">${esc(x.qty||'')}${x.status==='PURCHASED'?' · sudah dibeli, belum masuk Money':x.status==='POSTED'?' · sudah masuk pengeluaran':''}</div></div><span class="badge ${x.status==='POSTED'?'ok':x.status==='PURCHASED'?'warn':'gray'}">${x.status}</span>${x.status!=='POSTED'?`<button class="btn danger sm" onclick="removeItem('shopping','${x.id}')">Hapus</button>`:''}</div>`).join('')+(purchased.length?`<div style="margin-top:12px"><button class="btn" onclick="openPostShopping()">Catat ${purchased.length} item ke Pengeluaran</button></div>`:'');
 }
-function openPostShopping(){const items=S.shopping.filter(x=>x.status==='PURCHASED');if(!items.length)return toast('Centang item yang sudah dibeli dulu.',true);modal('Catat Belanja ke Pengeluaran',`<div class="alert">${items.length} item akan dihubungkan ke satu transaksi agar tidak dihitung ganda.</div><div class="field"><label>Total belanja</label><input id="mShopTotal" type="number" inputmode="numeric" placeholder="Total pembayaran"></div><div class="field"><label>Rekening</label><select id="mShopAccount">${accountOptions()}</select></div><div class="field"><label>Keterangan</label><input id="mShopDesc" value="Belanja rumah tangga"></div><button class="btn" onclick="postShoppingExpense()">Simpan ke Money</button>`)}
+function openPostShopping(){const items=S.shopping.filter(x=>x.status==='PURCHASED');if(!items.length)return toast('Centang item yang sudah dibeli dulu.',true);modal('Catat Belanja ke Pengeluaran',`<div class="alert">${items.length} item akan dihubungkan ke <b>satu transaksi induk</b>. Saldo dan Budget hanya berubah satu kali.</div><div class="field"><label>Total belanja</label><input id="mShopTotal" type="number" inputmode="numeric" placeholder="Total pembayaran"></div><div class="field"><label>Rekening</label><select id="mShopAccount">${accountOptions()}</select></div><div class="field"><label>Keterangan</label><input id="mShopDesc" value="Belanja rumah tangga"></div><button class="btn" onclick="postShoppingExpense()">Simpan ke Money</button>`)}
 function postShoppingExpense(){const ids=S.shopping.filter(x=>x.status==='PURCHASED').map(x=>x.id),amount=Number(formVal('mShopTotal')||0),accountId=formVal('mShopAccount');if(!ids.length||amount<=0||!accountId)return toast('Item, total, dan rekening wajib diisi.',true);api('shopping.post',{shoppingIds:ids,amount,accountId,date:todayISO(),description:formVal('mShopDesc')||'Belanja rumah tangga',category:'Belanja',clientMutationId:id('MUTSHOPPOST')}).then(r=>{closeModal();toast('Belanja sudah masuk Money ✓');return syncAll(false,{silent:true})}).catch(e=>toast(e.message,true))}
 
 function renderNotes(){
@@ -736,7 +791,8 @@ function updateConnectionUI(){
   const cacheRaw=localStorage.getItem(SNAP_KEY),cache=(()=>{try{return JSON.parse(cacheRaw||'{}')}catch(e){return{}}})();
   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};
   set('stInternet',CONN.online?'Online':'Offline');
-  set('stBackend',CONN.backend===true?'Terhubung'+(CONN.latency?' · '+CONN.latency+' ms':'')+' · '+(TRANSPORT.last==='WRITE'?'POST background':'Direct JSONP')+(API_STATS.timeouts?' · timeout '+API_STATS.timeouts:''):CONN.backend===false?'Terputus sementara'+(CONN.lastError?' · '+CONN.lastError:''):'Belum diperiksa');
+  const transportLabel=TRANSPORT.last==='WRITE'?'POST background':TRANSPORT.last==='BRIDGE'?'Direct Bridge':'Direct JSONP';
+  set('stBackend',CONN.backend===true?'Terhubung'+(CONN.latency?' · '+CONN.latency+' ms':'')+' · '+transportLabel+(API_STATS.timeouts?' · timeout '+API_STATS.timeouts:''):CONN.backend===false?'Terputus sementara'+(CONN.lastError?' · '+CONN.lastError:''):'Belum diperiksa');
   set('stDatabase',(S.settings.databaseName||'-')+(S.settings.spreadsheetId?' · '+S.settings.spreadsheetId.slice(0,12)+'…':''));
   set('stSession',S.session?'Aktif · tetap login sampai logout'+(CONN.activeSessions?' · '+CONN.activeSessions+' perangkat':''):'Tidak aktif');
   set('stCache',cache.at?((Date.now()-cache.at<=CACHE_TTL?'Fresh':'Stale')+' · '+Math.max(0,Math.round((Date.now()-cache.at)/1000))+' dtk · rev '+(S.revision||'-')):'Belum ada snapshot');
@@ -790,57 +846,71 @@ async function clearAppCache(){
   if('caches'in window){try{for(const k of await caches.keys())if(k.startsWith('ruma-'))await caches.delete(k)}catch(e){}}
   toast('Cache aplikasi dibersihkan. Login tetap aktif.');updateConnectionUI();scheduleSync(100)
 }
+function indoWordsToNumber(text){
+  const raw=String(text||'').toLowerCase().replace(/[-]/g,' ').replace(/\b(?:rupiah|perak)\b/g,' ');
+  const special={nol:0,satu:1,se:1,dua:2,tiga:3,empat:4,lima:5,enam:6,tujuh:7,delapan:8,sembilan:9,sepuluh:10,sebelas:11,seratus:100,seribu:1000};
+  const numeric=/^(?:nol|satu|se|dua|tiga|empat|lima|enam|tujuh|delapan|sembilan|sepuluh|sebelas|seratus|seribu|belas|puluh|ratus|ribu|juta)$/;
+  const tokens=raw.split(/[^a-z]+/).filter(Boolean),groups=[];let g=[];
+  for(const t of tokens){if(numeric.test(t))g.push(t);else if(g.length){groups.push(g);g=[]}}if(g.length)groups.push(g);
+  function calc(a){let total=0,cur=0,seen=false;for(const t of a){seen=true;if(t in special){const v=special[t];if(v===100||v===1000){if(v===1000){total+=(cur||1)*1000;cur=0}else cur=(cur||1)*100}else cur+=v;continue}if(t==='belas'){cur=(cur||1)+10;continue}if(t==='puluh'){cur=(cur||1)*10;continue}if(t==='ratus'){cur=(cur||1)*100;continue}if(t==='ribu'){total+=(cur||1)*1000;cur=0;continue}if(t==='juta'){total+=(cur||1)*1000000;cur=0;continue}}return seen?total+cur:0}
+  return groups.reduce((m,a)=>Math.max(m,calc(a)),0);
+}
 function parseHumanAmount(text){
-  const src=String(text||'').toLowerCase().replace(/rp\s*/g,'');
-  let m=src.match(/(\d+(?:[.,]\d+)?)\s*(juta|jt|ribu|rb)\b/i);
-  if(m){let n=Number(m[1].replace(',','.'));if(!Number.isFinite(n))return 0;return Math.round(n*(m[2].startsWith('j')?1000000:1000));}
-  m=src.match(/\b(\d{1,3}(?:[.]\d{3})+|\d{4,})\b/);
-  if(m)return Number(m[1].replace(/\./g,''))||0;
-  m=src.match(/\b(\d{1,3})\b/);
-  return m?Number(m[1]):0;
+  const src=String(text||'').toLowerCase().replace(/rp\.?\s*/g,'').replace(/\s+/g,' ');
+  let m=src.match(/(\d+(?:[.,]\d+)?)\s*(juta|jt|mio|ribu|rb|rebu|ewu|k)\b/i);
+  if(m){let n=Number(m[1].replace(',','.'));if(!Number.isFinite(n))return 0;const u=m[2].toLowerCase();return Math.round(n*(/^(?:juta|jt|mio)$/.test(u)?1000000:1000));}
+  m=src.match(/\b(\d{1,3}(?:[.]\d{3})+|\d{4,})\b/);if(m)return Number(m[1].replace(/\./g,''))||0;
+  const words=indoWordsToNumber(src);if(words>=1000)return words;
+  m=src.match(/\b(\d{1,3})\b/);return m?Number(m[1]):words||0;
 }
 function inferExpenseCategory(text){
   const q=String(text||'').toLowerCase();
-  if(/bakso|makan|nasi|ayam|kopi|teh|warung|resto|restaurant|gofood|grabfood|makanan|minuman|sarapan|makan siang|makan malam|jajan|snack/.test(q))return 'Makan';
-  if(/bensin|bbm|parkir|tol|ojek|gojek|grabcar|transport|angkot|bus|kereta|taksi/.test(q))return 'Transportasi';
-  if(/listrik|pln|pdam|internet|wifi|telepon|pulsa|tagihan/.test(q))return 'Tagihan';
-  if(/obat|dokter|klinik|rumah sakit|apotek|vitamin|kesehatan/.test(q))return 'Kesehatan';
-  if(/sekolah|kuliah|buku|kursus|pendidikan|spp/.test(q))return 'Pendidikan';
-  if(/sabun|deterjen|gas|galon|perabot|rumah/.test(q))return 'Rumah';
-  if(/belanja|supermarket|minimarket|alfamart|indomaret|pasar|grocer/.test(q))return 'Belanja';
-  if(/film|bioskop|game|hiburan|spotify|netflix/.test(q))return 'Hiburan';
+  if(/bakso|makan|nasi|ayam|ikan|sayur|buah|kopi|teh|warung|resto|restaurant|gofood|grabfood|makanan|minuman|sarapan|makan siang|makan malam|jajan|cemilan|snack|kuliner/.test(q))return 'Makan';
+  if(/bensin|bbm|solar|pertalite|pertamax|spbu|parkir|tol|ojek|gojek|grabcar|transport|angkot|bus|kereta|taksi|travel|ongkir/.test(q))return 'Transportasi';
+  if(/listrik|pln|pdam|air|internet|wifi|telepon|pulsa|paket data|tagihan|iuran/.test(q))return 'Tagihan';
+  if(/obat|dokter|klinik|rumah sakit|rs |apotek|vitamin|kesehatan|kontrol|periksa/.test(q))return 'Kesehatan';
+  if(/sekolah|kuliah|buku|kursus|pendidikan|spp|les|seragam/.test(q))return 'Pendidikan';
+  if(/sabun|deterjen|gas|galon|perabot|alat rumah|kebutuhan rumah|rumah tangga/.test(q))return 'Rumah';
+  if(/belanja|supermarket|minimarket|alfamart|indomaret|pasar|grocer|toko/.test(q))return 'Belanja';
+  if(/film|bioskop|game|hiburan|spotify|netflix|youtube premium|rekreasi/.test(q))return 'Hiburan';
+  if(/zakat|sedekah|donasi|amal/.test(q))return 'Donasi';
   return 'Lainnya';
 }
 function extractTxDescription(text,type){
   const q=String(text||'').replace(/\s+/g,' ').trim();
-  let m=q.match(/(?:beli|membeli|bayar|membayar)\s+(.+?)\s+(?:(?:rp\s*)?\d[\d.,]*\s*(?:ribu|rb|juta|jt)?)(?:\b|\s)/i);
-  if(m&&m[1])return m[1].replace(/\b(?:seharga|sebesar)\b/gi,'').trim().slice(0,80);
+  let m=q.match(/(?:beli|membeli|jajan|bayar|membayar|buat|untuk)\s+(.+?)\s+(?:(?:rp\.?\s*)?\d[\d.,]*\s*(?:k|ribu|rb|rebu|ewu|juta|jt|mio)?)(?:\b|\s)/i);
+  if(m&&m[1])return m[1].replace(/\b(?:seharga|sebesar|senilai|harga)\b/gi,'').trim().slice(0,80);
   if(type==='INCOME'){
-    m=q.match(/(?:terima|menerima|dapat|pemasukan|gaji)\s+(.+?)\s+(?:(?:rp\s*)?\d[\d.,]*\s*(?:ribu|rb|juta|jt)?)(?:\b|\s)/i);
+    m=q.match(/(?:terima|menerima|dapat|dapet|masuk|pemasukan|gaji|honor|fee)\s+(.+?)\s+(?:(?:rp\.?\s*)?\d[\d.,]*\s*(?:k|ribu|rb|juta|jt|mio)?)(?:\b|\s)/i);
     if(m&&m[1])return m[1].trim().slice(0,80);
   }
+  m=q.match(/(?:buat|untuk)\s+(.+?)(?:\s+(?:dari|pakai|pake|rekening|rek|wallet)\b|$)/i);if(m&&m[1])return m[1].trim().slice(0,80);
   return type==='EXPENSE'?'Pengeluaran via chat':'Pemasukan via chat';
 }
 function chatIntentProfile(raw){
   const text=String(raw||'').trim(),l=text.toLowerCase().replace(/\s+/g,' ');
   const questionLike=/\?/.test(text)
-    || /^(?:apa|berapa|bagaimana|gimana|kapan|siapa|apakah|adakah|mana|kenapa|mengapa|bisakah|bolehkah)\b/.test(l)
-    || /^(?:tolong\s+)?(?:cek|periksa|analisis|analisa|ringkas|rangkum|jelaskan|tampilkan|lihat|berikan feedback|beri feedback)\b/.test(l)
-    || /\b(?:feedback|analisis|analisa|ringkasan|kesimpulan|kondisi|status|apa saja|apa yang|berapa banyak|menurutmu|menurut anda)\b/.test(l);
-  const hypothetical=/\b(?:jika|kalau|seandainya|andaikan|rencana|berencana|mau|ingin|pengen|aman|boleh|bisa)\b/.test(l)
-    && /\b(?:beli|bayar|keluar|pakai|ambil|transfer)\b/.test(l);
-  const startsWrite=/^(?:tolong\s+)?(?:catat|simpan|masukkan|masukan|masukin|masukkin|tambahkan|tambah|buat|bikin|jadwalkan|agendakan|ingatkan|reminder(?:kan)?|transfer|pindahkan|kirim|input|record)\b/.test(l);
-  const recentWrite=/\b(?:tadi|barusan|baru saja|habis)\b/.test(l)&&/\b(?:beli|membeli|bayar|membayar|jajan|belanja|terima|menerima|dapat)\b/.test(l);
-  const directMoney=/^(?:saya\s+|aku\s+)?(?:beli|membeli|bayar|membayar|jajan|belanja|terima|menerima)\b/.test(l);
+    || /^(?:apa|berapa|bagaimana|gimana|gmn|kapan|siapa|apakah|adakah|mana|kenapa|mengapa|kok|bisakah|bolehkah|bisa gak|bisa nggak)\b/.test(l)
+    || /^(?:tolong\s+)?(?:cek|check|periksa|analisis|analisa|ringkas|rangkum|jelaskan|tampilkan|lihat|lihatkan|kasih tahu|kasitau|berikan feedback|beri feedback)\b/.test(l)
+    || /\b(?:feedback|analisis|analisa|ringkasan|kesimpulan|kondisi|status|apa saja|apa yang|berapa banyak|menurutmu|menurut anda|sisa berapa|ada apa|yang mana)\b/.test(l);
+  const hypothetical=/\b(?:jika|kalau|kalo|seandainya|andaikan|misal|misalnya|rencana|berencana|mau|ingin|pengen|pingin|aman|boleh|bisa)\b/.test(l)
+    && /\b(?:beli|bayar|keluar|pakai|ambil|transfer|belanja)\b/.test(l);
+  const startsWrite=/^(?:tolong\s+)?(?:jangan lupa|catat|catetin|catet|catatkan|simpan|simpen|masukkan|masukan|masukin|masukkin|input|rekam|record|tambahkan|tambah|tambahin|buat|bikin|gawe|jadwalkan|jadwalin|agendakan|masukin kalender|ingatkan|ingetin|reminder(?:kan)?|set reminder|transfer|transferin|pindahkan|pindahin|kirim|bayarkan|bayarin)\b/.test(l);
+  const recentWrite=/\b(?:tadi|barusan|baru saja|baru aja|habis|abis|tadi pagi|tadi siang|tadi sore|tadi malam)\b/.test(l)&&/\b(?:beli|membeli|bayar|membayar|jajan|belanja|terima|menerima|dapat|dapet|keluar)\b/.test(l);
+  const directMoney=/^(?:saya|aku|gue|kami|kita)?\s*(?:habis|abis)?\s*(?:beli|membeli|bayar|membayar|jajan|belanja|terima|menerima|dapet|dapat|keluar)\b/.test(l);
   return {questionLike,hypothetical,mutationAllowed:!questionLike&&!hypothetical&&(startsWrite||recentWrite||directMoney)};
 }
 function parseMultiExpenseItems(raw){
   let body=String(raw||'').trim();
-  body=body.replace(/\b(?:rekening|pakai|dari)\s+(?:bank\s+)?[A-Za-z0-9 ._-]+\s*$/i,'').trim();
-  const lastBelanja=Math.max(body.toLowerCase().lastIndexOf('belanja '),body.toLowerCase().lastIndexOf('beli '),body.toLowerCase().lastIndexOf('membeli '));
-  if(lastBelanja>=0){const word=body.slice(lastBelanja).match(/^(?:belanja|beli|membeli)\s+/i);if(word)body=body.slice(lastBelanja+word[0].length);}
-  const parts=body.split(/\s*(?:,|\bdan\b)\s*/i).map(x=>x.trim()).filter(Boolean),items=[];
-  for(const part of parts){const m=part.match(/^(.+?)\s+(?:rp\s*)?(\d+(?:[.,]\d+)?)\s*(rb|ribu|jt|juta)?\b/i);if(!m)continue;let n=Number(m[2].replace(',','.'));if((m[3]||'').startsWith('r'))n*=1000;else if((m[3]||'').startsWith('j'))n*=1000000;else if(n<1000)n*=1000;items.push({name:m[1].replace(/\b(?:seharga|harga)\b/gi,'').trim(),amount:Math.round(n)});}
+  body=body.replace(/\b(?:rekening|rek|wallet|dompet|pakai|pake|dari)\s+(?:bank\s+)?[A-Za-z0-9 ._-]+\s*$/i,'').trim();
+  const low=body.toLowerCase(),lastBelanja=Math.max(low.lastIndexOf('belanja '),low.lastIndexOf('beli '),low.lastIndexOf('membeli '),low.lastIndexOf('jajan '));
+  if(lastBelanja>=0){const word=body.slice(lastBelanja).match(/^(?:belanja|beli|membeli|jajan)\s+/i);if(word)body=body.slice(lastBelanja+word[0].length);}
+  const parts=body.split(/\s*(?:,|;|\bdan\b|\bsama\b|\bplus\b|\+ )\s*/i).map(x=>x.trim()).filter(Boolean),items=[];
+  for(const part of parts){
+    const m=part.match(/^(.+?)\s+(?:rp\.?\s*)?(\d+(?:[.,]\d+)?)\s*(k|rb|ribu|rebu|ewu|jt|juta|mio)?\b/i);if(!m)continue;
+    let n=Number(m[2].replace(',','.'));const u=(m[3]||'').toLowerCase();if(/^(?:k|rb|ribu|rebu|ewu)$/.test(u))n*=1000;else if(/^(?:jt|juta|mio)$/.test(u))n*=1000000;else if(n<1000)n*=1000;
+    const name=m[1].replace(/\b(?:seharga|harga|senilai|sebesar)\b/gi,'').replace(/^\s*(?:dan|sama|plus)\s+/i,'').trim();if(name)items.push({name,amount:Math.round(n)});
+  }
   return items.length>=2?items:[];
 }
 function pendingTransactionPrompt(tx){const items=(tx.items||[]).map(i=>`- **${i.name}** · ${rupiah(i.amount)}`).join('\n');return `Saya sudah menangkap belanja **${rupiah(tx.amount)}**${items?'\n'+items:''}\n\nPakai rekening/wallet yang mana? **${tx.accounts.map(a=>a.name).join(', ')}**.`}
@@ -848,7 +918,7 @@ function matchPendingAccount(text){if(!CHAT_PENDING||CHAT_PENDING.kind!=='transa
 function parseChatTransaction(q){
   const raw=String(q||'').trim(), l=raw.toLowerCase(), amount=parseHumanAmount(raw);
   const usable=S.accounts.filter(a=>a.active!==false&&(a.canEdit===true || a.scope==='JOINT' || a.ownerId===S.user.id)).filter(a=>!a.summaryOnly);
-  const transferIntent=/\b(transfer|pindah(?:kan)?|kirim|geser)\b/i.test(l)&&/\bke\b/i.test(l);
+  const transferIntent=/\b(transfer|transferin|tf|pindah(?:kan|in)?|kirim|geser)\b/i.test(l)&&/\bke\b/i.test(l);
   if(transferIntent){
     if(!amount)return {recognized:true,needs:'Nominal transfernya belum terbaca. Contoh: **“transfer 500 ribu dari BCA ke Mandiri”**.'};
     let from=null,to=null;
@@ -861,8 +931,8 @@ function parseChatTransaction(q){
     if(from.id===to.id)return {recognized:true,needs:'Rekening sumber dan tujuan transfer harus berbeda.'};
     return {recognized:true,payload:{type:'TRANSFER',date:todayISO(),amount,accountId:from.id,toAccountId:to.id,category:'Transfer',description:'Transfer '+from.name+' ke '+to.name,scope:(from.scope==='JOINT'||to.scope==='JOINT')?'JOINT':'PERSONAL'},account:from,toAccount:to};
   }
-  const expenseIntent=/(pengeluaran|expense|habis beli|habis membeli|\bbeli\b|membeli|\bbayar\b|membayar|keluar(?:in)? uang|uang keluar|belanja|jajan|spent|spend)/i.test(l);
-  const incomeIntent=/(pemasukan|income|terima gaji|menerima|\bgaji\b|uang masuk|masuk rekening|dibayar|honor|fee)/i.test(l);
+  const expenseIntent=/(pengeluaran|expense|habis beli|abis beli|habis membeli|\bbeli\b|membeli|\bbayar\b|membayar|bayarin|\bkeluar\b|keluar(?:in)? uang|duit keluar|uang keluar|keluar buat|belanja|jajan|kopi|bakso|makan|bensin|bbm|parkir|pulsa|ongkir|spent|spend)/i.test(l);
+  const incomeIntent=/(pemasukan|income|terima gaji|menerima|dapet|dapat|\bgaji\b|uang masuk|duit masuk|masuk rekening|masuk ke rekening|dibayar|honor|fee|bonus)/i.test(l);
   const intent=chatIntentProfile(raw);
   const writeIntent=intent.mutationAllowed;
   if(!writeIntent||(!expenseIntent&&!incomeIntent))return null;
@@ -870,7 +940,7 @@ function parseChatTransaction(q){
   if(!amount)return {recognized:true,needs:'Nominalnya belum terbaca. Tulis misalnya: **“tadi beli bakso 10 ribu pakai BCA”**.'};
   if(!usable.length)return {recognized:true,needs:'Belum ada rekening/wallet yang bisa dipakai. Tambahkan rekening dulu di **Money → Rekening**.'};
   let account=null;
-  const hits=usable.filter(a=>l.includes(String(a.name||'').toLowerCase()));
+  const accountNeedle=v=>String(v||'').toLowerCase().replace(/\bbank\s+/g,'').replace(/[^a-z0-9]+/g,' ').trim();const hits=usable.filter(a=>{const n=accountNeedle(a.name),q=accountNeedle(l);return n&&new RegExp('(?:^|\\s)'+n.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?:$|\\s)').test(q)});
   if(hits.length===1)account=hits[0];
   if(!account&&/(bersama|joint|rekening rumah|uang rumah)/.test(l)){const j=usable.filter(a=>a.scope==='JOINT');if(j.length===1)account=j[0];else if(j.length>1)return {recognized:true,needs:'Ada beberapa rekening bersama. Sebutkan yang dipakai: **'+j.slice(0,4).map(a=>a.name).join(', ')+'**.'};}
   if(!account&&/(pribadi|rekening saya|wallet saya)/.test(l)){const a=usable.filter(x=>x.scope!=='JOINT'&&x.ownerId===S.user.id);if(a.length===1)account=a[0];else if(a.length>1)return {recognized:true,needs:'Rekening pribadi yang mana? Pilih: **'+a.slice(0,4).map(x=>x.name).join(', ')+'**.'};}
@@ -878,63 +948,81 @@ function parseChatTransaction(q){
   if(!account){const preferred=usable.filter(a=>a.ownerId===S.user.id&&a.scope!=='JOINT');if(preferred.length===1)account=preferred[0];}
   const items=type==='EXPENSE'?parseMultiExpenseItems(raw):[];const total=items.length?items.reduce((n,i)=>n+Number(i.amount||0),0):amount;
   const desc=items.length?'Belanja':extractTxDescription(raw,type), category=type==='EXPENSE'?(items.length?'Belanja':inferExpenseCategory(raw)):(/gaji/i.test(l)?'Gaji':'Pemasukan');
-  if(!account)return {recognized:true,pending:true,items,amount:total,accounts:usable.slice(0,5),payload:{type,date:todayISO(),amount:total,accountId:'',toAccountId:'',category,description:desc,scope:'PERSONAL',items,source:'AI_CHAT'}};
-  return {recognized:true,payload:{type,date:todayISO(),amount:total,accountId:account.id,toAccountId:'',category,description:desc,scope:account.scope==='JOINT'?'JOINT':'PERSONAL',items,source:'AI_CHAT'},account};
+  if(!account)return {recognized:true,pending:true,items,amount:total,accounts:usable.slice(0,5),payload:{type,date:parseNaturalDate(raw)||todayISO(),amount:total,accountId:'',toAccountId:'',category,description:desc,scope:'PERSONAL',items,source:'AI_CHAT'}};
+  return {recognized:true,payload:{type,date:parseNaturalDate(raw)||todayISO(),amount:total,accountId:account.id,toAccountId:'',category,description:desc,scope:account.scope==='JOINT'?'JOINT':'PERSONAL',items,source:'AI_CHAT'},account};
 }
 function isoDateFrom(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function parseNaturalDate(text){
-  const l=String(text||'').toLowerCase(),now=new Date();
-  if(/\bhari ini\b/.test(l))return isoDateFrom(now);
-  if(/\bbesok\b/.test(l)){const d=new Date(now);d.setDate(d.getDate()+1);return isoDateFrom(d)}
-  if(/\blusa\b/.test(l)){const d=new Date(now);d.setDate(d.getDate()+2);return isoDateFrom(d)}
+  const l=String(text||'').toLowerCase().replace(/jum['’]?at/g,'jumat'),now=new Date(),base=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  const add=n=>{const d=new Date(base);d.setDate(d.getDate()+n);return isoDateFrom(d)};
+  if(/\b(?:hari ini|sekarang|today)\b/.test(l)||/\b(?:nanti|malam ini|sore ini|siang ini|pagi ini)\b/.test(l))return add(0);
+  if(/\bkemarin\b/.test(l))return add(-1);
+  if(/\b(?:besok|tomorrow)\b/.test(l))return add(1);
+  if(/\blusa\b/.test(l))return add(2);
+  if(/\bawal bulan depan\b/.test(l)){return isoDateFrom(new Date(now.getFullYear(),now.getMonth()+1,1))}
+  if(/\bakhir bulan(?: ini)?\b/.test(l)){return isoDateFrom(new Date(now.getFullYear(),now.getMonth()+1,0))}
+  if(/\bminggu depan\b/.test(l)&&!/\bhari minggu depan\b/.test(l))return '';
+  const days={minggu:0,senin:1,selasa:2,rabu:3,kamis:4,jumat:5,sabtu:6};
+  let dm=l.match(/\b(?:hari\s+)?(minggu|senin|selasa|rabu|kamis|jumat|sabtu)(?:\s+(depan|berikutnya))?\b/);
+  if(dm){const target=days[dm[1]],cur=base.getDay();let delta=(target-cur+7)%7;if(dm[2]&&delta===0)delta=7;else if(dm[2]&&delta>0){}else if(delta===0)delta=0;return add(delta);}
   let m=l.match(/\b(?:tanggal|tgl)\s*(\d{1,2})(?:[\s\/-]+(\d{1,2}))?(?:[\s\/-]+(\d{4}))?/);
-  if(m){let day=Number(m[1]),mon=m[2]?Number(m[2])-1:now.getMonth(),yr=m[3]?Number(m[3]):now.getFullYear();let d=new Date(yr,mon,day);if(!m[2]&&d<new Date(now.getFullYear(),now.getMonth(),now.getDate()))d=new Date(yr,mon+1,day);return isoDateFrom(d)}
+  if(m){let day=Number(m[1]),mon=m[2]?Number(m[2])-1:now.getMonth(),yr=m[3]?Number(m[3]):now.getFullYear();let d=new Date(yr,mon,day);if(!m[2]&&d<base)d=new Date(yr,mon+1,day);return isoDateFrom(d)}
   m=l.match(/\b(\d{1,2})[\/-](\d{1,2})(?:[\/-](\d{2,4}))?\b/);if(m){let yr=m[3]?Number(m[3]):now.getFullYear();if(yr<100)yr+=2000;return isoDateFrom(new Date(yr,Number(m[2])-1,Number(m[1])))}
   return '';
 }
-function parseNaturalDateTime(text){const d=parseNaturalDate(text);if(!d)return'';const m=String(text||'').toLowerCase().match(/\b(?:jam|pukul|pk)\s*(\d{1,2})(?:[:.]([0-5]\d))?/);if(!m)return d+'T09:00';return d+'T'+String(Math.min(23,Number(m[1]))).padStart(2,'0')+':'+String(Number(m[2]||0)).padStart(2,'0')}
+function parseNaturalDateTime(text){
+  const l=String(text||'').toLowerCase(),d=parseNaturalDate(text);if(!d)return'';
+  let hh=null,mm=0,m=l.match(/\b(?:jam|pukul|pk|pkl)\s*(\d{1,2})(?:[:.]([0-5]\d))?\s*(pagi|siang|sore|malam)?/);
+  if(m){hh=Math.min(23,Number(m[1]));mm=Number(m[2]||0);const part=m[3]||'';if(part==='malam'&&hh<12)hh+=12;else if(part==='sore'&&hh<12)hh+=12;else if(part==='siang'&&hh<11)hh+=12;else if(part==='pagi'&&hh===12)hh=0;}
+  if(hh===null){m=l.match(/\bsetengah\s+(\d{1,2})\b/);if(m){hh=(Number(m[1])+23)%24;mm=30;}}
+  if(hh===null){if(/\bpagi\b/.test(l))hh=8;else if(/\bsiang\b/.test(l))hh=12;else if(/\bsore\b/.test(l))hh=16;else if(/\bmalam\b/.test(l))hh=19;else hh=9;}
+  return d+'T'+String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');
+}
 function resolveCommandAssignee(raw){
-  const text=normText_(raw||'');if(/\bbersama\b/.test(text))return 'HOUSEHOLD';
-  const other=(S.users||[]).find(u=>u.id!==S.user.id);if(/\b(?:pasangan|suami|istri)\b/.test(text)&&other)return other.id;
+  const text=normText_(raw||'');if(/\b(?:bersama|berdua|bareng|kita|untuk kita|rumah tangga)\b/.test(text))return 'HOUSEHOLD';
+  const other=(S.users||[]).find(u=>u.id!==S.user.id);if(/\b(?:pasangan|suami|istri|partner)\b/.test(text)&&other)return other.id;
   for(const u of (S.users||[])){const nm=normText_(u.name||'');if(nm&&nm.length>=3&&text.includes(nm))return u.id;}
   return S.user.id;
 }
 function commandAssignmentLabel(id){return id==='HOUSEHOLD'?'Bersama':userName(id)}
-function cleanCommandTitle(q){return String(q||'').replace(/\b(?:tolong|dong|ya|please|catat|simpan|masukkan|masukin|masukkin|tambahkan|tambah|buat|bikin|jadwalkan|agendakan|agenda|jadwal|task|tugas|tagihan|reminder|ingatkan|bayar|membayar|saya|aku|kami|untuk|pada|di|ke daftar belanja|daftar belanja|belanja)\b/gi,' ').replace(/\b(?:hari ini|besok|lusa)\b/gi,' ').replace(/\b(?:tanggal|tgl)\s*\d{1,2}(?:[\s\/-]+\d{1,2})?(?:[\s\/-]+\d{4})?/gi,' ').replace(/\b(?:jam|pukul|pk)\s*\d{1,2}(?:[:.]\d{2})?/gi,' ').replace(/\b(?:rp\s*)?\d[\d.,]*\s*(?:ribu|rb|juta|jt)?\b/gi,' ').replace(/\s+/g,' ').trim().replace(/^[,.:;-]+|[,.:;-]+$/g,'').slice(0,100)}
+function cleanCommandTitle(q){return String(q||'')
+  .replace(/\b(?:jangan lupa|tolong|dong|ya|yah|please|plis|catat|catetin|catet|catatkan|simpan|simpen|masukkan|masukan|masukin|masukkin|input|rekam|record|tambahkan|tambah|tambahin|buat|bikin|gawe|jadwalkan|jadwalin|agendakan|masukin kalender|agenda|jadwal|task|tugas|tagihan|reminder|ingatkan|ingetin|bayar|membayar|bayarin|saya|aku|gue|kami|untuk|pada|di|ke daftar belanja|ke list belanja|daftar belanja|shopping list|belanja)\b/gi,' ')
+  .replace(/\b(?:hari ini|besok|lusa|kemarin|nanti|pagi ini|siang ini|sore ini|malam ini)\b/gi,' ')
+  .replace(/\b(?:hari\s+)?(?:minggu|senin|selasa|rabu|kamis|jum['’]?at|sabtu)(?:\s+(?:depan|berikutnya))?\b/gi,' ')
+  .replace(/\b(?:tanggal|tgl)\s*\d{1,2}(?:[\s\/-]+\d{1,2})?(?:[\s\/-]+\d{4})?/gi,' ')
+  .replace(/\b(?:jam|pukul|pk|pkl)\s*\d{1,2}(?:[:.]\d{2})?\s*(?:pagi|siang|sore|malam)?/gi,' ')
+  .replace(/\b(?:rp\.?\s*)?\d[\d.,]*\s*(?:k|ribu|rb|rebu|ewu|juta|jt|mio)?\b/gi,' ')
+  .replace(/\s+/g,' ').trim().replace(/^[,.:;-]+|[,.:;-]+$/g,'').slice(0,100)}
 function findMentioned(arr,q,field){const l=String(q||'').toLowerCase();const hit=arr.filter(x=>{const n=String(x[field]||'').toLowerCase().trim();return n&&l.includes(n)});return hit.length===1?hit[0]:null}
 function parseChatAction(q){
-  const raw=String(q||'').trim(),l=raw.toLowerCase();
-  // Tandai selesai/lunas lebih dulu agar tidak salah dianggap create.
-  if(/(lunas|sudah dibayar|udah dibayar|sudah bayar|udah bayar|tandai.*bayar)/.test(l)){
-    const open=S.bills.filter(b=>b.status!=='PAID'),b=findMentioned(open,raw,'name');if(b)return {action:'bill.toggle',payload:{id:b.id},apply:()=>{b.status='PAID'},success:`✓ Tagihan **${b.name}** saya tandai **sudah dibayar**.`};
-    if(open.length===1)return {action:'bill.toggle',payload:{id:open[0].id},apply:()=>{open[0].status='PAID'},success:`✓ Tagihan **${open[0].name}** saya tandai **sudah dibayar**.`};
+  const raw=String(q||'').trim(),l=raw.toLowerCase().replace(/\s+/g,' ');
+  // Selesai/lunas diproses lebih dulu agar tidak dianggap membuat data baru.
+  if(/\b(lunas|sudah dibayar|udah dibayar|wes dibayar|sudah bayar|udah bayar|beres bayar|selesai bayar|tandai.*(?:bayar|lunas)|lunasin|lunas(?:kan|in))\b/.test(l)){
+    const open=S.bills.filter(b=>b.status!=='PAID'||b.legacyPaid),mentioned=findMentioned(open,raw,'name'),b=mentioned||(open.length===1?open[0]:null);
+    if(b){const usable=S.accounts.filter(a=>a.active!==false&&!a.summaryOnly&&(a.canEdit===true||a.scope==='JOINT'||a.ownerId===S.user.id)),namedAcc=usable.find(a=>l.includes(String(a.name||'').toLowerCase())),defaultAcc=usable.find(a=>a.id===b.accountId),accountId=(namedAcc&&namedAcc.id)||(defaultAcc&&defaultAcc.id)||'';if(!accountId)return {needs:`Tagihan **${b.name}** dibayar dari rekening/wallet mana? Sebutkan nama rekening atau gunakan tombol Bayar.`};return {action:'bill.pay',payload:{id:b.id,accountId,date:parseNaturalDate(raw)||todayISO(),amount:b.amount},apply:()=>{b.status='PAID'},success:`✓ Tagihan **${b.name}** dibayar dan transaksi pengeluarannya terhubung ke Money.`};}
     if(open.length>1)return {needs:'Tagihan yang mana yang sudah dibayar? Sebutkan namanya: **'+open.slice(0,5).map(x=>x.name).join(', ')+'**.'};
   }
-  if(/(selesai|beres|kelar|done)/.test(l)&&/(tugas|task)/.test(l)){
-    const open=S.tasks.filter(t=>t.status!=='DONE'),t=findMentioned(open,raw,'title');if(t)return {action:'task.toggle',payload:{id:t.id},apply:()=>{t.status='DONE'},success:`✓ Task **${t.title}** selesai.`};if(open.length===1)return {action:'task.toggle',payload:{id:open[0].id},apply:()=>{open[0].status='DONE'},success:`✓ Task **${open[0].title}** selesai.`};
-    if(open.length>1)return {needs:'Task yang mana yang selesai? Sebutkan judulnya.'};
+  const doneWords=/\b(selesai|beres|kelar|done|rampung|berhasil|sudah beres|udah beres|sudah selesai|udah selesai)\b/;
+  if(doneWords.test(l)){
+    const openTasks=S.tasks.filter(t=>t.status!=='DONE'),t=findMentioned(openTasks,raw,'title');if(t)return {action:'task.toggle',payload:{id:t.id},apply:()=>{t.status='DONE'},success:`✓ Task **${t.title}** selesai.`};
+    const openEvents=S.events.filter(e=>e.status!=='DONE'),e=findMentioned(openEvents,raw,'title');if(e)return {action:'event.toggle',payload:{id:e.id},apply:()=>{e.status='DONE'},success:`✓ Agenda **${e.title}** saya tandai selesai.`};
+    if(/\b(tugas|task|to do|todo)\b/.test(l)){if(openTasks.length===1)return {action:'task.toggle',payload:{id:openTasks[0].id},apply:()=>{openTasks[0].status='DONE'},success:`✓ Task **${openTasks[0].title}** selesai.`};if(openTasks.length>1)return {needs:'Task yang mana yang selesai? Sebutkan judulnya.'};}
+    if(/\b(agenda|jadwal|acara|meeting)\b/.test(l)){if(openEvents.length===1)return {action:'event.toggle',payload:{id:openEvents[0].id},apply:()=>{openEvents[0].status='DONE'},success:`✓ Agenda **${openEvents[0].title}** saya tandai selesai.`};if(openEvents.length>1)return {needs:'Agenda yang mana yang selesai? Sebutkan judulnya.'};}
   }
-  if(/(selesai|beres|kelar|done)/.test(l)&&/(agenda|jadwal|acara)/.test(l)){
-    const open=S.events.filter(e=>e.status!=='DONE'),e=findMentioned(open,raw,'title');if(e)return {action:'event.toggle',payload:{id:e.id},apply:()=>{e.status='DONE'},success:`✓ Agenda **${e.title}** saya tandai selesai.`};if(open.length===1)return {action:'event.toggle',payload:{id:open[0].id},apply:()=>{open[0].status='DONE'},success:`✓ Agenda **${open[0].title}** saya tandai selesai.`};
-    if(open.length>1)return {needs:'Agenda yang mana yang selesai? Sebutkan judulnya.'};
+  const intent=chatIntentProfile(raw);if(!intent.mutationAllowed)return null;
+  if(/(?:ke\s+)?(?:daftar|list)\s+belanja|shopping list/.test(l)&&/(tambah|tambahin|masukkan|masukin|catat|catet|catetin|input|beli|butuh)/.test(l)){
+    const item=cleanCommandTitle(raw);if(!item)return {needs:'Barangnya apa? Contoh: **“masukin beras 5 kg ke daftar belanja”**.'};return {action:'shopping.save',payload:{item,qty:''},create:'shopping',success:`✓ **${item}** ditambahkan ke daftar belanja.`};
   }
-  // MUTATION GUARD: pertanyaan/analisis tidak boleh mengubah data.
-  // Hanya perintah tulis yang eksplisit atau laporan transaksi nyata yang diteruskan ke CRUD.
-  const intent=chatIntentProfile(raw);
-  if(!intent.mutationAllowed)return null;
-  if(/(ke daftar belanja|daftar belanja|shopping list)/.test(l)&&/(tambah|masukkan|masukin|catat|beli)/.test(l)){
-    const item=cleanCommandTitle(raw);if(!item)return {needs:'Barangnya apa? Contoh: **“tambahkan beras 5 kg ke daftar belanja”**.'};return {action:'shopping.save',payload:{item,qty:''},create:'shopping',success:`✓ **${item}** ditambahkan ke daftar belanja.`};
-  }
-  if(/\b(tagihan|reminder bayar|ingatkan bayar)\b/.test(l)&&/(tambah|tambahkan|catat|buat|bikin|simpan|masukkan|masukin|masukkin|ingatkan|reminder)/.test(l)){
-    const due=parseNaturalDate(raw),amount=parseHumanAmount(raw);if(!due)return {needs:'Tanggal jatuh temponya belum jelas. Contoh: **“catat tagihan internet 350 ribu tanggal 20”**.'};
-    let name=cleanCommandTitle(raw).replace(/\b(?:internet|wifi|listrik|pln|pdam|cicilan|sewa|asuransi)\b/i,m=>m).trim();if(!name){const m=l.match(/\b(internet|wifi|listrik|pln|pdam|cicilan|sewa|asuransi)\b/);name=m?m[1].toUpperCase():'Tagihan';}
+  if(/\b(tagihan|bill|jatuh tempo|reminder bayar|ingatkan bayar)\b/.test(l)&&/(tambah|tambahin|catat|catet|catetin|buat|bikin|simpan|simpen|masukkan|masukin|input|ingatkan|ingetin|reminder|set reminder)/.test(l)){
+    const due=parseNaturalDate(raw),amount=parseHumanAmount(raw);if(!due)return {needs:'Tanggal jatuh temponya belum jelas. Contoh: **“catat PLN 350 ribu tanggal 20 sebagai tagihan”**.'};
+    let name=cleanCommandTitle(raw).trim();if(!name){const m=l.match(/\b(internet|wifi|listrik|pln|pdam|cicilan|sewa|asuransi|spp|kartu kredit)\b/);name=m?m[1].toUpperCase():'Tagihan';}
     const acc=S.accounts.find(a=>l.includes(String(a.name||'').toLowerCase()));return {action:'bill.save',payload:{name,amount,dueDate:due,accountId:acc?acc.id:'',recurring:'NO',scope:acc&&acc.scope==='PERSONAL'?'PERSONAL':'JOINT'},create:'bill',success:`✓ Tagihan **${name}** untuk **${fmtDate(due)}** sudah dicatat${amount?' sebesar **'+rupiah(amount)+'**':''}.`};
   }
-  if(/\b(jadwalkan|agendakan|buat agenda|tambah agenda|catat agenda|masukkan agenda|masukin agenda)\b/.test(l)){
-    const start=parseNaturalDateTime(raw);if(!start)return {needs:'Waktu agendanya belum jelas. Contoh: **“jadwalkan dokter besok jam 9”**.'};const title=cleanCommandTitle(raw);if(!title)return {needs:'Judul agendanya apa?'};const assignedTo=resolveCommandAssignee(raw),scope=assignedTo===S.user.id?'PERSONAL':'JOINT';return {action:'event.save',payload:{title,startAt:start,endAt:'',location:'',assignedTo,scope},create:'event',success:`✓ Agenda **${title}** dibuat untuk **${localDT(start)}** · ${commandAssignmentLabel(assignedTo)}.`};
+  if(/\b(jadwalkan|jadwalin|agendakan|buat agenda|bikin agenda|tambah agenda|catat agenda|masukkan agenda|masukin agenda|masukin kalender|masukkan kalender|set jadwal|set agenda)\b/.test(l)){
+    const start=parseNaturalDateTime(raw);if(!start)return {needs:'Waktu agendanya belum jelas. Contoh: **“jadwalin dokter besok jam 9 pagi”**.'};const title=cleanCommandTitle(raw);if(!title)return {needs:'Judul agendanya apa?'};const assignedTo=resolveCommandAssignee(raw),scope=assignedTo===S.user.id?'PERSONAL':'JOINT';return {action:'event.save',payload:{title,startAt:start,endAt:'',location:'',assignedTo,scope},create:'event',success:`✓ Agenda **${title}** dibuat untuk **${localDT(start)}** · ${commandAssignmentLabel(assignedTo)}.`};
   }
-  if(/\b(buat tugas|tambah tugas|catat tugas|masukkan tugas|masukin tugas|ingatkan saya|remind me)\b/.test(l)){
-    const title=cleanCommandTitle(raw);if(!title)return {needs:'Tugasnya apa? Contoh: **“ingatkan saya service motor besok”**.'};const due=parseNaturalDate(raw),assignedTo=resolveCommandAssignee(raw),scope=assignedTo===S.user.id?'PERSONAL':'JOINT';return {action:'task.save',payload:{title,dueDate:due,assignedTo,priority:'NORMAL',scope},create:'task',success:`✓ Task **${title}** dibuat${due?' untuk **'+fmtDate(due)+'**':''} · ${commandAssignmentLabel(assignedTo)}.`};
+  if(/\b(buat tugas|bikin tugas|gawe tugas|tambah tugas|tambahin tugas|catat tugas|masukkan tugas|masukin tugas|buat to do|tambah to do|ingatkan|ingetin|jangan lupa|remind me|set reminder)\b/.test(l)){
+    const title=cleanCommandTitle(raw);if(!title)return {needs:'Tugasnya apa? Contoh: **“ingetin service motor besok”**.'};const due=parseNaturalDate(raw),assignedTo=resolveCommandAssignee(raw),scope=assignedTo===S.user.id?'PERSONAL':'JOINT';return {action:'task.save',payload:{title,dueDate:due,assignedTo,priority:/\b(penting|urgent|prioritas tinggi|high)\b/.test(l)?'HIGH':'NORMAL',scope},create:'task',success:`✓ Task **${title}** dibuat${due?' untuk **'+fmtDate(due)+'**':''} · ${commandAssignmentLabel(assignedTo)}.`};
   }
   return null;
 }
@@ -961,19 +1049,30 @@ function runChatAction(cmd){
     else if(cmd.apply)cmd.apply();
     persistSnapshot();renderAll();showChatThinking('Saya kerjakan…');
   }catch(e){CHAT_BUSY=false;restoreState(backup);appendChatMessage('assistant','Belum bisa diproses: '+e.message,'feedback');return}
-  CONN.pendingWrites++;api(cmd.action,{...cmd.payload,clientMutationId:id('MUTCMD')}).then(r=>{if(r&&r.duplicatePrevented){restoreState(backup);finishChat('Data yang sama sudah ada, jadi tidak saya gandakan.','feedback');return}if(tempId&&r&&r.id)replaceTempId(tempId,r.id);if(r&&r._revision)S.revision=Number(r._revision);persistSnapshot();renderAll();finishChat(cmd.success||'✓ Sudah dilakukan.','success');if(r&&r.refreshRequired)syncAll(false,{silent:true}).catch(()=>{});else scheduleSync(1200)}).catch(e=>{restoreState(backup);finishChat(`Belum tersimpan karena **${e.message}**. Perubahan lokal sudah saya batalkan.`,'feedback')}).finally(()=>{CONN.pendingWrites=Math.max(0,CONN.pendingWrites-1);updateConnectionUI()});
+  CONN.pendingWrites++;api(cmd.action,{...cmd.payload,clientMutationId:id('MUTCMD')}).then(r=>{if(r&&r.duplicatePrevented){restoreState(backup);finishChat('Data yang sama sudah ada, jadi tidak saya gandakan.','feedback');return}if(tempId&&r&&r.id)replaceTempId(tempId,r.id);if(r&&r._revision)S.revision=Number(r._revision);persistSnapshot();renderAll();finishChat(cmd.success||'✓ Sudah dilakukan.','success');if((r&&r.refreshRequired)||['bill.pay','bill.unpay','goal.contribute','task.cost','event.cost'].includes(cmd.action))syncAll(false,{silent:true}).catch(()=>{});else scheduleSync(1200)}).catch(e=>{restoreState(backup);finishChat(`Belum tersimpan karena **${e.message}**. Perubahan lokal sudah saya batalkan.`,'feedback')}).finally(()=>{CONN.pendingWrites=Math.max(0,CONN.pendingWrites-1);updateConnectionUI()});
 }
 function chatClarification(q){
   const x=String(q||'').trim(),l=x.toLowerCase();
-  if(x.length<3)return 'Boleh diperjelas sedikit? Contohnya: **“berapa pengeluaran bulan ini?”** atau **“apa tagihan minggu ini?”**';
-  if(/^(cek|gimana|bagaimana|aman|analisis|tolong cek|menurutmu)[?!. ]*$/i.test(x))return 'Bisa. Tapi saya perlu tahu yang mau dicek: **keuangan, tagihan, jadwal, task, atau rekening?**';
-  if(/(aman|boleh|bisa).*(beli|ambil|keluar|pakai)/i.test(l)&&!/(\d|ribu|juta|rb)/i.test(l))return 'Bisa saya nilai, tapi nominalnya belum ada. Tulis misalnya: **“aman beli laptop 8 juta bulan ini?”**';
-  if(/(rekening|wallet).*(ini|itu|tersebut)/i.test(l)&&S.accounts.length>1&&!S.accounts.some(a=>l.includes(String(a.name||'').toLowerCase())))return 'Rekeningnya belum jelas. Sebutkan nama rekening/wallet yang dimaksud agar saya tidak salah membaca data.';
+  if(x.length<2)return 'Boleh diperjelas sedikit? Contohnya: **“keluar berapa bulan ini?”**, **“besok ada apa?”**, atau **“catat kopi 15 ribu pakai BCA”**.';
+  if(/^(cek|check|gimana|gmn|bagaimana|aman|analisis|analisa|tolong cek|menurutmu|menurut anda|lihat)[?!. ]*$/i.test(x))return 'Bisa. Mau dicek bagian **keuangan, tagihan, aktivitas, rekening, atau daftar belanja**?';
+  if(/(aman|boleh|bisa|cukup).*(beli|ambil|keluar|pakai|belanja)/i.test(l)&&!/(\d|ribu|juta|rb|jt|k)/i.test(l))return 'Bisa saya nilai, tapi nominalnya belum ada. Contoh: **“aman beli laptop 8 juta bulan ini?”**';
+  if(/(rekening|wallet|dompet|akun).*(ini|itu|tersebut)/i.test(l)&&S.accounts.length>1&&!S.accounts.some(a=>l.includes(String(a.name||'').toLowerCase())))return 'Rekeningnya belum jelas. Sebutkan nama rekening/wallet yang dimaksud agar saya tidak salah membaca data.';
+  if(/^iya|^ya$|^oke?$|^sip$|^lanjut$/.test(l)&&!CHAT_PENDING)return 'Siap. Sebutkan yang mau dilanjutkan, misalnya **cek saldo**, **lihat tagihan**, **catat pengeluaran**, atau **buat aktivitas**.';
   return null;
 }
 function fastLocalAnswer(q){
   const x=String(q||'').toLowerCase(),mine=S.accounts.filter(a=>a.active!==false&&a.ownerId===S.user.id&&a.scope==='PERSONAL').reduce((n,a)=>n+Number(a.balance||0),0),joint=S.accounts.filter(a=>a.active!==false&&a.scope==='JOINT').reduce((n,a)=>n+Number(a.balance||0),0);
   const sum=S.summary||{},exp=Number(sum.monthExpense||0),inc=Number(sum.monthIncome||0);
+  if(/\b(?:hari ini|sekarang)\b.*\b(?:ada apa|ngapain|ngapain aja|kegiatan|agenda|jadwal|aktivitas)\b|\b(?:ada apa|ngapain|kegiatan)\b.*\b(?:hari ini|sekarang)\b/.test(x)){
+    const d=todayISO(),ev=S.events.filter(e=>e.status!=='DONE'&&String(e.startAt||'').slice(0,10)===d).slice(0,6),ts=S.tasks.filter(t=>t.status!=='DONE'&&String(t.dueDate||'')===d).slice(0,6);const all=[...ev.map(e=>`- **${e.title}** · ${localDT(e.startAt)}`),...ts.map(t=>`- **${t.title}** · task`)];return all.length?`Aktivitas hari ini:\n${all.join('\n')}`:'Hari ini belum ada aktivitas yang tercatat.';
+  }
+  if(/\b(?:besok)\b.*\b(?:ada apa|ngapain|kegiatan|agenda|jadwal|aktivitas)\b|\b(?:ada apa|ngapain|kegiatan)\b.*\b(?:besok)\b/.test(x)){
+    const d=parseNaturalDate('besok'),ev=S.events.filter(e=>e.status!=='DONE'&&String(e.startAt||'').slice(0,10)===d).slice(0,6),ts=S.tasks.filter(t=>t.status!=='DONE'&&String(t.dueDate||'')===d).slice(0,6);const all=[...ev.map(e=>`- **${e.title}** · ${localDT(e.startAt)}`),...ts.map(t=>`- **${t.title}** · task`)];return all.length?`Besok ada:\n${all.join('\n')}`:'Besok belum ada aktivitas yang tercatat.';
+  }
+  if(/\b(?:duit|uang)\s*(?:ku|saya|gue)?\s*(?:sisa|tinggal|ada)?\s*berapa\b|\bsisa\s+(?:duit|uang)\b/.test(x))return `Saldo yang terlihat sekarang:\n- Pribadi: **${rupiah(mine)}**\n- Bersama: **${rupiah(joint)}**`;
+  if(/\b(?:belum bayar apa|apa yang belum dibayar|tagihan belum bayar|utang tagihan)\b/.test(x)){const a=S.bills.filter(b=>b.status!=='PAID').slice(0,8);return a.length?`Yang belum dibayar:\n${a.map(b=>`- **${b.name}** · ${rupiah(b.amount)} · ${fmtDate(b.dueDate)}`).join('\n')}`:'Tidak ada tagihan belum dibayar yang tercatat.';}
+  if(/\b(?:belanjaan|barang belanja|list belanja|shopping)\b.*\b(?:apa|mana|belum)\b/.test(x)){const a=S.shopping.filter(s=>s.status==='OPEN');return a.length?`Yang belum dibeli:\n${a.slice(0,12).map(i=>`- **${i.item}**${i.qty?' · '+i.qty:''}`).join('\n')}`:'Daftar belanja aktif sedang kosong.';}
+
   if(/\b(?:aktivitas|agenda|jadwal|task|tugas)\b.*\btagihan\b|\btagihan\b.*\b(?:aktivitas|agenda|jadwal|task|tugas)\b/.test(x)&&/\b(?:hari ini|penting|perlu diperhatikan)\b/.test(x)){
     const today=todayISO();
     const ev=S.events.filter(e=>e.status!=='DONE'&&String(e.startAt||'').slice(0,10)===today).slice(0,5);
@@ -1058,15 +1157,18 @@ function openBudgetModal(i=''){const b=S.budgets.find(x=>x.id===i)||{};modal(i?'
 <div class="field"><label>Bulan</label><input id="mBudMonth" type="month" value="${b.month||todayISO().slice(0,7)}"></div><div class="field"><label>Kategori</label><input id="mBudCat" value="${esc(b.category||'Makan')}"></div><div class="field"><label>Nominal</label><input id="mBudAmount" type="number" value="${Number(b.amount||0)}"></div><div class="field"><label>Scope</label><select id="mBudScope"><option ${b.scope!=='JOINT'?'selected':''}>PERSONAL</option><option ${b.scope==='JOINT'?'selected':''}>JOINT</option></select></div><div class="row"><button class="btn" onclick="saveBudget('${i}')">Simpan</button>${i?`<button class="btn danger" onclick="removeItem('budget','${i}')">Hapus</button>`:''}</div>`)}
 function saveBudget(i){const p={id:i,month:formVal('mBudMonth'),category:formVal('mBudCat'),amount:Number(formVal('mBudAmount')),scope:formVal('mBudScope')};optimistic('budget.save',p,()=>{const old=S.budgets.find(x=>x.id===i),tid=i||id('TMPBUD');upsert(S.budgets,{...p,id:tid,ownerId:S.user.id,spent:old?old.spent:0},i||tid);return{tempId:i?'':tid}})}
 
-function openBillModal(i=''){const b=S.bills.find(x=>x.id===i)||{};modal(i?'Edit Tagihan':'Tambah Tagihan',`
-<div class="field"><label>Nama tagihan</label><input id="mBillName" value="${esc(b.name||'')}"></div><div class="field"><label>Nominal</label><input id="mBillAmount" type="number" value="${Number(b.amount||0)}"></div><div class="field"><label>Jatuh tempo</label><input id="mBillDate" type="date" value="${b.dueDate||todayISO()}"></div><div class="field"><label>Rekening</label><select id="mBillAcc">${accountOptions(b.accountId)}</select></div><div class="field"><label>Berulang bulanan</label><select id="mBillRec"><option value="NO" ${b.recurring!=='YES'?'selected':''}>Tidak</option><option value="YES" ${b.recurring==='YES'?'selected':''}>Ya</option></select></div><div class="field"><label>Scope</label><select id="mBillScope"><option ${b.scope!=='JOINT'?'selected':''}>PERSONAL</option><option ${b.scope==='JOINT'?'selected':''}>JOINT</option></select></div><div class="row"><button class="btn" onclick="saveBill('${i}')">Simpan</button>${i?`<button class="btn danger" onclick="removeItem('bill','${i}')">Hapus</button>`:''}</div>`)}
-function saveBill(i){const p={id:i,name:formVal('mBillName'),amount:Number(formVal('mBillAmount')),dueDate:formVal('mBillDate'),accountId:formVal('mBillAcc'),recurring:formVal('mBillRec'),scope:formVal('mBillScope')};optimistic('bill.save',p,()=>{const old=S.bills.find(x=>x.id===i),tid=i||id('TMPBILL');upsert(S.bills,{...p,id:tid,status:old?old.status:'UNPAID'},i||tid);return{tempId:i?'':tid}})}
-function toggleBill(i){optimistic('bill.toggle',{id:i},()=>{const b=S.bills.find(x=>x.id===i);if(b)b.status=b.status==='PAID'?'UNPAID':'PAID'})}
-
+function openBillModal(i=''){const b=S.bills.find(x=>x.id===i)||{},locked=!!(b.status==='PAID'&&b.linkedTransactionId);modal(i?'Edit Tagihan':'Tambah Tagihan',`
+${locked?'<div class="alert">Tagihan ini sudah terhubung ke transaksi pembayaran. Batalkan pembayaran dulu jika ingin mengubah nominal atau rekening.</div>':''}<div class="field"><label>Nama tagihan</label><input id="mBillName" value="${esc(b.name||'')}"></div><div class="field"><label>Nominal</label><input id="mBillAmount" type="number" value="${Number(b.amount||0)}" ${locked?'disabled':''}></div><div class="field"><label>Jatuh tempo</label><input id="mBillDate" type="date" value="${b.dueDate||todayISO()}"></div><div class="field"><label>Rekening pembayaran default</label><select id="mBillAcc" ${locked?'disabled':''}>${accountOptions(b.accountId)}</select><div class="small muted">Saldo belum berubah sampai tombol Bayar digunakan.</div></div><div class="field"><label>Berulang bulanan</label><select id="mBillRec"><option value="NO" ${b.recurring!=='YES'?'selected':''}>Tidak</option><option value="YES" ${b.recurring==='YES'?'selected':''}>Ya</option></select></div><div class="field"><label>Scope</label><select id="mBillScope"><option ${b.scope!=='JOINT'?'selected':''}>PERSONAL</option><option ${b.scope==='JOINT'?'selected':''}>JOINT</option></select></div><div class="row"><button class="btn" onclick="saveBill('${i}')">Simpan</button>${i?`<button class="btn danger" onclick="removeItem('bill','${i}')">Hapus</button>`:''}</div>`)}
+function saveBill(i){const old=S.bills.find(x=>x.id===i)||{},p={id:i,name:formVal('mBillName'),amount:Number(document.getElementById('mBillAmount')?.disabled?old.amount:formVal('mBillAmount')),dueDate:formVal('mBillDate'),accountId:document.getElementById('mBillAcc')?.disabled?old.accountId:formVal('mBillAcc'),recurring:formVal('mBillRec'),scope:formVal('mBillScope')};optimistic('bill.save',p,()=>{const prev=S.bills.find(x=>x.id===i),tid=i||id('TMPBILL');upsert(S.bills,{...p,id:tid,status:prev?prev.status:'UNPAID',linkedTransactionId:prev?.linkedTransactionId||''},i||tid);return{tempId:i?'':tid}})}
+function toggleBill(i){const b=S.bills.find(x=>x.id===i);if(!b)return;if(b.status==='PAID'&&b.linkedTransactionId)return undoBillPayment(i);return openBillPayment(i)}
+function openBillPayment(i){const b=S.bills.find(x=>x.id===i);if(!b)return;modal(b.legacyPaid?'Hubungkan Pembayaran Lama':'Bayar Tagihan',`<div class="alert">Pembayaran akan membuat <b>1 transaksi pengeluaran</b>. Saldo rekening, Budget, dan ringkasan Money otomatis ikut berubah.</div><div class="field"><label>Tagihan</label><input value="${esc(b.name)} · ${rupiah(b.amount)}" disabled></div><div class="field"><label>Bayar dari rekening/wallet</label><select id="mBillPayAcc">${accountOptions(b.paymentAccountId||b.accountId)}</select></div><div class="field"><label>Tanggal pembayaran</label><input id="mBillPayDate" type="date" value="${todayISO()}"></div><div class="field"><label>Nominal dibayar</label><input id="mBillPayAmount" type="number" value="${Number(b.amount||0)}"></div><button class="btn" onclick="payBill('${i}')">Konfirmasi Pembayaran</button>`)}
+function payBill(i){const accountId=formVal('mBillPayAcc'),amount=Number(formVal('mBillPayAmount')),date=formVal('mBillPayDate');if(!accountId||amount<=0)return toast('Rekening dan nominal pembayaran wajib diisi.',true);api('bill.pay',{id:i,accountId,amount,date,clientMutationId:id('MUTBILLPAY')}).then(()=>{closeModal();toast('Tagihan dibayar dan transaksi Money dibuat ✓');return syncAll(false,{silent:true})}).catch(e=>toast(e.message,true))}
+function undoBillPayment(i){if(!confirm('Batalkan pembayaran? Transaksi pembayaran yang terhubung juga akan diarsipkan dan saldo dikembalikan.'))return;api('bill.unpay',{id:i,clientMutationId:id('MUTBILLUNPAY')}).then(()=>{toast('Pembayaran dibatalkan dan transaksi terkait dikembalikan.');return syncAll(false,{silent:true})}).catch(e=>toast(e.message,true))}
 function openGoalModal(i=''){const g=S.goals.find(x=>x.id===i)||{};modal(i?'Edit Goal':'Tambah Goal',`
-<div class="field"><label>Nama goal</label><input id="mGoalName" value="${esc(g.name||'')}"></div><div class="field"><label>Target</label><input id="mGoalTarget" type="number" value="${Number(g.target||0)}"></div><div class="field"><label>Saat ini</label><input id="mGoalCurrent" type="number" value="${Number(g.current||0)}"></div><div class="field"><label>Target tanggal</label><input id="mGoalDate" type="date" value="${g.dueDate||''}"></div><div class="field"><label>Scope</label><select id="mGoalScope"><option ${g.scope!=='JOINT'?'selected':''}>PERSONAL</option><option ${g.scope==='JOINT'?'selected':''}>JOINT</option></select></div><div class="row"><button class="btn" onclick="saveGoal('${i}')">Simpan</button>${i?`<button class="btn danger" onclick="removeItem('goal','${i}')">Hapus</button>`:''}</div>`)}
-function saveGoal(i){const p={id:i,name:formVal('mGoalName'),target:Number(formVal('mGoalTarget')),current:Number(formVal('mGoalCurrent')),dueDate:formVal('mGoalDate'),scope:formVal('mGoalScope')};optimistic('goal.save',p,()=>{const tid=i||id('TMPGOAL');upsert(S.goals,{...p,id:tid},i||tid);return{tempId:i?'':tid}})}
-
+<div class="alert">Progress goal baru dihitung dari transaksi kontribusi. Mengedit goal tidak mengubah saldo rekening.</div><div class="field"><label>Nama goal</label><input id="mGoalName" value="${esc(g.name||'')}"></div><div class="field"><label>Target</label><input id="mGoalTarget" type="number" value="${Number(g.target||0)}"></div>${Number(g.baseCurrent||0)>0?`<div class="field"><label>Progress lama (read-only)</label><input value="${Number(g.baseCurrent||0)}" disabled><div class="small muted">Data sebelum Unified Transaction dipertahankan sebagai baseline.</div></div>`:''}<div class="field"><label>Rekening tujuan goal</label><select id="mGoalAcc"><option value="">Pilih nanti saat kontribusi</option>${accountOptions(g.accountId)}</select></div><div class="field"><label>Target tanggal</label><input id="mGoalDate" type="date" value="${g.dueDate||''}"></div><div class="field"><label>Scope</label><select id="mGoalScope"><option ${g.scope!=='JOINT'?'selected':''}>PERSONAL</option><option ${g.scope==='JOINT'?'selected':''}>JOINT</option></select></div><div class="row"><button class="btn" onclick="saveGoal('${i}')">Simpan</button>${i?`<button class="btn danger" onclick="removeItem('goal','${i}')">Hapus</button>`:''}</div>`)}
+function saveGoal(i){const p={id:i,name:formVal('mGoalName'),target:Number(formVal('mGoalTarget')),accountId:formVal('mGoalAcc'),dueDate:formVal('mGoalDate'),scope:formVal('mGoalScope')};optimistic('goal.save',p,()=>{const old=S.goals.find(x=>x.id===i)||{},tid=i||id('TMPGOAL');upsert(S.goals,{...old,...p,id:tid,baseCurrent:old.baseCurrent||0,current:old.current||0,contributionTotal:old.contributionTotal||0},i||tid);return{tempId:i?'':tid}})}
+function openGoalContribution(i){const g=S.goals.find(x=>x.id===i);if(!g)return;const usable=S.accounts.filter(a=>a.active!==false&&!a.summaryOnly&&(a.canEdit===true||a.scope==='JOINT'||a.ownerId===S.user.id));if(usable.length<2)return toast('Kontribusi goal membutuhkan rekening sumber dan tujuan yang berbeda.',true);const opts=(sel='')=>usable.map(a=>`<option value="${a.id}" ${a.id===sel?'selected':''}>${esc(a.name)} · ${a.scope==='JOINT'?'Bersama':'Pribadi'} · ${rupiah(a.balance)}</option>`).join('');modal('Tambah Dana Goal',`<div class="alert">Kontribusi dibuat sebagai <b>TRANSFER</b>, bukan pengeluaran. Uang hanya berpindah rekening.</div><div class="field"><label>Goal</label><input value="${esc(g.name)} · ${rupiah(g.current)} / ${rupiah(g.target)}" disabled></div><div class="field"><label>Nominal</label><input id="mGoalContribAmount" type="number" inputmode="numeric"></div><div class="field"><label>Dari rekening</label><select id="mGoalFrom">${opts('')}</select></div><div class="field"><label>Ke rekening tujuan</label><select id="mGoalTo">${opts(g.accountId||'')}</select></div><div class="field"><label>Tanggal</label><input id="mGoalContribDate" type="date" value="${todayISO()}"></div><button class="btn" onclick="contributeGoal('${i}')">Simpan Kontribusi</button>`)}
+function contributeGoal(i){const amount=Number(formVal('mGoalContribAmount')),fromAccountId=formVal('mGoalFrom'),toAccountId=formVal('mGoalTo'),date=formVal('mGoalContribDate');if(amount<=0||!fromAccountId||!toAccountId)return toast('Nominal dan rekening wajib diisi.',true);if(fromAccountId===toAccountId)return toast('Rekening sumber dan tujuan harus berbeda.',true);api('goal.contribute',{id:i,amount,fromAccountId,toAccountId,date,clientMutationId:id('MUTGOAL')}).then(()=>{closeModal();toast('Kontribusi goal tersimpan sebagai transfer ✓');return syncAll(false,{silent:true})}).catch(e=>toast(e.message,true))}
 function openActivityModal(i='',kind='TASK',presetDate=''){
   const isEvent=kind==='AGENDA',src=isEvent?(S.events.find(x=>x.id===i)||{}):(S.tasks.find(x=>x.id===i)||{});
   const dt=x=>x?String(x).slice(0,16):'',date=presetDate||(isEvent?String(src.startAt||'').slice(0,10):src.dueDate)||todayISO(),startTime=isEvent?(String(src.startAt||'').slice(11,16)||'09:00'):'09:00',endTime=isEvent?(String(src.endAt||'').slice(11,16)||''):'',locked=i?'disabled':'';
@@ -1101,6 +1203,8 @@ function openEventModal(i=''){openActivityModal(i,'AGENDA')}
 function saveEvent(i){const p={id:i,title:formVal('mEventTitle'),startAt:formVal('mEventStart'),endAt:formVal('mEventEnd'),location:formVal('mEventLoc'),assignedTo:S.user.id,scope:formVal('mEventScope')};optimistic('event.save',p,()=>{const old=S.events.find(x=>x.id===i),tid=i||id('TMPEVT');upsert(S.events,{...p,id:tid,status:old?old.status:'OPEN'},i||tid);return{tempId:i?'':tid}})}
 function toggleEvent(i){optimistic('event.toggle',{id:i},()=>{const e=S.events.find(x=>x.id===i);if(e)e.status=e.status==='DONE'?'OPEN':'DONE'})}
 
+function openActivityCost(kind,i){const isEvent=kind==='EVENT',a=isEvent?S.events.find(x=>x.id===i):S.tasks.find(x=>x.id===i);if(!a)return;modal('Catat Biaya Aktivitas',`<div class="alert">Biaya aktual akan dibuat sebagai transaksi pengeluaran dan ditautkan ke ${isEvent?'agenda':'task'} ini.</div><div class="field"><label>Aktivitas</label><input value="${esc(a.title)}" disabled></div><div class="field"><label>Nominal</label><input id="mActCostAmount" type="number" inputmode="numeric"></div><div class="field"><label>Rekening</label><select id="mActCostAcc">${accountOptions()}</select></div><div class="field"><label>Kategori</label><input id="mActCostCat" value="Aktivitas"></div><div class="field"><label>Tanggal</label><input id="mActCostDate" type="date" value="${todayISO()}"></div><button class="btn" onclick="saveActivityCost('${kind}','${i}')">Catat ke Money</button>`)}
+function saveActivityCost(kind,i){const amount=Number(formVal('mActCostAmount')),accountId=formVal('mActCostAcc'),category=formVal('mActCostCat')||'Aktivitas',date=formVal('mActCostDate');if(amount<=0||!accountId)return toast('Nominal dan rekening wajib diisi.',true);api(kind==='EVENT'?'event.cost':'task.cost',{id:i,amount,accountId,category,date,clientMutationId:id('MUTACTCOST')}).then(()=>{closeModal();toast('Biaya aktivitas masuk Money ✓');return syncAll(false,{silent:true})}).catch(e=>toast(e.message,true))}
 function openShoppingModal(){modal('Tambah Belanja',`<div class="field"><label>Item</label><input id="mShopItem"></div><div class="field"><label>Jumlah/catatan</label><input id="mShopQty" placeholder="2 pcs / 1 kg"></div><button class="btn" onclick="saveShopping()">Tambah</button>`)}
 function saveShopping(){const p={item:formVal('mShopItem'),qty:formVal('mShopQty')};optimistic('shopping.save',p,()=>{const tid=id('TMPSHP');S.shopping.unshift({id:tid,item:p.item,qty:p.qty,status:'OPEN',addedBy:S.user.id});return{tempId:tid}})}
 function toggleShopping(i){const cur=S.shopping.find(x=>x.id===i);if(cur&&cur.status==='POSTED')return toast('Item ini sudah terhubung ke transaksi Money.',true);optimistic('shopping.toggle',{id:i},()=>{const t=S.shopping.find(x=>x.id===i);if(t)t.status=t.status==='OPEN'?'PURCHASED':'OPEN'})}
@@ -1194,11 +1298,32 @@ function openReceiptDraft(r,preview){
   const itemHtml=RECEIPT_DRAFT.items.length?`<div class="field"><label>Item terbaca (${RECEIPT_DRAFT.items.length})</label><div class="panel" style="padding:10px">${RECEIPT_DRAFT.items.slice(0,12).map(i=>`<div style="display:flex;justify-content:space-between;gap:12px;padding:5px 0"><span>${esc(i.name)}</span><b>${rupiah(i.amount)}</b></div>`).join('')}${RECEIPT_DRAFT.items.length>12?`<div class="small">+${RECEIPT_DRAFT.items.length-12} item lainnya</div>`:''}</div></div>`:'';
   modal('Konfirmasi Foto Struk',`${preview?`<img class="receipt-preview" src="${preview}" alt="Preview struk">`:''}${warning}<div class="field"><label>Keterangan</label><input id="mReceiptDesc" value="${esc(r.description||r.merchant||'Belanja dari struk')}"></div><div class="field"><label>Total</label><input id="mReceiptAmount" type="number" value="${Number(r.total||0)}"></div><div class="field"><label>Tanggal</label><input id="mReceiptDate" type="date" value="${esc(r.date||todayISO())}"></div><div class="field"><label>Kategori</label><input id="mReceiptCategory" value="${esc(r.category||'Belanja')}"></div>${itemHtml}<div class="field"><label>Rekening / Wallet</label><select id="mReceiptAccount">${accountOptions('')}</select></div><div class="field"><label>Scope</label><select id="mReceiptScope"><option>PERSONAL</option><option>JOINT</option></select></div><button class="btn" style="width:100%" onclick="saveReceiptDraft()">Simpan sebagai Pengeluaran</button>`)
 }
-function saveReceiptDraft(){const accountId=formVal('mReceiptAccount'),acc=S.accounts.find(a=>a.id===accountId);const p={date:formVal('mReceiptDate')||todayISO(),type:'EXPENSE',amount:Number(formVal('mReceiptAmount')||0),accountId:accountId,toAccountId:'',category:formVal('mReceiptCategory')||'Belanja',description:formVal('mReceiptDesc')||'Belanja dari struk',scope:acc&&acc.scope==='JOINT'?'JOINT':(formVal('mReceiptScope')||'PERSONAL'),items:(RECEIPT_DRAFT&&Array.isArray(RECEIPT_DRAFT.items))?RECEIPT_DRAFT.items:[],source:'RECEIPT'};if(!p.amount||!p.accountId)return toast('Total dan rekening wajib diisi.',true);optimistic('transaction.save',p,()=>{const tid=id('TMPTX'),tx={...p,id:tid,canEdit:true,createdBy:S.user.id};S.transactions.unshift(tx);adjustTx(tx,1);return{tempId:tid}},{message:'Transaksi struk langsung tampil. Menyimpan di background…'});RECEIPT_DRAFT=null}
+function saveReceiptDraft(){const accountId=formVal('mReceiptAccount'),acc=S.accounts.find(a=>a.id===accountId);const p={date:formVal('mReceiptDate')||todayISO(),type:'EXPENSE',amount:Number(formVal('mReceiptAmount')||0),accountId:accountId,toAccountId:'',category:formVal('mReceiptCategory')||'Belanja',description:formVal('mReceiptDesc')||'Belanja dari struk',scope:acc&&acc.scope==='JOINT'?'JOINT':(formVal('mReceiptScope')||'PERSONAL'),items:(RECEIPT_DRAFT&&Array.isArray(RECEIPT_DRAFT.items))?RECEIPT_DRAFT.items:[],source:'RECEIPT',sourceType:'RECEIPT'};if(!p.amount||!p.accountId)return toast('Total dan rekening wajib diisi.',true);optimistic('transaction.save',p,()=>{const tid=id('TMPTX'),tx={...p,id:tid,canEdit:true,createdBy:S.user.id};S.transactions.unshift(tx);adjustTx(tx,1);return{tempId:tid}},{message:'Transaksi struk langsung tampil. Menyimpan di background…'});RECEIPT_DRAFT=null}
 
 function handleChatKeydown(event){if(event.key!=='Enter')return;if(event.shiftKey)return;event.preventDefault();sendChat()}
 function autoGrowChat(el){if(!el)return;el.style.height='auto';el.style.height=Math.min(116,Math.max(44,el.scrollHeight))+'px'}
 function sendChat(){const q=formVal('chatInput').trim();if(!q||CHAT_BUSY)return;const input=document.getElementById('chatInput');input.value='';autoGrowChat(input);askPreset(q)}
+function buildAiClientContext(message,history){
+  const q=String(message||'').toLowerCase(),finance=/(uang|saldo|rekening|wallet|pengeluaran|pemasukan|budget|anggaran|tagihan|beli|belanja|boros|goal|tabung)/.test(q),plan=/(agenda|jadwal|task|tugas|kalender|besok|hari ini|minggu)/.test(q),household=/(rumah|suami|istri|pasangan|belanja|shopping|bagi tugas)/.test(q);
+  const data={user:{name:S.user?.name||'',role:S.user?.role||''},anggotaKeluarga:(S.users||[]).slice(0,8).map(u=>({name:u.name,role:u.role})),recentChat:(history||[]).slice(-6).map(x=>({role:x.role==='user'?'user':'assistant',text:String(x.text||'').slice(0,320)})),dataQuality:{transactions:(S.transactions||[]).length,budgets:(S.budgets||[]).length,bills:(S.bills||[]).length,tasks:(S.tasks||[]).length,events:(S.events||[]).length,accounts:(S.accounts||[]).length}};
+  if(finance||(!plan&&!household)){
+    data.balances=(S.accounts||[]).filter(a=>a.active!==false).slice(0,12).map(a=>({rekening:a.name,pemilik:a.ownerName||userName(a.ownerId)||((a.scope==='JOINT')?'Bersama':'Pribadi'),jenis:a.scope,saldo:Number(a.balance||0),visibilitas:a.visibility}));
+    data.month={income:Number((S.summary||{}).monthIncome||0),expense:Number((S.summary||{}).monthExpense||0),expenseByCategory:(S.summary||{}).expenseByCategory||{}};
+    data.budgets=(S.budgets||[]).slice(0,12).map(b=>({bulan:b.month,kategori:b.category,anggaran:Number(b.amount||0),terpakai:Number(b.spent||0),scope:b.scope}));
+    data.upcomingBills=(S.bills||[]).filter(b=>b.status!=='PAID').slice(0,8).map(b=>({nama:b.name,nominal:Number(b.amount||0),jatuhTempo:b.dueDate,rekening:b.accountName||'',status:b.status,scope:b.scope,transaksiTerhubung:!!b.linkedTransactionId}));
+    data.goals=(S.goals||[]).slice(0,6).map(g=>({nama:g.name,target:Number(g.target||0),terkumpul:Number(g.current||0),jatuhTempo:g.dueDate,scope:g.scope}));
+  }
+  if(plan||household){
+    const acts=[];(S.tasks||[]).filter(t=>t.status!=='DONE').slice(0,10).forEach(t=>acts.push({jenis:'Task',judul:t.title,tanggal:t.dueDate,ditugaskanKepada:t.assignedToName||userName(t.assignedTo)||'Belum ditentukan',prioritas:t.priority,status:t.status,scope:t.scope,biayaAktual:Number(t.actualCost||0)}));
+    (S.events||[]).filter(e=>!e.startAt||new Date(e.startAt).getTime()>=Date.now()-86400000).slice(0,8).forEach(e=>acts.push({jenis:'Agenda',judul:e.title,mulai:e.startAt,selesai:e.endAt,lokasi:e.location,status:e.status,scope:e.scope,biayaAktual:Number(e.actualCost||0)}));data.aktivitas=acts.slice(0,16);
+  }
+  if(household)data.shopping=(S.shopping||[]).slice(0,12).map(x=>({item:x.item,jumlah:x.qty,status:x.status,harga:Number(x.unitPrice||0)}));
+  if(finance){
+    const terms=q.split(/[^a-z0-9]+/).filter(w=>w.length>=3&&!['uang','saldo','berapa','bulan','hari','saya','yang','untuk','dari','rekening','pengeluaran','pemasukan','belanja'].includes(w));
+    data.transaksiRelevan=(S.transactions||[]).filter(t=>!terms.length||terms.some(w=>String((t.description||'')+' '+(t.category||'')+' '+((t.items||[]).map(i=>i.name||i.item||'').join(' '))).toLowerCase().includes(w))).slice(0,18).map(t=>({tanggal:t.date,jenis:t.type,nominal:Number(t.amount||0),kategori:t.category,keterangan:t.description,item:(t.items||[]).slice(0,8),sumber:t.sourceType||t.source||''}));
+  }
+  const out=JSON.stringify(data);return out.length>22000?out.slice(0,22000):out;
+}
 function askPreset(q){
   q=String(q||'').trim();if(!q||CHAT_BUSY)return;goPage('ai',document.querySelector('.navbtn[data-page="ai"]'));appendChatMessage('user',q,'normal',true);
   if(CHAT_PENDING&&CHAT_PENDING.kind==='transaction'){
@@ -1212,7 +1337,8 @@ function askPreset(q){
   const feedback=chatClarification(q);if(feedback){appendChatMessage('assistant',feedback,'feedback',true);return}
   const fast=fastLocalAnswer(q);if(fast){appendChatMessage('assistant',fast,'normal',true);return}
   const contextual=(S.chatHistory||[]).slice(-3).map(m=>m.role+':'+m.text).join('|');const ck=(S.revision||0)+'|'+q.trim().toLowerCase()+'|'+contextual.slice(-800),cached=AI_CACHE.get(ck);if(cached&&Date.now()-cached.at<180000){appendChatMessage('assistant',cached.text,'normal',true);return}
-  CHAT_BUSY=true;showChatThinking('RUMA sedang menganalisis…');api('ai.chat',{message:q,history:(S.chatHistory||[]).slice(-10).map(m=>({role:m.role,text:m.text}))}).then(r=>{AI_CACHE.set(ck,{at:Date.now(),text:r.text});document.getElementById('aiInsight').innerHTML=chatHtml(r.text);finishChat(r.text,'normal')}).catch(e=>{finishChat('Saya belum bisa menyelesaikan pengecekan ini. **'+e.message+'**\n\nCoba lagi sebentar, atau tulis permintaan dengan detail yang lebih spesifik.','feedback');toast(e.message,true)})
+  const aiHistory=(S.chatHistory||[]).slice(0,-1).slice(-6).map(m=>({role:m.role,text:m.text})),aiContext=buildAiClientContext(q,aiHistory);
+  CHAT_BUSY=true;showChatThinking('RUMA AI menjawab…');api('ai.chat',{message:q,history:aiHistory,context:aiContext},{timeout:70000}).then(r=>{AI_CACHE.set(ck,{at:Date.now(),text:r.text});document.getElementById('aiInsight').innerHTML=chatHtml(r.text);finishChat(r.text,'normal')}).catch(e=>{finishChat('Saya belum bisa menyelesaikan pengecekan ini. **'+e.message+'**\n\nCoba kirim ulang. Data lokal tetap aman dan RUMA akan memakai jalur koneksi cadangan bila direct bridge belum siap.','feedback');toast(e.message,true)})
 }
 
 
@@ -1231,6 +1357,7 @@ function initPWA(){
 
 (async function init(){
   initPWA();
+  initBridge();
   updateConnectionUI();
   const cachedRaw=localStorage.getItem(SNAP_KEY)||localStorage.getItem('ruma_snapshot_v2_4')||localStorage.getItem('ruma_snapshot_v2_3')||localStorage.getItem('ruma_snapshot_v2_1')||localStorage.getItem('ruma_snapshot');
   if(S.session&&cachedRaw){try{const c=JSON.parse(cachedRaw);Object.assign(S,c.data);showApp();renderAll();CONN.lastSync=Number(c.at||0)}catch(e){}}
