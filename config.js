@@ -15,12 +15,12 @@ window.RUMA_CONFIG = {
   FIREBASE: {
     enabled: false,
     sdkVersion: "12.17.1",
-    apiKey: "",
-    authDomain: "",
-    projectId: "",
-    storageBucket: "",
-    messagingSenderId: "",
-    appId: "",
-    vapidKey: ""
+    apiKey: "AIzaSyDhWKqdQd664Fk7XM9-HI8RYGdYkS7xe9g",
+    authDomain: "ruma-9b3cf.firebaseapp.com",
+    projectId: "ruma-9b3cf",
+    storageBucket: "ruma-9b3cf.firebasestorage.app",
+    messagingSenderId: "770596277924",
+    appId: "1:770596277924:web:0e6f758b69ecbab84be031",
+    vapidKey: "G-8K8RNQCKB8"
   }
 };
