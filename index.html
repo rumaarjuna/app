@@ -306,7 +306,7 @@
             <div id="calendarSettingsInfo" class="small muted" style="margin-top:10px">Belum diperiksa.</div>
           </div>
           <div class="card span12" data-owner-only="1">
-            <div class="row between wrap"><div><h2 style="margin:0">Status Sistem</h2><div class="small muted">Status cepat Apps Script, Cloudflare D1 Phase 2, fallback, cache, dan sinkronisasi.</div></div><button class="btn ghost sm" onclick="checkSystemStatus(true,true)">Periksa Cepat</button></div>
+            <div class="row between wrap"><div><h2 style="margin:0">Status Sistem</h2><div class="small muted">Status cepat Apps Script, Cloudflare D1 Phase 3, fallback, cache, dan sinkronisasi.</div></div><button class="btn ghost sm" onclick="checkSystemStatus(true,true)">Periksa Cepat</button></div>
             <div class="statusgrid" style="margin-top:14px">
               <div class="statusbox"><b>Internet</b><div id="stInternet" class="statusvalue">Memeriksa...</div></div>
               <div class="statusbox"><b>API Gateway Apps Script</b><div id="stBackend" class="statusvalue">Belum diperiksa</div></div>
@@ -361,7 +361,7 @@
 <script>
 const C = window.RUMA_CONFIG || {};
 const API_URL = (C.API_URL || '').trim();
-const VERSION = '2.14.0';
+const VERSION = '2.15.0';
 const CACHE_TTL = Number(C.CACHE_TTL_MS || 300000);
 const BG_SYNC_MS = Number(C.BACKGROUND_SYNC_MS || 120000);
 const SNAP_KEY='ruma_snapshot_v2_6';
@@ -1008,7 +1008,7 @@ function applyFastSystemStatus(r){
   const rf=r.readFirst||{},dw=r.dualWrite||{},sp=r.spreadsheet||{};
   S.settings={...S.settings,
     version:r.version||S.settings.version,databaseName:sp.name||S.settings.databaseName,spreadsheetId:sp.id||S.settings.spreadsheetId,
-    d1ReadFirstKnown:true,d1ReadFirstEnabled:!!rf.enabled,d1ReadFirstPhase2Enabled:!!rf.phase2Enabled,d1ReadFirstModules:Array.isArray(rf.modules)?rf.modules:[],d1LastLatencyMs:Number(rf.lastLatencyMs||0),d1LastSuccessAt:rf.lastSuccessAt||'',
+    d1ReadFirstKnown:true,d1ReadFirstEnabled:!!rf.enabled,d1ReadFirstPhase2Enabled:!!rf.phase2Enabled,d1ReadFirstPhase3Enabled:!!rf.phase3Enabled,d1ReadFirstModules:Array.isArray(rf.modules)?rf.modules:[],d1LastLatencyMs:Number(rf.lastLatencyMs||0),d1LastSuccessAt:rf.lastSuccessAt||'',
     d1FallbackCount:Number(rf.fallbackCount||0),d1LastFallbackAt:rf.lastFallbackAt||'',d1LastFallbackReason:rf.lastFallbackReason||'',d1FallbackExpected:!!rf.fallbackExpected,d1LastError:rf.lastError||'',
     d1DualWriteKnown:true,d1DualWriteEnabled:!!dw.enabled,d1EngineTrigger:!!dw.engineTrigger,d1PendingEvents:Number(dw.pendingEvents||0),d1FailedEvents:Number(dw.failedD1MirrorEvents||0),
     d1MirrorLastSuccessAt:dw.lastMirrorSuccessAt||'',d1MirrorLastErrorAt:dw.lastMirrorErrorAt||'',d1MirrorLastError:dw.lastMirrorError||''
@@ -1027,9 +1027,9 @@ function updateConnectionUI(){
   set('stBackend',CONN.backend===true?'Gateway aktif'+(CONN.latency?' · '+CONN.latency+' ms':'')+(slowGateway?' · cold/slow start':'')+' · '+transportLabel+(API_STATS.timeouts?' · timeout '+API_STATS.timeouts:''):CONN.backend===false?'Terputus sementara'+(CONN.lastError?' · '+CONN.lastError:''):'Belum diperiksa');
   if(S.settings.d1ReadFirstKnown){
     const lat=Number(S.settings.d1LastLatencyMs||0),last=statusClock(S.settings.d1LastSuccessAt);
-    const phase2=!!S.settings.d1ReadFirstPhase2Enabled,phaseLabel=phase2?' · Phase 2':' · Phase 1';
+    const phase2=!!S.settings.d1ReadFirstPhase2Enabled,phase3=!!S.settings.d1ReadFirstPhase3Enabled,phaseLabel=phase3?' · Phase 3':(phase2?' · Phase 2':' · Phase 1');
     set('stD1',S.settings.d1ReadFirstEnabled?'Aktif'+phaseLabel+(lat?' · '+lat+' ms':'')+(last?' · terakhir '+last:''):'Read-First nonaktif');
-    const fb=Number(S.settings.d1FallbackCount||0),reason=S.settings.d1LastFallbackReason||'',err=S.settings.d1LastError||'',moduleLabel=phase2?'Money Core: akun, transaksi, budget, tagihan, belanja':'Akun + transaksi';
+    const fb=Number(S.settings.d1FallbackCount||0),reason=S.settings.d1LastFallbackReason||'',err=S.settings.d1LastError||'',moduleLabel=phase3?'Core harian: akun, transaksi, budget, tagihan, belanja, task, agenda, notifikasi':(phase2?'Money Core: akun, transaksi, budget, tagihan, belanja':'Akun + transaksi');
     set('stReadFirst',S.settings.d1ReadFirstEnabled?'Aktif · '+moduleLabel+(fb?' · fallback '+fb+'×':' · tanpa fallback')+(reason?' · '+reason:'')+(err&&!S.settings.d1FallbackExpected?' · ⚠ '+err:''):'Nonaktif');
   }else{set('stD1','Belum diperiksa');set('stReadFirst','Belum diperiksa');}
   if(S.settings.d1DualWriteKnown){
