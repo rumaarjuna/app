@@ -133,7 +133,7 @@
       <div class="field"><label>Password</label><input id="ownerPassword" type="password" placeholder="Minimal 10 karakter + huruf & angka"></div>
       <button class="btn" style="width:100%" onclick="createOwner()">Aktifkan RUMA</button>
     </div>
-    <div class="small muted" style="margin-top:16px">v<span id="gateVersion">2.9.1</span> · Pink Edition</div>
+    <div class="small muted" style="margin-top:16px">v<span id="gateVersion">2.9.3</span> · Pink Edition</div>
   </div>
 </section>
 
@@ -339,11 +339,12 @@
 <script>
 const C = window.RUMA_CONFIG || {};
 const API_URL = (C.API_URL || '').trim();
-const VERSION = '2.9.1';
+const VERSION = '2.9.3';
 const CACHE_TTL = Number(C.CACHE_TTL_MS || 300000);
 const BG_SYNC_MS = Number(C.BACKGROUND_SYNC_MS || 120000);
 const SNAP_KEY='ruma_snapshot_v2_6';
 const CHAT_QUEUE_KEY='ruma_chat_queue_v2_6';
+const MUTATION_QUEUE_KEY='ruma_mutation_queue_v2_9_2';
 const DEVICE_KEY='ruma_device_id';
 const DEVICE_ID=localStorage.getItem(DEVICE_KEY)||id('DEV');
 localStorage.setItem(DEVICE_KEY,DEVICE_ID);
@@ -390,10 +391,18 @@ function fmtDate(v){
 function formVal(id){return document.getElementById(id)?.value ?? ''}
 function checked(id){return !!document.getElementById(id)?.checked}
 
-const DIRECT_READ_ACTIONS=new Set(['system.ping','bootstrap.status','app.snapshot','app.revision','system.status','system.diagnose','calendar.status']);
-const BRIDGE_ACTIONS=new Set(['ai.chat','chat.append','chat.search']);
-const TRANSPORT={read:'Direct JSONP',write:'POST job + poll',ai:'Direct Bridge',last:'-'};
-const BRIDGE={frame:null,ready:false,booting:false,pending:new Map(),listener:false};
+const DIRECT_READ_ACTIONS=new Set(['system.ping','bootstrap.status','app.snapshot','app.revision','system.status','system.diagnose','calendar.status','mutation.status']);
+const TRANSPORT={read:'Direct JSONP',write:'Direct Bridge',fallback:'POST job + poll',ai:'Direct Bridge',last:'-'};
+const BRIDGE={frame:null,ready:false,booting:false,pending:new Map(),listener:false,failures:0};
+function isClientMutationAction(action){return /\.(save|delete|toggle|pay|unpay|cost|contribute)$/.test(action)||['shopping.post','account.reconcile','settings.save','user.save','system.cleanupLegacyGhosts','calendar.saveSettings','calendar.setup','calendar.sync','calendar.test'].includes(action)}
+function ensureMutationId(action,payload){if(!isClientMutationAction(action)||payload.clientMutationId)return payload;return {...payload,clientMutationId:id('MUTAPI')}}
+function shouldUseBridge(action){return !DIRECT_READ_ACTIONS.has(action)}
+function resetBridge(){
+  BRIDGE.ready=false;BRIDGE.booting=false;BRIDGE.failures++;
+  try{BRIDGE.frame?.remove()}catch(e){}BRIDGE.frame=null;
+  for(const [rid,req] of BRIDGE.pending){clearTimeout(req.timer);const e=new Error('Direct bridge di-reset untuk memulihkan koneksi.');e.code='BRIDGE_UNAVAILABLE';req.reject(e)}
+  BRIDGE.pending.clear();
+}
 function sleepMs(ms){return new Promise(r=>setTimeout(r,ms))}
 function initBridge(){
   if(!API_URL||API_URL.includes('PASTE_APPS_SCRIPT')||BRIDGE.frame)return;
@@ -476,13 +485,44 @@ async function directJsonpApi(action,payload={},opts={}){
   updateConnectionUI();throw lastErr||new Error('Koneksi backend gagal.');
 }
 
+async function mutationReceipt(clientMutationId,attempts=2){
+  if(!clientMutationId||!navigator.onLine)return null;
+  for(let i=0;i<Math.max(1,attempts);i++){
+    try{
+      const r=await directJsonpApi('mutation.status',{clientMutationId},{timeout:6500,attempts:1,healthNeutral:true});
+      if(r&&r.found&&r.data)return r.data;
+    }catch(e){}
+    if(i<attempts-1)await sleepMs(260+(i*420));
+  }
+  return null;
+}
 async function api(action,payload={},opts={}){
   if(!API_URL)throw new Error('API_URL belum diisi di config.js');
   if(!navigator.onLine){const e=new Error('Perangkat sedang offline. Data lokal tetap tersedia.');e.code='OFFLINE';throw e}
+  payload=ensureMutationId(action,payload||{});
   if(DIRECT_READ_ACTIONS.has(action))return directJsonpApi(action,payload,opts);
-  if(BRIDGE_ACTIONS.has(action)&&opts.bridge!==false){
+  if(shouldUseBridge(action)&&opts.bridge!==false){
     try{return await bridgeApi(action,payload,opts)}
-    catch(e){if(e&&e.code==='BRIDGE_UNAVAILABLE')return apiLegacy(action,payload,{...opts,bridge:false});throw e}
+    catch(e){
+      const safeRetry=isClientMutationAction(action)&&payload.clientMutationId;
+      const transportFail=e&&['BRIDGE_UNAVAILABLE','BRIDGE_ERROR','TIMEOUT','NETWORK'].includes(e.code);
+      if(transportFail){resetBridge();setTimeout(initBridge,120);}
+      // v2.9.3: sebelum menyebut timeout, cek ACK server. Sering kali write sudah sukses
+      // tetapi browser terlambat menerima respons Apps Script.
+      if(safeRetry&&transportFail){
+        const ack=await mutationReceipt(payload.clientMutationId,e.code==='TIMEOUT'?3:1);
+        if(ack)return ack;
+        try{return await apiLegacy(action,payload,{...opts,bridge:false})}
+        catch(fallbackErr){
+          const finalAck=await mutationReceipt(payload.clientMutationId,3);
+          if(finalAck)return finalAck;
+          throw fallbackErr;
+        }
+      }
+      // AI chat hanya pindah ke fallback jika bridge memang belum tersedia; timeout AI tidak dikirim ulang.
+      if(e&&e.code==='BRIDGE_UNAVAILABLE')return apiLegacy(action,payload,{...opts,bridge:false});
+      throw e;
+    }
   }
   return apiLegacy(action,payload,opts);
 }
@@ -569,6 +609,9 @@ async function syncAll(first=false,opts={}){
   if(syncAll._running)return syncAll._running;
   const job=(async()=>{
     try{
+      // Jangan menimpa optimistic local data sebelum mutation tertunda sempat dikirim.
+      if(queuedMutationCount()&&navigator.onLine)await flushMutationQueue({silent:true});
+      if(queuedMutationCount())return {deferred:true,pendingQueue:queuedMutationCount()};
       const r=await api('app.snapshot',{}, {healthNeutral:true}), localChats=(S.chatHistory||[]).slice();
       Object.assign(S,r);S.chatHistory=mergeChatHistory(r.chatHistory||[],localChats);CONN.lastSync=Date.now();persistSnapshot();showApp();renderAll();flushChatQueue();
       if(!first&&!opts.silent)toast('Data terbaru sudah masuk ✓');
@@ -585,6 +628,7 @@ async function syncAll(first=false,opts={}){
 }
 async function smartSync(force=false,opts={}){
   if(!S.session||!navigator.onLine)return;
+  if(queuedMutationCount()){await flushMutationQueue({silent:true});if(queuedMutationCount())return {deferred:true,pendingQueue:queuedMutationCount()};}
   if(!force&&(API_INFLIGHT>0||CHAT_BUSY||CONN.pendingWrites>0))return {deferred:true};
   if(force||!S.user)return syncAll(false,opts);
   try{
@@ -750,14 +794,45 @@ function stableStringify(v){
   return '{'+Object.keys(v).sort().map(k=>JSON.stringify(k)+':'+stableStringify(v[k])).join(',')+'}';
 }
 function mutationFingerprint(action,payload){const clean={...payload};delete clean.clientMutationId;return action+'|'+stableStringify(clean)}
+const CHAT_TX_GUARD_KEY='ruma_chat_tx_guard_v1';
+function readChatTxGuards(){try{const a=JSON.parse(localStorage.getItem(CHAT_TX_GUARD_KEY)||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}}
+function writeChatTxGuards(a){const now=Date.now(),clean=(a||[]).filter(x=>x&&now-Number(x.at||0)<3600000).slice(-24);try{localStorage.setItem(CHAT_TX_GUARD_KEY,JSON.stringify(clean))}catch(e){}}
+function chatTxGuardFingerprint(p){return mutationFingerprint('transaction.save',p||{})}
+function recentChatTxGuard(p,maxAge=12*60*1000){const fp=chatTxGuardFingerprint(p),now=Date.now();return readChatTxGuards().slice().reverse().find(x=>x.fp===fp&&now-Number(x.at||0)<maxAge)||null}
+function setChatTxGuard(p,status,serverId=''){const fp=chatTxGuardFingerprint(p),a=readChatTxGuards().filter(x=>x.fp!==fp);a.push({fp,status:String(status||'LOCAL'),serverId:String(serverId||''),at:Date.now()});writeChatTxGuards(a)}
+function clearChatTxGuard(p){const fp=chatTxGuardFingerprint(p);writeChatTxGuards(readChatTxGuards().filter(x=>x.fp!==fp))}
 function isDuplicatePending(action,payload){const key=mutationFingerprint(action,payload),now=Date.now(),last=PENDING_MUTATIONS.get(key)||0;if(now-last<2200)return true;PENDING_MUTATIONS.set(key,now);setTimeout(()=>{if(PENDING_MUTATIONS.get(key)===now)PENDING_MUTATIONS.delete(key)},6000);return false}
-function retryMutationBackground(action,payload,backup){
-  setTimeout(()=>{
-    if(!navigator.onLine){setTimeout(()=>retryMutationBackground(action,payload,backup),5000);return}
-    api(action,payload,{timeout:Math.max(timeoutForAction(action),50000)}).then(r=>{
-      if(r&&r._revision)S.revision=Number(r._revision);persistSnapshot();scheduleSync(700);toast('Sinkronisasi selesai ✓');
-    }).catch(err=>{restoreState(backup);toast('Perubahan dibatalkan karena backend tetap tidak dapat dijangkau: '+err.message,true)});
-  },2200);
+function readMutationQueue(){try{const q=JSON.parse(localStorage.getItem(MUTATION_QUEUE_KEY)||'[]');return Array.isArray(q)?q:[]}catch(e){return[]}}
+function writeMutationQueue(q){try{localStorage.setItem(MUTATION_QUEUE_KEY,JSON.stringify((q||[]).slice(-100)))}catch(e){}updateConnectionUI()}
+function queuedMutationCount(){return readMutationQueue().filter(x=>!x.userId||!S.user||x.userId===S.user.id).length}
+function isQueuedMutation(action,payload){const fp=mutationFingerprint(action,payload);return readMutationQueue().some(x=>(!x.userId||!S.user||x.userId===S.user.id)&&mutationFingerprint(x.action,x.payload||{})===fp)}
+function isTransientConnectionError(e){const m=String((e&&e.message)||e||'');return !!(e&&['TIMEOUT','OFFLINE','NETWORK','BRIDGE_UNAVAILABLE','BRIDGE_ERROR'].includes(e.code))||/timeout|tidak merespons|terlalu lama|offline|network|connection|sementara|coba lagi|sedang diperbarui/i.test(m)}
+function queueMutation(action,payload){
+  payload=ensureMutationId(action,{...(payload||{})});const mid=payload.clientMutationId||id('MUTQ');if(!payload.clientMutationId)payload.clientMutationId=mid;
+  const q=readMutationQueue();if(!q.some(x=>x.clientMutationId===mid))q.push({clientMutationId:mid,action,payload,userId:S.user&&S.user.id||'',createdAt:Date.now(),attempts:0,lastError:''});writeMutationQueue(q);return mid;
+}
+let MUTATION_FLUSHING=false;
+async function flushMutationQueue(opts={}){
+  if(MUTATION_FLUSHING||!S.session||!navigator.onLine)return {pending:queuedMutationCount()};
+  let q=readMutationQueue();if(!q.length)return {pending:0};MUTATION_FLUSHING=true;let changed=false,done=0,failed=0;
+  try{
+    const keep=[];
+    for(let qi=0;qi<q.length;qi++){
+      const item=q[qi];if(item.userId&&S.user&&item.userId!==S.user.id){keep.push(item);continue}
+      try{
+        const r=await api(item.action,item.payload,{timeout:Math.max(timeoutForAction(item.action),50000)});done++;changed=true;if(r&&r._revision)S.revision=Number(r._revision);
+      }catch(e){
+        if(isTransientConnectionError(e)){item.attempts=Number(item.attempts||0)+1;item.lastError=String(e.message||e).slice(0,180);keep.push(item,...q.slice(qi+1));break;}
+        else{failed++;changed=true;if(!opts.silent)toast('Server menolak perubahan tertunda: '+e.message,true);}
+      }
+    }
+    writeMutationQueue(keep);if(changed){persistSnapshot();if(!keep.length)scheduleSync(250)}
+    if(done&&!opts.silent)toast('Sinkronisasi tertunda selesai ✓');
+    return {done,failed,pending:keep.length};
+  }finally{MUTATION_FLUSHING=false;updateConnectionUI()}
+}
+function retryMutationBackground(action,payload){
+  queueMutation(action,payload);setTimeout(()=>flushMutationQueue({silent:true}).catch(()=>{}),900);
 }
 function optimistic(action,payload,applyLocal,opts={}){
   if(isDuplicatePending(action,payload)){toast('Input yang sama baru saja diproses. Duplikat dicegah.');return}
@@ -766,7 +841,7 @@ function optimistic(action,payload,applyLocal,opts={}){
   try{meta=applyLocal()||{};closeModal();persistSnapshot();renderAll();toast(opts.message||'Sudah tampil. Saya sinkronkan di belakang…')}
   catch(e){restoreState(backup);toast(e.message,true);return}
   CONN.pendingWrites++;updateConnectionUI();
-  api(action,payload).then(r=>{if(r&&r.duplicatePrevented){restoreState(backup);toast('Data yang sama sudah ada. Duplikat tidak ditambahkan.');scheduleSync(120);return}replaceTempId(meta.tempId,r&&r.id);if(r&&r._revision)S.revision=Number(r._revision);persistSnapshot();renderAll();if(r&&r.refreshRequired)syncAll(false,{silent:true}).catch(()=>{});else scheduleSync(1200)}).catch(e=>{if(isTimeoutLike(e)||e.code==='OFFLINE'){toast('Koneksi lambat. Perubahan tetap tampil dan saya coba sinkron lagi di background.');retryMutationBackground(action,payload,backup);return}restoreState(backup);toast('Belum tersimpan: '+e.message,true)}).finally(()=>{CONN.pendingWrites=Math.max(0,CONN.pendingWrites-1);updateConnectionUI()})
+  api(action,payload).then(r=>{if(r&&r.duplicatePrevented){restoreState(backup);toast('Data yang sama sudah ada. Duplikat tidak ditambahkan.');scheduleSync(120);return}replaceTempId(meta.tempId,r&&r.id);if(r&&r._revision)S.revision=Number(r._revision);persistSnapshot();renderAll();if(r&&r.refreshRequired)syncAll(false,{silent:true}).catch(()=>{});else scheduleSync(1200)}).catch(e=>{if(isTransientConnectionError(e)){toast('Koneksi lambat. Perubahan tetap tersimpan di perangkat dan akan disinkronkan otomatis.');retryMutationBackground(action,payload);return}restoreState(backup);toast('Belum tersimpan: '+e.message,true)}).finally(()=>{CONN.pendingWrites=Math.max(0,CONN.pendingWrites-1);updateConnectionUI()})
 }
 function adjustTx(tx,sign){
   if(!tx)return;const n=Number(tx.amount||0)*sign,find=id=>S.accounts.find(a=>a.id===id);
@@ -783,11 +858,13 @@ function adjustTx(tx,sign){
     }
   }
 }
+function removeOptimisticTransaction(tempId){const tx=(S.transactions||[]).find(x=>x.id===tempId);if(!tx)return;adjustTx(tx,-1);S.transactions=S.transactions.filter(x=>x.id!==tempId);persistSnapshot();renderAll()}
 function upsert(list,item,idValue){const i=list.findIndex(x=>x.id===idValue);if(i>=0)list[i]={...list[i],...item};else list.unshift(item)}
 function updateConnectionUI(){
   CONN.online=navigator.onLine;
+  const queued=queuedMutationCount(),pendingTotal=CONN.pendingWrites+queued;
   const dot=document.getElementById('topConnDot'),text=document.getElementById('topConnText'),versionMismatch=!!(S.settings.version&&S.settings.version!==VERSION);
-  if(dot&&text){dot.className='conndot '+(!CONN.online?'bad':CONN.backend===false?'bad':(CONN.pendingWrites||versionMismatch)?'warn':CONN.backend===true?'ok':'warn');text.textContent=!CONN.online?'Offline':CONN.backend===false?'Backend error':CONN.pendingWrites?'Menyimpan…':versionMismatch?('Backend '+(S.settings.version||'?')+' → '+VERSION):CONN.backend===true?'Online':'Online'}
+  if(dot&&text){dot.className='conndot '+(!CONN.online?'bad':CONN.backend===false?'bad':(pendingTotal||versionMismatch)?'warn':CONN.backend===true?'ok':'warn');text.textContent=!CONN.online?'Offline':CONN.backend===false?'Backend error':queued?('Menunggu sinkron '+queued):CONN.pendingWrites?'Menyimpan…':versionMismatch?('Backend '+(S.settings.version||'?')+' → '+VERSION):CONN.backend===true?'Online':'Online'}
   const cacheRaw=localStorage.getItem(SNAP_KEY),cache=(()=>{try{return JSON.parse(cacheRaw||'{}')}catch(e){return{}}})();
   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};
   set('stInternet',CONN.online?'Online':'Offline');
@@ -800,12 +877,12 @@ function updateConnectionUI(){
   set('stReceipt',S.settings.receiptConfigured?'Aktif · Gemini Vision':'Belum aktif · butuh Gemini API Key');
   set('stEmail',S.settings.emailEnabled===false?'Nonaktif':((S.settings.notificationTrigger===false?'Trigger belum aktif':'Aktif')+' · jam '+String(S.settings.emailHour??7).padStart(2,'0')+'.00'+(Number(S.settings.mailQuota)>=0?' · kuota '+S.settings.mailQuota:'')));
   const calOn=!!S.settings.calendarEnabled,calConnected=!!S.settings.calendarConnected;set('stCalendar',!calOn?'Nonaktif':(calConnected?'Terhubung · '+(S.settings.calendarName||'RUMA Household')+(S.settings.calendarPending?' · '+S.settings.calendarPending+' antrean':'')+(S.settings.calendarRetrying?' · '+S.settings.calendarRetrying+' retry':''):'Perlu setup'+(S.settings.calendarLastError?' · '+S.settings.calendarLastError:'')));
-  set('stSync',(CONN.pendingWrites?CONN.pendingWrites+' perubahan sedang disimpan · ':'')+(CONN.lastSync?new Date(CONN.lastSync).toLocaleTimeString('id-ID'):'Belum sinkron'));
+  set('stSync',(queued?queued+' perubahan menunggu sinkron · ':CONN.pendingWrites?CONN.pendingWrites+' perubahan sedang disimpan · ':'')+(CONN.lastSync?new Date(CONN.lastSync).toLocaleTimeString('id-ID'):'Belum sinkron'));
   set('stVersion','App '+VERSION+' · Backend '+(S.settings.version||'-')+(versionMismatch?' · ⚠ versi berbeda':''));
   const pwaText=!C.PWA_ENABLED?'Dinonaktifkan di config':!PWA_STATE.supported?'Tidak didukung browser':PWA_STATE.installed?'Terpasang · standalone':PWA_STATE.controlled?'Aktif · service worker mengontrol':PWA_STATE.registered?'Terdaftar · siap offline':PWA_STATE.error?'Error · '+PWA_STATE.error:'Menunggu registrasi';
   set('stPWA',pwaText);set('stDedupe','Aktif · '+PENDING_MUTATIONS.size+' request dijaga');
   const ib=document.getElementById('installPwaBtn');if(ib)ib.classList.toggle('show',!!deferredInstallPrompt&&!PWA_STATE.installed);
-  set('stEndpoint',API_URL?API_URL.replace(/\/s\/[^/]+\/exec/,'/s/••••/exec'):'Belum diisi');const mini=document.getElementById('miniSync');if(mini)mini.textContent=CONN.pendingWrites?'Menyimpan '+CONN.pendingWrites+' perubahan':CONN.lastSync?'Sinkron '+new Date(CONN.lastSync).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}):'Cache siap';
+  set('stEndpoint',API_URL?API_URL.replace(/\/s\/[^/]+\/exec/,'/s/••••/exec'):'Belum diisi');const mini=document.getElementById('miniSync');if(mini)mini.textContent=queued?'Menunggu sinkron '+queued:CONN.pendingWrites?'Menyimpan '+CONN.pendingWrites+' perubahan':CONN.lastSync?'Sinkron '+new Date(CONN.lastSync).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}):'Cache siap';
 }
 async function checkSystemStatus(showToast=false){
   if(CONN.checking)return;if(!showToast&&API_INFLIGHT>0){setTimeout(()=>checkSystemStatus(false),1800);return}CONN.checking=true;updateConnectionUI();
@@ -1027,15 +1104,34 @@ function parseChatAction(q){
   return null;
 }
 function runChatTransaction(cmd){
-  const p=cmd.payload,account=cmd.account,backup=cloneState(),tempId=id('TMPTXCHAT');CHAT_BUSY=true;
-  const item={...p,id:tempId,canEdit:true,createdBy:S.user.id};upsert(S.transactions,item,tempId);adjustTx(item,1);persistSnapshot();renderAll();showChatThinking('Saya simpan transaksi…');
+  const p=cmd.payload,account=cmd.account,guard=recentChatTxGuard(p);
+  if(guard){
+    const done=guard.status==='SAVED';
+    appendChatMessage('assistant',done?'Transaksi ini **sudah tercatat di Money**. Tidak saya gandakan.':'Transaksi ini **sudah dicatat** dan sinkronisasi masih berjalan otomatis. Tidak perlu dikirim ulang.','pending',true);return;
+  }
+  if(isQueuedMutation('transaction.save',p)){setChatTxGuard(p,'PENDING');appendChatMessage('assistant','Transaksi yang sama masih **menunggu sinkronisasi**. Tidak perlu dikirim ulang; RUMA akan melanjutkan otomatis.','pending',true);return}
+  const tempId=id('TMPTXCHAT'),mutationPayload={...p,clientMutationId:id('MUTCHAT')};CHAT_BUSY=true;
+  const item={...p,id:tempId,canEdit:true,createdBy:S.user.id};upsert(S.transactions,item,tempId);adjustTx(item,1);setChatTxGuard(p,'LOCAL');persistSnapshot();renderAll();
   CONN.pendingWrites++;updateConnectionUI();
-  api('transaction.save',{...p,clientMutationId:id('MUTCHAT')}).then(r=>{
-    if(r&&r.duplicatePrevented){restoreState(backup);finishChat(`Transaksi yang sama **sudah tercatat**, jadi tidak saya gandakan.`,'feedback');scheduleSync(120);return;}
-    replaceTempId(tempId,r&&r.id);if(r&&r._revision)S.revision=Number(r._revision);persistSnapshot();renderAll();
-    let txText;if(p.type==='TRANSFER')txText=`✓ Transfer **${rupiah(p.amount)}** dari **${account.name}** ke **${cmd.toAccount.name}** tersimpan.`;else{const lines=(p.items||[]).map(i=>`- ${i.name} · ${rupiah(i.amount)}`).join('\n');const linked=Number(r&&r.linkedShopping||0)>0?`\n\n${Number(r.linkedShopping)} item yang sama di **Daftar Belanja** otomatis ditandai sudah dibeli.`:'';txText=`✓ **Tersimpan**\n**${p.description||'Transaksi'} · ${rupiah(p.amount)}**\nRekening: **${account.name}**${lines?'\n\n'+lines:''}${linked}`;}
-    CHAT_PENDING=null;finishChat(txText,'success');scheduleSync(250);
-  }).catch(e=>{restoreState(backup);finishChat(`Belum tersimpan karena **${e.message}**. Data lokal sudah saya kembalikan supaya saldo tidak salah.`,'feedback');toast(e.message,true)}).finally(()=>{CONN.pendingWrites=Math.max(0,CONN.pendingWrites-1);updateConnectionUI()});
+  // Mulai write terlebih dahulu, tetapi chat tidak menunggu ACK server. Respons terasa instan.
+  const writePromise=api('transaction.save',mutationPayload);
+  let instantText;if(p.type==='TRANSFER')instantText=`✓ **Dicatat** · Transfer ${rupiah(p.amount)} dari **${account.name}** ke **${cmd.toAccount.name}**.
+
+_Sinkronisasi server berjalan otomatis di belakang._`;else{const lines=(p.items||[]).map(i=>`- ${i.name} · ${rupiah(i.amount)}`).join('\n');instantText=`✓ **Dicatat**
+**${p.description||'Transaksi'} · ${rupiah(p.amount)}**
+Rekening: **${account.name}**${lines?'\n\n'+lines:''}
+
+_Sinkronisasi server berjalan otomatis di belakang._`;}
+  CHAT_PENDING=null;finishChat(instantText,'success');
+  writePromise.then(r=>{
+    if(r&&r.duplicatePrevented){removeOptimisticTransaction(tempId);setChatTxGuard(p,'SAVED',r.id||'');scheduleSync(120);return;}
+    replaceTempId(tempId,r&&r.id);setChatTxGuard(p,'SAVED',(r&&r.id)||'');if(r&&r._revision)S.revision=Number(r._revision);persistSnapshot();renderAll();scheduleSync(250);
+  }).catch(e=>{
+    if(isTransientConnectionError(e)){
+      queueMutation('transaction.save',mutationPayload);setChatTxGuard(p,'PENDING');persistSnapshot();renderAll();setTimeout(()=>flushMutationQueue({silent:true}).catch(()=>{}),900);return;
+    }
+    removeOptimisticTransaction(tempId);clearChatTxGuard(p);appendChatMessage('assistant',`Transaksi **${rupiah(p.amount)}** tadi ditolak server karena **${e.message}**. Catatan lokalnya sudah dibatalkan agar saldo tetap benar.`,'feedback',true);toast(e.message,true);
+  }).finally(()=>{CONN.pendingWrites=Math.max(0,CONN.pendingWrites-1);updateConnectionUI()});
 }
 
 function runChatAction(cmd){
@@ -1049,7 +1145,8 @@ function runChatAction(cmd){
     else if(cmd.apply)cmd.apply();
     persistSnapshot();renderAll();showChatThinking('Saya kerjakan…');
   }catch(e){CHAT_BUSY=false;restoreState(backup);appendChatMessage('assistant','Belum bisa diproses: '+e.message,'feedback');return}
-  CONN.pendingWrites++;api(cmd.action,{...cmd.payload,clientMutationId:id('MUTCMD')}).then(r=>{if(r&&r.duplicatePrevented){restoreState(backup);finishChat('Data yang sama sudah ada, jadi tidak saya gandakan.','feedback');return}if(tempId&&r&&r.id)replaceTempId(tempId,r.id);if(r&&r._revision)S.revision=Number(r._revision);persistSnapshot();renderAll();finishChat(cmd.success||'✓ Sudah dilakukan.','success');if((r&&r.refreshRequired)||['bill.pay','bill.unpay','goal.contribute','task.cost','event.cost'].includes(cmd.action))syncAll(false,{silent:true}).catch(()=>{});else scheduleSync(1200)}).catch(e=>{restoreState(backup);finishChat(`Belum tersimpan karena **${e.message}**. Perubahan lokal sudah saya batalkan.`,'feedback')}).finally(()=>{CONN.pendingWrites=Math.max(0,CONN.pendingWrites-1);updateConnectionUI()});
+  const mutationPayload={...cmd.payload,clientMutationId:id('MUTCMD')};
+  CONN.pendingWrites++;api(cmd.action,mutationPayload).then(r=>{if(r&&r.duplicatePrevented){restoreState(backup);finishChat('Data yang sama sudah ada, jadi tidak saya gandakan.','feedback');return}if(tempId&&r&&r.id)replaceTempId(tempId,r.id);if(r&&r._revision)S.revision=Number(r._revision);persistSnapshot();renderAll();finishChat(cmd.success||'✓ Sudah dilakukan.','success');if((r&&r.refreshRequired)||['bill.pay','bill.unpay','goal.contribute','task.cost','event.cost'].includes(cmd.action))syncAll(false,{silent:true}).catch(()=>{});else scheduleSync(1200)}).catch(e=>{if(isTransientConnectionError(e)){queueMutation(cmd.action,mutationPayload);persistSnapshot();renderAll();finishChat('✓ Perubahan sudah **dicatat di perangkat**. Sinkronisasi ke server akan dilanjutkan otomatis; tidak perlu mengulangi perintah.','pending');setTimeout(()=>flushMutationQueue({silent:true}).catch(()=>{}),900);return}restoreState(backup);finishChat(`Belum tersimpan karena **${e.message}**. Perubahan lokal sudah saya batalkan.`,'feedback')}).finally(()=>{CONN.pendingWrites=Math.max(0,CONN.pendingWrites-1);updateConnectionUI()});
 }
 function chatClarification(q){
   const x=String(q||'').trim(),l=x.toLowerCase();
@@ -1112,8 +1209,10 @@ function chatHtml(text){
 }
 
 function mergeChatHistory(server,local){const m=new Map();[...(server||[]),...(local||[])].forEach(x=>{if(x&&x.id)m.set(x.id,x)});return [...m.values()].sort((a,b)=>String(a.createdAt||'').localeCompare(String(b.createdAt||''))).slice(-180)}
+function isLegacyTransportNoise(m){const t=String((m&&m.text)||'');return m&&m.role!=='user'&&(/Belum tersimpan karena.*Koneksi Apps Script timeout/i.test(t)||/Data lokal sudah saya kembalikan supaya saldo tidak salah/i.test(t))}
+function usableChatHistory(){return (S.chatHistory||[]).filter(m=>!isLegacyTransportNoise(m))}
 function renderChatHistory(){
-  const ch=document.getElementById('chat');if(!ch)return;const h=(S.chatHistory||[]).slice(-60);
+  const ch=document.getElementById('chat');if(!ch)return;const h=usableChatHistory().slice(-60);
   if(!h.length){ch.innerHTML='<div class="bubble ai">Hai 👋 Mau cek apa? Saya bisa mencatat transaksi, membuat task/agenda/tagihan, dan membantu analisis. Riwayat chat akan tersimpan otomatis.</div>';return}
   ch.innerHTML='<div class="chat-history-note">Riwayat chat tersimpan</div>'+h.map(m=>`<div class="bubble ${m.role==='user'?'user':'ai'} ${m.kind==='feedback'?'feedback':m.kind==='success'?'success':''}">${m.role==='user'?esc(m.text):chatHtml(m.text)}</div>`).join('');ch.scrollTop=ch.scrollHeight;
 }
@@ -1336,8 +1435,8 @@ function askPreset(q){
   if(/^(?:iya|ya|ok|oke)$/i.test(q)){appendChatMessage('assistant','Siap. Sebutkan yang ingin dilanjutkan, misalnya **cek saldo**, **catat transaksi**, atau **lihat tagihan**.','normal',true);return}
   const feedback=chatClarification(q);if(feedback){appendChatMessage('assistant',feedback,'feedback',true);return}
   const fast=fastLocalAnswer(q);if(fast){appendChatMessage('assistant',fast,'normal',true);return}
-  const contextual=(S.chatHistory||[]).slice(-3).map(m=>m.role+':'+m.text).join('|');const ck=(S.revision||0)+'|'+q.trim().toLowerCase()+'|'+contextual.slice(-800),cached=AI_CACHE.get(ck);if(cached&&Date.now()-cached.at<180000){appendChatMessage('assistant',cached.text,'normal',true);return}
-  const aiHistory=(S.chatHistory||[]).slice(0,-1).slice(-6).map(m=>({role:m.role,text:m.text})),aiContext=buildAiClientContext(q,aiHistory);
+  const contextual=usableChatHistory().slice(-3).map(m=>m.role+':'+m.text).join('|');const ck=(S.revision||0)+'|'+q.trim().toLowerCase()+'|'+contextual.slice(-800),cached=AI_CACHE.get(ck);if(cached&&Date.now()-cached.at<180000){appendChatMessage('assistant',cached.text,'normal',true);return}
+  const aiHistory=usableChatHistory().slice(0,-1).slice(-6).map(m=>({role:m.role,text:m.text})),aiContext=buildAiClientContext(q,aiHistory);
   CHAT_BUSY=true;showChatThinking('RUMA AI menjawab…');api('ai.chat',{message:q,history:aiHistory,context:aiContext},{timeout:70000}).then(r=>{AI_CACHE.set(ck,{at:Date.now(),text:r.text});document.getElementById('aiInsight').innerHTML=chatHtml(r.text);finishChat(r.text,'normal')}).catch(e=>{finishChat('Saya belum bisa menyelesaikan pengecekan ini. **'+e.message+'**\n\nCoba kirim ulang. Data lokal tetap aman dan RUMA akan memakai jalur koneksi cadangan bila direct bridge belum siap.','feedback');toast(e.message,true)})
 }
 
@@ -1361,11 +1460,11 @@ function initPWA(){
   updateConnectionUI();
   const cachedRaw=localStorage.getItem(SNAP_KEY)||localStorage.getItem('ruma_snapshot_v2_4')||localStorage.getItem('ruma_snapshot_v2_3')||localStorage.getItem('ruma_snapshot_v2_1')||localStorage.getItem('ruma_snapshot');
   if(S.session&&cachedRaw){try{const c=JSON.parse(cachedRaw);Object.assign(S,c.data);showApp();renderAll();CONN.lastSync=Number(c.at||0)}catch(e){}}
-  if(S.session){smartSync(!S.user,{silent:true}).catch(()=>{}).finally(()=>setTimeout(()=>checkSystemStatus(false),1200))}else await checkBootstrap(false);
-  window.addEventListener('online',()=>{CONN.online=true;updateConnectionUI();if(S.session)scheduleSync(150)});
+  if(S.session){flushMutationQueue({silent:true}).catch(()=>{}).finally(()=>smartSync(!S.user,{silent:true}).catch(()=>{}).finally(()=>setTimeout(()=>checkSystemStatus(false),1200)))}else await checkBootstrap(false);
+  window.addEventListener('online',()=>{CONN.online=true;resetBridge();initBridge();updateConnectionUI();if(S.session){flushMutationQueue({silent:true}).catch(()=>{});scheduleSync(350)}});
   window.addEventListener('offline',()=>{CONN.online=false;CONN.backend=null;updateConnectionUI()});
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&S.session&&Date.now()-CONN.lastSync>45000)scheduleSync(200)});
-  setInterval(()=>{if(S.session&&navigator.onLine&&document.visibilityState==='visible'&&Date.now()-CONN.lastSync>BG_SYNC_MS)smartSync(false,{silent:true}).catch(()=>{})},Math.max(60000,BG_SYNC_MS));
+  setInterval(()=>{if(S.session&&navigator.onLine&&document.visibilityState==='visible'){if(queuedMutationCount())flushMutationQueue({silent:true}).catch(()=>{});else if(Date.now()-CONN.lastSync>BG_SYNC_MS)smartSync(false,{silent:true}).catch(()=>{})}},Math.max(45000,BG_SYNC_MS));
 })();
 // Solid mobile app feel: cegah pinch/double-tap zoom tanpa mengganggu scroll vertikal.
 if('ontouchstart' in window){document.addEventListener('gesturestart',e=>e.preventDefault(),{passive:false});document.addEventListener('gesturechange',e=>e.preventDefault(),{passive:false});document.addEventListener('gestureend',e=>e.preventDefault(),{passive:false});}
