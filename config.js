@@ -13,7 +13,7 @@ window.RUMA_CONFIG = {
 
   // Firebase Web config memang bersifat public. Aktifkan setelah project Firebase siap.
   FIREBASE: {
-    enabled: false,
+    enabled: true,
     sdkVersion: "12.17.1",
     apiKey: "AIzaSyDhWKqdQd664Fk7XM9-HI8RYGdYkS7xe9g",
     authDomain: "ruma-9b3cf.firebaseapp.com",
