@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
   <meta name="theme-color" content="#ec4899">
-  <title>RUMA.</title>
+  <title>RUMA</title>
   <link rel="manifest" href="manifest.webmanifest">
   <script src="config.js"></script>
   <style>
@@ -306,11 +306,14 @@
             <div id="calendarSettingsInfo" class="small muted" style="margin-top:10px">Belum diperiksa.</div>
           </div>
           <div class="card span12" data-owner-only="1">
-            <div class="row between wrap"><div><h2 style="margin:0">Status Sistem</h2><div class="small muted">Koneksi, cache, session, database, dan AI.</div></div><button class="btn ghost sm" onclick="checkSystemStatus(true)">Periksa Semua</button></div>
+            <div class="row between wrap"><div><h2 style="margin:0">Status Sistem</h2><div class="small muted">Status cepat Apps Script, Cloudflare D1, fallback, cache, dan sinkronisasi.</div></div><button class="btn ghost sm" onclick="checkSystemStatus(true,true)">Periksa Cepat</button></div>
             <div class="statusgrid" style="margin-top:14px">
               <div class="statusbox"><b>Internet</b><div id="stInternet" class="statusvalue">Memeriksa...</div></div>
-              <div class="statusbox"><b>Backend Apps Script</b><div id="stBackend" class="statusvalue">Belum diperiksa</div></div>
-              <div class="statusbox"><b>Database</b><div id="stDatabase" class="statusvalue">-</div></div>
+              <div class="statusbox"><b>API Gateway Apps Script</b><div id="stBackend" class="statusvalue">Belum diperiksa</div></div>
+              <div class="statusbox"><b>Cloudflare D1</b><div id="stD1" class="statusvalue">Belum diperiksa</div></div>
+              <div class="statusbox"><b>Read-First</b><div id="stReadFirst" class="statusvalue">Belum diperiksa</div></div>
+              <div class="statusbox"><b>Dual-Write</b><div id="stDualWrite" class="statusvalue">Belum diperiksa</div></div>
+              <div class="statusbox"><b>Spreadsheet</b><div id="stSpreadsheet" class="statusvalue">-</div></div>
               <div class="statusbox"><b>Session</b><div id="stSession" class="statusvalue">Aktif · persisten</div></div>
               <div class="statusbox"><b>Cache</b><div id="stCache" class="statusvalue">-</div></div>
               <div class="statusbox"><b>AI</b><div id="stAI" class="statusvalue">-</div></div>
@@ -358,7 +361,7 @@
 <script>
 const C = window.RUMA_CONFIG || {};
 const API_URL = (C.API_URL || '').trim();
-const VERSION = '2.13.0';
+const VERSION = '2.13.1';
 const CACHE_TTL = Number(C.CACHE_TTL_MS || 300000);
 const BG_SYNC_MS = Number(C.BACKGROUND_SYNC_MS || 120000);
 const SNAP_KEY='ruma_snapshot_v2_6';
@@ -368,7 +371,7 @@ const DEVICE_KEY='ruma_device_id';
 const DEVICE_ID=localStorage.getItem(DEVICE_KEY)||id('DEV');
 localStorage.setItem(DEVICE_KEY,DEVICE_ID);
 const PERSONAL_THEME_PREFIX='ruma_personal_theme_';
-let CONN={online:navigator.onLine,backend:null,latency:null,lastSync:0,lastError:'',checking:false,pendingWrites:0,activeSessions:0};
+let CONN={online:navigator.onLine,backend:null,latency:null,lastSync:0,lastError:'',checking:false,pendingWrites:0,activeSessions:0,fastStatusAt:0};
 let syncTimer=null;
 const AI_CACHE=new Map();
 let CHAT_PENDING=null;
@@ -411,7 +414,7 @@ function fmtDate(v){
 function formVal(id){return document.getElementById(id)?.value ?? ''}
 function checked(id){return !!document.getElementById(id)?.checked}
 
-const DIRECT_READ_ACTIONS=new Set(['system.ping','bootstrap.status','app.snapshot','app.revision','system.status','system.diagnose','calendar.status','mutation.status','context.get','notifications.list']);
+const DIRECT_READ_ACTIONS=new Set(['system.ping','bootstrap.status','app.snapshot','app.revision','system.fastStatus','system.status','system.diagnose','calendar.status','mutation.status','context.get','notifications.list']);
 const TRANSPORT={read:'Direct JSONP',write:'Direct Bridge',fallback:'POST job + poll',ai:'Direct Bridge',last:'-'};
 const BRIDGE={frame:null,ready:false,booting:false,pending:new Map(),listener:false,failures:0};
 function isClientMutationAction(action){return /\.(save|delete|toggle|pay|unpay|cost|contribute)$/.test(action)||['shopping.post','account.reconcile','settings.save','user.save','system.cleanupLegacyGhosts','system.moneyRepair','calendar.saveSettings','calendar.setup','calendar.sync','calendar.test','notifications.read','notifications.readAll','notifications.action','notifications.deviceSave','notifications.deviceDelete','ai.command','file.receiptSave'].includes(action)}
@@ -874,7 +877,7 @@ function exitChat(){goPage('today',document.querySelector('.navbtn[data-page="to
 function moneyTab(p,b){['overview','transactions','accounts','budgets','bills','goals'].forEach(x=>document.getElementById('money-'+x).classList.toggle('hidden',x!==p));b.parentElement.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active')}
 function planTab(p,b){['activities','calendar'].forEach(x=>document.getElementById('plan-'+x)?.classList.toggle('hidden',x!==p));b.parentElement.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');if(p==='calendar')renderCalendar();else renderActivities()}
 function moreTab(p,b){['shopping','notes','settings'].forEach(x=>document.getElementById('more-'+x).classList.toggle('hidden',x!==p));b.parentElement.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active')}
-function openSettings(){goPage('more',document.querySelector('.navbtn[data-page="more"]'));const btn=[...document.querySelectorAll('#page-more .tab')].find(x=>x.textContent.includes('Pengaturan'));moreTab('settings',btn);applySettingsRoleVisibility();fillPersonalSettings();if(S.user&&S.user.role==='OWNER')setTimeout(()=>checkSystemStatus(false),80)}
+function openSettings(){goPage('more',document.querySelector('.navbtn[data-page="more"]'));const btn=[...document.querySelectorAll('#page-more .tab')].find(x=>x.textContent.includes('Pengaturan'));moreTab('settings',btn);applySettingsRoleVisibility();fillPersonalSettings();if(S.user&&S.user.role==='OWNER')setTimeout(()=>checkSystemStatus(false,true),80)}
 function closeModal(){document.getElementById('modal').classList.add('hidden')}
 function modal(title,html){document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').innerHTML=html;document.getElementById('modal').classList.remove('hidden')}
 function accountOptions(sel=''){const active=S.accounts.filter(a=>a.active!==false&&(a.canEdit||a.scope==='JOINT'||a.ownerId===S.user.id));let out=active.map(a=>`<option value="${a.id}" ${a.id===sel?'selected':''}>${esc(a.name)} · ${esc(a.scope)}</option>`).join('');const old=sel&&S.accounts.find(a=>a.id===sel&&a.active===false);if(old)out=`<option value="${old.id}" selected>${esc(old.name)} · ARSIP</option>`+out;return out}
@@ -999,6 +1002,19 @@ function applyLinkedTransactionDelete(tx){
 }
 function removeOptimisticTransaction(tempId){const tx=(S.transactions||[]).find(x=>x.id===tempId);if(!tx)return;adjustTx(tx,-1);S.transactions=S.transactions.filter(x=>x.id!==tempId);persistSnapshot();renderAll()}
 function upsert(list,item,idValue){const i=list.findIndex(x=>x.id===idValue);if(i>=0)list[i]={...list[i],...item};else list.unshift(item)}
+function statusClock(v){if(!v)return'';const d=new Date(v);return Number.isNaN(d.getTime())?'':d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});}
+function applyFastSystemStatus(r){
+  if(!r)return;
+  const rf=r.readFirst||{},dw=r.dualWrite||{},sp=r.spreadsheet||{};
+  S.settings={...S.settings,
+    version:r.version||S.settings.version,databaseName:sp.name||S.settings.databaseName,spreadsheetId:sp.id||S.settings.spreadsheetId,
+    d1ReadFirstKnown:true,d1ReadFirstEnabled:!!rf.enabled,d1LastLatencyMs:Number(rf.lastLatencyMs||0),d1LastSuccessAt:rf.lastSuccessAt||'',
+    d1FallbackCount:Number(rf.fallbackCount||0),d1LastFallbackAt:rf.lastFallbackAt||'',d1LastFallbackReason:rf.lastFallbackReason||'',d1FallbackExpected:!!rf.fallbackExpected,d1LastError:rf.lastError||'',
+    d1DualWriteKnown:true,d1DualWriteEnabled:!!dw.enabled,d1EngineTrigger:!!dw.engineTrigger,d1PendingEvents:Number(dw.pendingEvents||0),d1FailedEvents:Number(dw.failedD1MirrorEvents||0),
+    d1MirrorLastSuccessAt:dw.lastMirrorSuccessAt||'',d1MirrorLastErrorAt:dw.lastMirrorErrorAt||'',d1MirrorLastError:dw.lastMirrorError||''
+  };
+  CONN.fastStatusAt=Date.now();
+}
 function updateConnectionUI(){
   CONN.online=navigator.onLine;
   const queued=queuedMutationCount(),pendingTotal=CONN.pendingWrites+queued;
@@ -1007,44 +1023,53 @@ function updateConnectionUI(){
   const cacheRaw=localStorage.getItem(SNAP_KEY),cache=(()=>{try{return JSON.parse(cacheRaw||'{}')}catch(e){return{}}})();
   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};
   set('stInternet',CONN.online?'Online':'Offline');
-  const transportLabel=TRANSPORT.last==='WRITE'?'POST background':TRANSPORT.last==='BRIDGE'?'Direct Bridge':'Direct JSONP';
-  set('stBackend',CONN.backend===true?'Terhubung'+(CONN.latency?' · '+CONN.latency+' ms':'')+' · '+transportLabel+(API_STATS.timeouts?' · timeout '+API_STATS.timeouts:''):CONN.backend===false?'Terputus sementara'+(CONN.lastError?' · '+CONN.lastError:''):'Belum diperiksa');
-  set('stDatabase',(S.settings.databaseName||'-')+(S.settings.spreadsheetId?' · '+S.settings.spreadsheetId.slice(0,12)+'…':''));
+  const transportLabel=TRANSPORT.last==='WRITE'?'POST background':TRANSPORT.last==='BRIDGE'?'Direct Bridge':'Direct JSONP',slowGateway=Number(CONN.latency||0)>=3000;
+  set('stBackend',CONN.backend===true?'Gateway aktif'+(CONN.latency?' · '+CONN.latency+' ms':'')+(slowGateway?' · cold/slow start':'')+' · '+transportLabel+(API_STATS.timeouts?' · timeout '+API_STATS.timeouts:''):CONN.backend===false?'Terputus sementara'+(CONN.lastError?' · '+CONN.lastError:''):'Belum diperiksa');
+  if(S.settings.d1ReadFirstKnown){
+    const lat=Number(S.settings.d1LastLatencyMs||0),last=statusClock(S.settings.d1LastSuccessAt);
+    set('stD1',S.settings.d1ReadFirstEnabled?'Aktif'+(lat?' · '+lat+' ms':'')+(last?' · terakhir '+last:''):'Read-First nonaktif');
+    const fb=Number(S.settings.d1FallbackCount||0),reason=S.settings.d1LastFallbackReason||'',err=S.settings.d1LastError||'';
+    set('stReadFirst',S.settings.d1ReadFirstEnabled?'Aktif'+(fb?' · fallback '+fb+'×':' · tanpa fallback')+(reason?' · '+reason:'')+(err&&!S.settings.d1FallbackExpected?' · ⚠ '+err:''):'Nonaktif');
+  }else{set('stD1','Belum diperiksa');set('stReadFirst','Belum diperiksa');}
+  if(S.settings.d1DualWriteKnown){
+    const pend=Number(S.settings.d1PendingEvents||0),fail=Number(S.settings.d1FailedEvents||0);
+    set('stDualWrite',(S.settings.d1DualWriteEnabled?'Aktif':'Nonaktif')+(S.settings.d1EngineTrigger?' · trigger aktif':' · trigger belum aktif')+' · '+pend+' pending · '+fail+' gagal'+(S.settings.d1MirrorLastError?' · ⚠ '+S.settings.d1MirrorLastError:''));
+  }else set('stDualWrite','Belum diperiksa');
+  set('stSpreadsheet','Write source + fallback · '+(S.settings.databaseName||'-')+(S.settings.spreadsheetId?' · '+S.settings.spreadsheetId.slice(0,12)+'…':''));
   set('stSession',S.session?'Aktif · tetap login sampai logout'+(CONN.activeSessions?' · '+CONN.activeSessions+' perangkat':''):'Tidak aktif');
   set('stCache',cache.at?((Date.now()-cache.at<=CACHE_TTL?'Fresh':'Stale')+' · '+Math.max(0,Math.round((Date.now()-cache.at)/1000))+' dtk · rev '+(S.revision||'-')):'Belum ada snapshot');
   set('stAI',S.settings.aiConfigured?(S.settings.aiProvider+' · '+S.settings.aiModel):'Belum dikonfigurasi');
   set('stReceipt',S.settings.receiptConfigured?'Aktif · Gemini Vision':'Belum aktif · butuh Gemini API Key');
   set('stEmail',S.settings.emailEnabled===false?'Nonaktif':((S.settings.notificationTrigger===false?'Trigger belum aktif':'Aktif')+' · jam '+String(S.settings.emailHour??7).padStart(2,'0')+'.00'+(Number(S.settings.mailQuota)>=0?' · kuota '+S.settings.mailQuota:'')));
   const calOn=!!S.settings.calendarEnabled,calConnected=!!S.settings.calendarConnected;set('stCalendar',!calOn?'Nonaktif':(calConnected?'Terhubung · '+(S.settings.calendarName||'RUMA Household')+(S.settings.calendarPending?' · '+S.settings.calendarPending+' antrean':'')+(S.settings.calendarRetrying?' · '+S.settings.calendarRetrying+' retry':''):'Perlu setup'+(S.settings.calendarLastError?' · '+S.settings.calendarLastError:'')));
-  set('stSync',(queued?queued+' perubahan menunggu sinkron · ':CONN.pendingWrites?CONN.pendingWrites+' perubahan sedang disimpan · ':'')+(CONN.lastSync?new Date(CONN.lastSync).toLocaleTimeString('id-ID'):'Belum sinkron'));
+  const d1Queue=Number(S.settings.d1PendingEvents||0),d1Failed=Number(S.settings.d1FailedEvents||0);
+  set('stSync',(queued?queued+' perubahan lokal menunggu · ':CONN.pendingWrites?CONN.pendingWrites+' perubahan sedang disimpan · ':'')+(d1Queue?d1Queue+' mirror D1 menunggu · ':'')+(d1Failed?d1Failed+' mirror gagal · ':'')+(CONN.lastSync?new Date(CONN.lastSync).toLocaleTimeString('id-ID'):'Belum sinkron'));
   set('stVersion','App '+VERSION+' · Backend '+(S.settings.version||'-')+(versionMismatch?' · ⚠ versi berbeda':''));
   const pwaText=!C.PWA_ENABLED?'Dinonaktifkan di config':!PWA_STATE.supported?'Tidak didukung browser':PWA_STATE.installed?'Terpasang · standalone':PWA_STATE.controlled?'Aktif · service worker mengontrol':PWA_STATE.registered?'Terdaftar · siap offline':PWA_STATE.error?'Error · '+PWA_STATE.error:'Menunggu registrasi';
   set('stPWA',pwaText);set('stDedupe','Aktif · '+PENDING_MUTATIONS.size+' request dijaga');
   const ib=document.getElementById('installPwaBtn');if(ib)ib.classList.toggle('show',!!deferredInstallPrompt&&!PWA_STATE.installed);
-  set('stEndpoint',API_URL?API_URL.replace(/\/s\/[^/]+\/exec/,'/s/••••/exec'):'Belum diisi');const mini=document.getElementById('miniSync');if(mini)mini.textContent=queued?'Menunggu sinkron '+queued:CONN.pendingWrites?'Menyimpan '+CONN.pendingWrites+' perubahan':CONN.lastSync?'Sinkron '+new Date(CONN.lastSync).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}):'Cache siap';
+  set('stEndpoint',API_URL?API_URL.replace(/\/s\/[^/]+\/exec/,'/s/••••/exec'):'Belum diisi');const mini=document.getElementById('miniSync');if(mini)mini.textContent=queued?'Menunggu sinkron '+queued:CONN.pendingWrites?'Menyimpan '+CONN.pendingWrites+' perubahan':d1Queue?'Mirror D1 '+d1Queue+' menunggu':CONN.lastSync?'Sinkron '+new Date(CONN.lastSync).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}):'Cache siap';
 }
-async function checkSystemStatus(showToast=false){
-  if(CONN.checking)return;if(!showToast&&API_INFLIGHT>0){setTimeout(()=>checkSystemStatus(false),1800);return}CONN.checking=true;updateConnectionUI();
+async function checkSystemStatus(showToast=false,includeDetails=false){
+  if(CONN.checking)return;if(!showToast&&API_INFLIGHT>0){setTimeout(()=>checkSystemStatus(false,includeDetails),1200);return}CONN.checking=true;updateConnectionUI();
   try{
-    // Heartbeat publik sangat ringan: tidak membuka Spreadsheet, Calendar, atau Gmail.
-    const t=performance.now(),ping=await api('system.ping',{}, {noSession:true,timeout:9000,attempts:3,healthNeutral:true});
-    CONN.backend=true;CONN.latency=Math.round(performance.now()-t);CONN.lastError='';
-    if(ping&&ping.version)S.settings={...S.settings,version:ping.version};
-    updateConnectionUI();
-    if(!S.session){if(showToast)toast('Backend aktif ✓');return;}
-    // Status detail hanya diminta ketika user menekan Periksa Semua.
-    if(!showToast)return;
-    try{
-      const r=await api('system.status',{}, {timeout:18000,attempts:2,healthNeutral:true});
-      if(r){CONN.activeSessions=Number(r.activeSessions||0);const c=r.calendar||{};S.settings={...S.settings,version:r.version,databaseName:r.databaseName,spreadsheetId:r.spreadsheetId,aiProvider:r.aiProvider,aiModel:r.aiModel,aiConfigured:r.aiConfigured,receiptConfigured:!!r.receiptConfigured,emailEnabled:r.emailEnabled!==false,emailHour:Number(r.emailHour||7),notificationTrigger:!!r.notificationTrigger,mailQuota:Number(r.mailQuota||-1),legacyGhostBills:Number(r.legacyGhostBills||0),transport:r.transport||'Heartbeat + Direct JSONP',calendarEnabled:!!c.enabled,calendarConnected:!!c.connected,calendarId:c.id||'',calendarName:c.name||'RUMA Household',calendarTrigger:!!c.trigger,calendarSyncEvents:c.syncEvents!==false,calendarSyncTasks:!!c.syncTasks,calendarSyncBills:c.syncBills!==false,calendarPopupH1:c.popupH1!==false,calendarPopup60:c.popup60!==false,calendarPopup15:!!c.popup15,calendarEmailH1:!!c.emailH1,calendarLinkUsers:true,calendarSendInvites:false,calendarSharedOnly:true,calendarLinkedUsers:c.linkedUsers||S.settings.calendarLinkedUsers||[],calendarLastSync:c.lastSync||'',calendarLastError:c.lastError||'',calendarPending:Number(c.pending||0),calendarRetrying:Number(c.retrying||0)};fillCalendarSettings();}
-      updateConnectionUI();toast((r&&r.version!==VERSION)?('Backend masih v'+r.version+'. Deploy backend.gs v'+VERSION+' sebagai New version.'):'Backend dan koneksi utama aktif ✓',!!(r&&r.version!==VERSION));
-    }catch(detailErr){
-      CONN.backend=true;CONN.lastError='Status detail tertunda: '+detailErr.message;updateConnectionUI();toast('Backend aktif. Pemeriksaan detail belum selesai, data lokal tetap aman.');
+    const tasks=[],pingStarted=performance.now();
+    tasks.push(api('system.ping',{}, {noSession:true,timeout:7000,attempts:1,healthNeutral:true}).then(value=>({value:value,ms:Math.round(performance.now()-pingStarted)})));
+    if(includeDetails&&S.session)tasks.push(api('system.fastStatus',{}, {timeout:7000,attempts:1,healthNeutral:true}));
+    const results=await Promise.allSettled(tasks),pingRes=results[0];
+    if(pingRes.status==='fulfilled'){
+      const ping=pingRes.value.value;CONN.backend=true;CONN.latency=Number(pingRes.value.ms||0);CONN.lastError='';if(ping&&ping.version)S.settings={...S.settings,version:ping.version};
+    }else throw pingRes.reason||new Error('Heartbeat gagal');
+    if(results[1]){
+      if(results[1].status==='fulfilled'){applyFastSystemStatus(results[1].value);}
+      else CONN.lastError='Status D1 tertunda: '+String(results[1].reason?.message||results[1].reason||'tidak tersedia');
     }
-  }catch(e){
-    CONN.backend=false;CONN.lastError=e.message;updateConnectionUI();if(showToast)toast('Backend belum merespons: '+e.message,true);
+    updateConnectionUI();
+    if(showToast){const vm=!!(S.settings.version&&S.settings.version!==VERSION);toast(versionMismatchText_(),vm);}
+  }catch(e){CONN.backend=false;CONN.lastError=e.message;updateConnectionUI();if(showToast)toast('Backend belum merespons: '+e.message,true);
   }finally{CONN.checking=false}
 }
+function versionMismatchText_(){return S.settings.version&&S.settings.version!==VERSION?'Backend masih v'+S.settings.version+'. Deploy backend.gs v'+VERSION+' sebagai New version.':'Status cepat sehat ✓';}
 
 async function runDiagnostics(){if(!S.session)return;try{const r=await api('system.diagnose',{});const issues=r.issues||[];const score=Number(r.score||0);const st=document.getElementById('stDiagnostics');if(st)st.textContent=score+'/100 · '+(issues.length?issues.length+' catatan':'Sehat');const health=document.getElementById('stDataHealth');if(health)health.textContent=issues.length?issues.map(x=>x.label).slice(0,2).join(' · '):'Bersih';modal('Diagnosa Sistem',`<div class="system-score"><div class="scoreball">${score}</div><div><b>Kesehatan RUMA ${score}/100</b><div class="small muted">${issues.length?issues.length+' hal perlu diperhatikan':'Semua pemeriksaan utama sehat'}</div></div></div><div class="list">${issues.length?issues.map(x=>`<div class="item"><div class="main"><div class="name">${esc(x.label)}</div><div class="meta" style="white-space:normal">${esc(x.detail||'')}</div></div><span class="badge ${x.level==='error'?'warn':'gray'}">${esc(x.level||'info')}</span></div>`).join(''):'<div class="alert ok">Semua pemeriksaan utama sehat. Tidak ada referensi rusak atau schema yang hilang.</div>'}</div>`)}catch(e){toast('Diagnostik gagal: '+e.message,true)}}
 
