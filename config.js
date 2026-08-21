@@ -21,6 +21,6 @@ window.RUMA_CONFIG = {
     storageBucket: "ruma-9b3cf.firebasestorage.app",
     messagingSenderId: "770596277924",
     appId: "1:770596277924:web:0e6f758b69ecbab84be031",
-    vapidKey: "G-8K8RNQCKB8"
+    vapidKey: "BDBiG0ThNzvxi2tmkjl0R_4S_hlGJAy8CGtac-f1IYIR0KB9PiJOP2j974TLR5zW1n5o9P8nBGyScFprem5QtJ0"
   }
 };
