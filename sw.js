@@ -1,4 +1,4 @@
-const CACHE='ruma-pwa-v2.15.0';
+const CACHE='ruma-pwa-v2.16.0';
 const STATIC=['./','./index.html','./config.js','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
 const NETWORK_FIRST_TIMEOUT=2600;
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(CACHE).then(c=>c.addAll(STATIC).catch(()=>{})))});
@@ -24,9 +24,10 @@ self.addEventListener('fetch',e=>{
 // FCM/web push memakai service worker RUMA yang sama; aplikasi tidak perlu sedang terbuka.
 self.addEventListener('push',event=>{
   let payload={};try{payload=event.data?event.data.json():{}}catch(e){payload={notification:{title:'RUMA',body:event.data?event.data.text():'Ada informasi baru.'}}}
-  const n=payload.notification||{},d=payload.data||{},title=n.title||'RUMA',body=n.body||'Ada informasi penting dari RUMA.';
-  const actions=[];if(d.actionType==='COMPLETE_TASK')actions.push({action:'COMPLETE_TASK',title:'Selesai'});if(d.actionType==='PAY_BILL')actions.push({action:'PAY_BILL',title:'Sudah Dibayar'});actions.push({action:'OPEN',title:'Buka'});
-  event.waitUntil(self.registration.showNotification(title,{body,icon:'./icon-192.png',badge:'./icon-192.png',tag:d.notificationId||undefined,renotify:false,data:d,actions:actions.slice(0,2)}));
+  const n=payload.notification||{},d=payload.data||{},title=n.title||'RUMA',body=n.body||'Ada informasi penting dari RUMA.',score=Number(d.score||0),priority=String(d.priority||'').toUpperCase(),urgent=score>=85||priority==='URGENT',important=!urgent&&(score>=65||priority==='HIGH');
+  const actions=[];if(d.actionType==='COMPLETE_TASK')actions.push({action:'COMPLETE_TASK',title:'Selesai'});if(d.actionType==='PAY_BILL')actions.push({action:'PAY_BILL',title:'Sudah Dibayar'});if(d.actionType==='SNOOZE')actions.push({action:'SNOOZE',title:'Tunda'});actions.push({action:'OPEN',title:'Buka'});
+  const options={body,icon:'./icon-192.png',badge:'./icon-192.png',tag:d.notificationId||undefined,renotify:urgent,requireInteraction:urgent,silent:false,data:d,actions:actions.slice(0,2),vibrate:urgent?[300,150,300,150,500]:(important?[200,100,200]:[120])};
+  event.waitUntil(self.registration.showNotification(title,options));
 });
 self.addEventListener('notificationclick',event=>{
   event.notification.close();const data=event.notification.data||{},action=event.action||'OPEN',url='./?notification='+encodeURIComponent(data.notificationId||'')+'&action='+encodeURIComponent(action);
