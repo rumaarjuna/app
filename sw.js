@@ -1,4 +1,7 @@
-const CACHE='ruma-pwa-v2.16.2';
+// Stable service worker: cache version comes from the registration URL (?v=BUILD_VERSION).
+const SW_PARAMS=new URL(self.location.href).searchParams;
+const SW_VERSION=SW_PARAMS.get('v')||'stable';
+const CACHE=`ruma-pwa-${SW_VERSION}`;
 const STATIC=['./','./index.html','./config.js','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
 const NETWORK_FIRST_TIMEOUT=2600;
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(CACHE).then(c=>c.addAll(STATIC).catch(()=>{})))});
