@@ -378,7 +378,7 @@
 <script>
 const C = window.RUMA_CONFIG || {};
 const API_URL = (C.API_URL || '').trim();
-const VERSION = '2.16.0';
+const VERSION = '2.16.1';
 const CACHE_TTL = Number(C.CACHE_TTL_MS || 300000);
 const BG_SYNC_MS = Number(C.BACKGROUND_SYNC_MS || 120000);
 const SNAP_KEY='ruma_snapshot_v2_6';
@@ -848,7 +848,7 @@ function renderGoals(){
 }
 function renderTasks(){
   const el=document.getElementById('tasksList');if(!el)return;if(!S.tasks.length){el.innerHTML='<div class="empty">Belum ada task.</div>';return}
-  el.innerHTML=S.tasks.map(t=>`<div class="item"><button class="iconbtn" style="width:34px;height:34px" onclick="toggleTask('${t.id}')">${t.status==='DONE'?'✓':'○'}</button><div class="main"><div class="name" style="${t.status==='DONE'?'text-decoration:line-through;opacity:.55':''}">${esc(t.title)}</div><div class="meta">${t.dueDate?fmtDate(t.dueDate):'Tanpa tanggal'}${t.dueTime?' · '+esc(t.dueTime):''} · ${esc(userName(t.assignedTo))} · ${esc(t.priority)}${Number(t.reminderMinutes||0)>0?' · notif '+Number(t.reminderMinutes)+'m':''}${t.recurring&&t.recurring!=='NO'?' · '+esc(t.recurring):''}</div></div><button class="btn ghost sm" onclick="openTaskModal('${t.id}')">Edit</button></div>`).join('');
+  el.innerHTML=S.tasks.map(t=>`<div class="item"><button class="iconbtn" style="width:34px;height:34px" onclick="toggleTask('${t.id}')">${t.status==='DONE'?'✓':'○'}</button><div class="main"><div class="name" style="${t.status==='DONE'?'text-decoration:line-through;opacity:.55':''}">${esc(t.title)}</div><div class="meta">${t.dueDate?fmtDate(t.dueDate):'Tanpa tanggal'}${t.dueTime?' · '+esc(t.dueTime):''} · ${esc(userName(t.assignedTo))} · ${esc(t.priority)}${Number(t.reminderMinutes||0)<0?' · notif tepat waktu':Number(t.reminderMinutes||0)>0?' · notif '+Number(t.reminderMinutes)+'m':''}${t.recurring&&t.recurring!=='NO'?' · '+esc(t.recurring):''}</div></div><button class="btn ghost sm" onclick="openTaskModal('${t.id}')">Edit</button></div>`).join('');
 }
 function renderEvents(){
   const el=document.getElementById('eventsList');if(!el)return;if(!S.events.length){el.innerHTML='<div class="empty">Belum ada agenda.</div>';return}
@@ -1290,6 +1290,23 @@ function recentTransactionForCommand(raw){
 }
 function editableTxPayload(t,changes={}){return {...t,...changes,id:t.id,items:Array.isArray(t.items)?t.items:[],source:t.source||'MANUAL',sourceType:t.sourceType||transactionSourceKey(t),sourceId:t.sourceId||''}}
 
+function parseTaskReminderSpec(q){
+  const raw=String(q||''),l=raw.toLowerCase(),date=parseNaturalDate(raw),isReminder=/\b(ingatkan|ingetin|jangan lupa|remind me|set reminder|kasih notif)\b/i.test(l);
+  let dueTime='',reminderMinutes=0,m=l.match(/(\d+)\s*(menit|jam)\s*(?:sebelum|sebelumnya)/i);
+  if(m)reminderMinutes=Number(m[1])*(m[2].toLowerCase()==='jam'?60:1);else if(/\bsetengah jam\s*(?:sebelum|sebelumnya)/i.test(l))reminderMinutes=30;else if(isReminder)reminderMinutes=-1;
+  const explicitClock=/\b(?:jam|pukul|pk|pkl)\s*\d{1,2}(?:[:.]\d{2})?|\bsetengah\s+\d{1,2}|\b(?:pagi|siang|sore|malam)\b/i.test(l);
+  if(date&&explicitClock){const dt=parseNaturalDateTime(raw);if(dt)dueTime=String(dt).slice(11,16);}
+  if(date&&isReminder&&!dueTime)dueTime='08:00';
+  return {date,dueTime,reminderMinutes,isReminder};
+}
+function parseDirectTaskCommand(q){
+  const raw=String(q||'').trim(),l=raw.toLowerCase().replace(/\s+/g,' ');
+  if(!/\b(buat tugas|bikin tugas|gawe tugas|tambah tugas|tambahin tugas|catat tugas|masukkan tugas|masukin tugas|buat to do|tambah to do|ingatkan|ingetin|jangan lupa|remind me|set reminder|kasih notif)\b/.test(l))return null;
+  if(/[?]/.test(raw)||/^(?:apa|berapa|bagaimana|gimana|kapan|siapa|apakah|cek|lihat)\b/.test(l))return null;
+  const title=cleanCommandTitle(raw);if(!title)return {needs:'Tugasnya apa? Contoh: **“ingetin service motor besok”**.'};
+  const spec=parseTaskReminderSpec(raw),assignedTo=resolveCommandAssignee(raw),scope=assignedTo===S.user.id?'PERSONAL':'JOINT';
+  return {action:'task.save',payload:{title,dueDate:spec.date,dueTime:spec.dueTime,reminderMinutes:spec.reminderMinutes,assignedTo,priority:/\b(penting|urgent|prioritas tinggi|high)\b/.test(l)?'HIGH':'NORMAL',scope},create:'task',success:`✓ Task **${title}** dibuat${spec.date?' untuk **'+fmtDate(spec.date)+'**':''}${spec.dueTime?' pukul **'+spec.dueTime+'**':''}${spec.reminderMinutes<0?' · pengingat tepat waktu aktif':spec.reminderMinutes>0?' · pengingat '+spec.reminderMinutes+' menit sebelumnya aktif':''} · ${commandAssignmentLabel(assignedTo)}.`};
+}
 function parseChatAction(q){
   const raw=String(q||'').trim(),l=raw.toLowerCase().replace(/\s+/g,' ');
   // Edit/hapus transaksi langsung dari chat. Hanya transaksi yang dapat diidentifikasi dengan aman.
@@ -1343,7 +1360,7 @@ function parseChatAction(q){
     const start=parseNaturalDateTime(raw);if(!start)return {needs:'Waktu agendanya belum jelas. Contoh: **“jadwalin dokter besok jam 9 pagi”**.'};const title=cleanCommandTitle(raw);if(!title)return {needs:'Judul agendanya apa?'};const assignedTo=resolveCommandAssignee(raw),scope=assignedTo===S.user.id?'PERSONAL':'JOINT';return {action:'event.save',payload:{title,startAt:start,endAt:'',location:'',assignedTo,scope},create:'event',success:`✓ Agenda **${title}** dibuat untuk **${localDT(start)}** · ${commandAssignmentLabel(assignedTo)}.`};
   }
   if(/\b(buat tugas|bikin tugas|gawe tugas|tambah tugas|tambahin tugas|catat tugas|masukkan tugas|masukin tugas|buat to do|tambah to do|ingatkan|ingetin|jangan lupa|remind me|set reminder)\b/.test(l)){
-    const title=cleanCommandTitle(raw);if(!title)return {needs:'Tugasnya apa? Contoh: **“ingetin service motor besok”**.'};const due=parseNaturalDate(raw),assignedTo=resolveCommandAssignee(raw),scope=assignedTo===S.user.id?'PERSONAL':'JOINT';return {action:'task.save',payload:{title,dueDate:due,assignedTo,priority:/\b(penting|urgent|prioritas tinggi|high)\b/.test(l)?'HIGH':'NORMAL',scope},create:'task',success:`✓ Task **${title}** dibuat${due?' untuk **'+fmtDate(due)+'**':''} · ${commandAssignmentLabel(assignedTo)}.`};
+    const title=cleanCommandTitle(raw);if(!title)return {needs:'Tugasnya apa? Contoh: **“ingetin service motor besok”**.'};const spec=parseTaskReminderSpec(raw),due=spec.date,assignedTo=resolveCommandAssignee(raw),scope=assignedTo===S.user.id?'PERSONAL':'JOINT';return {action:'task.save',payload:{title,dueDate:due,dueTime:spec.dueTime,reminderMinutes:spec.reminderMinutes,assignedTo,priority:/\b(penting|urgent|prioritas tinggi|high)\b/.test(l)?'HIGH':'NORMAL',scope},create:'task',success:`✓ Task **${title}** dibuat${due?' untuk **'+fmtDate(due)+'**':''}${spec.dueTime?' pukul **'+spec.dueTime+'**':''}${spec.reminderMinutes<0?' · pengingat tepat waktu aktif':spec.reminderMinutes>0?' · pengingat '+spec.reminderMinutes+' menit sebelumnya aktif':''} · ${commandAssignmentLabel(assignedTo)}.`};
   }
   return null;
 }
@@ -1531,7 +1548,7 @@ function openActivityModal(i='',kind='TASK',presetDate=''){
     <div class="field"><label>Lokasi</label><input id="mActivityLocation" value="${esc(src.location||'')}" placeholder="Opsional"></div>
   </div>
   <div id="activityTaskFields">
-    <div class="grid"><div class="field span6"><label>Jam task (opsional)</label><input id="mActivityTaskTime" type="time" value="${esc(src.dueTime||'')}"></div><div class="field span6"><label>Pengingat</label><select id="mActivityReminder"><option value="0" ${!Number(src.reminderMinutes||0)?'selected':''}>Tanpa notif khusus</option><option value="15" ${Number(src.reminderMinutes||0)===15?'selected':''}>15 menit sebelumnya</option><option value="30" ${Number(src.reminderMinutes||0)===30?'selected':''}>30 menit sebelumnya</option><option value="60" ${Number(src.reminderMinutes||0)===60?'selected':''}>1 jam sebelumnya</option><option value="1440" ${Number(src.reminderMinutes||0)===1440?'selected':''}>1 hari sebelumnya</option></select></div></div>
+    <div class="grid"><div class="field span6"><label>Jam task (opsional)</label><input id="mActivityTaskTime" type="time" value="${esc(src.dueTime||'')}"></div><div class="field span6"><label>Pengingat</label><select id="mActivityReminder"><option value="0" ${!Number(src.reminderMinutes||0)?'selected':''}>Tanpa notif khusus</option><option value="-1" ${Number(src.reminderMinutes||0)<0?'selected':''}>Pada waktunya</option><option value="15" ${Number(src.reminderMinutes||0)===15?'selected':''}>15 menit sebelumnya</option><option value="30" ${Number(src.reminderMinutes||0)===30?'selected':''}>30 menit sebelumnya</option><option value="60" ${Number(src.reminderMinutes||0)===60?'selected':''}>1 jam sebelumnya</option><option value="1440" ${Number(src.reminderMinutes||0)===1440?'selected':''}>1 hari sebelumnya</option></select></div></div>
     <div class="grid"><div class="field span6"><label>Prioritas</label><select id="mActivityPri">${['LOW','NORMAL','HIGH'].map(x=>`<option ${src.priority===x?'selected':''}>${x}</option>`).join('')}</select></div><div class="field span6"><label>Berulang</label><select id="mActivityRecurring">${['NO','WEEKLY','MONTHLY'].map(x=>`<option ${String(src.recurring||'NO')===x?'selected':''}>${x}</option>`).join('')}</select></div></div>
   </div>
   <div class="field"><label>Visibilitas</label><select id="mActivityScope"><option ${src.scope!=='JOINT'?'selected':''}>PERSONAL</option><option ${src.scope==='JOINT'?'selected':''}>JOINT</option></select><div id="activityScopeHint" class="small muted"></div></div>
@@ -1703,6 +1720,7 @@ function askPreset(q){
     if(/^(?:iya|ya|ok|oke|lanjut|jadi)$/i.test(q)){appendChatMessage('assistant',pendingTransactionPrompt(CHAT_PENDING),'feedback',true);return;}
     CHAT_PENDING=null;
   }
+  const directTask=parseDirectTaskCommand(q);if(directTask){runChatAction(directTask);return}
   const action=parseChatAction(q);if(action){runChatAction(action);return}
   const tx=parseChatTransaction(q);if(tx){if(tx.pending){CHAT_PENDING={kind:'transaction',payload:tx.payload,items:tx.items||[],amount:tx.amount,accounts:tx.accounts||[]};appendChatMessage('assistant',pendingTransactionPrompt(CHAT_PENDING),'feedback',true);return}if(tx.needs){appendChatMessage('assistant',tx.needs,'feedback',true);return}runChatTransaction(tx);return}
   if(shouldTryAiCommand(q)){runAiCommandFallback(q);return}
