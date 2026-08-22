@@ -378,7 +378,7 @@
 <script>
 const C = window.RUMA_CONFIG || {};
 const API_URL = (C.API_URL || '').trim();
-const VERSION = '2.16.1';
+const VERSION = '2.16.2';
 const CACHE_TTL = Number(C.CACHE_TTL_MS || 300000);
 const BG_SYNC_MS = Number(C.BACKGROUND_SYNC_MS || 120000);
 const SNAP_KEY='ruma_snapshot_v2_6';
@@ -924,6 +924,12 @@ function chatTxGuardFingerprint(p){return mutationFingerprint('transaction.save'
 function recentChatTxGuard(p,maxAge=12*60*1000){const fp=chatTxGuardFingerprint(p),uid=S.user?.id||'',now=Date.now();return readChatTxGuards().slice().reverse().find(x=>x.fp===fp&&(!x.userId||x.userId===uid)&&now-Number(x.at||0)<maxAge)||null}
 function setChatTxGuard(p,status,serverId=''){const fp=chatTxGuardFingerprint(p),uid=S.user?.id||'',a=readChatTxGuards().filter(x=>x.fp!==fp||((x.userId||'')!==uid));a.push({fp,userId:uid,status:String(status||'LOCAL'),serverId:String(serverId||''),at:Date.now()});writeChatTxGuards(a)}
 function clearChatTxGuard(p){const fp=chatTxGuardFingerprint(p),uid=S.user?.id||'';writeChatTxGuards(readChatTxGuards().filter(x=>x.fp!==fp||((x.userId||'')!==uid)))}
+const CHAT_CMD_GUARD_KEY='ruma_chat_command_guard_v1';
+function readChatCommandGuards(){try{const a=JSON.parse(localStorage.getItem(CHAT_CMD_GUARD_KEY)||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}}
+function writeChatCommandGuards(a){const now=Date.now(),clean=(a||[]).filter(x=>x&&now-Number(x.at||0)<120000).slice(-30);try{localStorage.setItem(CHAT_CMD_GUARD_KEY,JSON.stringify(clean))}catch(e){}}
+function chatCommandFingerprint(cmd){if(!cmd)return'';return mutationFingerprint(cmd.action||'',cmd.payload||{})}
+function recentChatCommandGuard(cmd,maxAge=25000){const fp=chatCommandFingerprint(cmd),uid=S.user?.id||'',now=Date.now();if(!fp)return null;return readChatCommandGuards().slice().reverse().find(x=>x.fp===fp&&(!x.userId||x.userId===uid)&&now-Number(x.at||0)<maxAge)||null}
+function setChatCommandGuard(cmd,status='LOCAL',serverId=''){const fp=chatCommandFingerprint(cmd),uid=S.user?.id||'',a=readChatCommandGuards().filter(x=>x.fp!==fp||((x.userId||'')!==uid));if(fp)a.push({fp,userId:uid,status:String(status||'LOCAL'),serverId:String(serverId||''),at:Date.now()});writeChatCommandGuards(a)}
 function isDuplicatePending(action,payload){const key=mutationFingerprint(action,payload),now=Date.now(),last=PENDING_MUTATIONS.get(key)||0;if(now-last<2200)return true;PENDING_MUTATIONS.set(key,now);setTimeout(()=>{if(PENDING_MUTATIONS.get(key)===now)PENDING_MUTATIONS.delete(key)},6000);return false}
 function readMutationQueue(){try{const q=JSON.parse(localStorage.getItem(MUTATION_QUEUE_KEY)||'[]');return Array.isArray(q)?q:[]}catch(e){return[]}}
 function writeMutationQueue(q){try{localStorage.setItem(MUTATION_QUEUE_KEY,JSON.stringify((q||[]).slice(-100)))}catch(e){}updateConnectionUI()}
@@ -1411,11 +1417,33 @@ function runChatAction(cmd){
     if(cmd.action==='bill.pay'){const b=S.bills.find(x=>x.id===cmd.payload.id),acc=S.accounts.find(x=>x.id===cmd.payload.accountId);if(b&&acc&&!S.transactions.some(t=>t.sourceType==='BILL'&&t.sourceId===b.id)){const tid=id('TMPTXCHATBILL'),tx={id:tid,date:cmd.payload.date||todayISO(),type:'EXPENSE',amount:Number(cmd.payload.amount||b.amount||0),accountId:acc.id,category:cmd.payload.category||'Tagihan',description:b.name,scope:transactionScopeFromAccounts('EXPENSE',acc.id),source:'BILL',sourceType:'BILL',sourceId:b.id,links:[{entityType:'BILL',entityId:b.id,label:b.name,relation:'PAYMENT'}],canEdit:true,createdBy:S.user.id};S.transactions.unshift(tx);adjustTx(tx,1);b.status='PAID';b.paidAt=tx.date;b.linkedTransactionId=tid;b.paidAmount=tx.amount;b.paymentAccountId=acc.id;}}
     if(cmd.action==='shopping.post'){const ids=cmd.payload.shoppingIds||[],rows=(S.shopping||[]).filter(x=>ids.includes(x.id)),acc=S.accounts.find(x=>x.id===cmd.payload.accountId);if(rows.length&&acc&&!S.transactions.some(t=>t.sourceType==='SHOPPING'&&ids.includes(t.sourceId))){const tid=id('TMPTXCHATSHOP'),tx={id:tid,date:cmd.payload.date||todayISO(),type:'EXPENSE',amount:Number(cmd.payload.amount||0),accountId:acc.id,category:cmd.payload.category||'Belanja',description:cmd.payload.description||'Belanja rumah tangga',scope:transactionScopeFromAccounts('EXPENSE',acc.id),items:rows.map(x=>({shoppingId:x.id,name:x.item,qty:x.qty||'',amount:Number((cmd.payload.itemAmounts||{})[x.id]||0)})),source:'SHOPPING',sourceType:'SHOPPING',sourceId:ids[0]||'',links:rows.map(x=>({entityType:'SHOPPING',entityId:x.id,label:x.item,relation:'ITEM'})),canEdit:true,createdBy:S.user.id};S.transactions.unshift(tx);adjustTx(tx,1);rows.forEach(x=>{x.status='POSTED';x.postedTxId=tid;x.unitPrice=Number((cmd.payload.itemAmounts||{})[x.id]||x.unitPrice||0);});}}
     if(cmd.action==='goal.contribute'){const g=S.goals.find(x=>x.id===cmd.payload.id);if(g&&!S.transactions.some(t=>t.sourceType==='GOAL'&&t.sourceId===g.id&&Number(t.amount||0)===Number(cmd.payload.amount||0))){const tid=id('TMPTXCHATGOAL'),tx={id:tid,date:cmd.payload.date||todayISO(),type:'TRANSFER',amount:Number(cmd.payload.amount||0),accountId:cmd.payload.fromAccountId,toAccountId:cmd.payload.toAccountId,category:'Goal',description:'Goal · '+g.name,scope:transactionScopeFromAccounts('TRANSFER',cmd.payload.fromAccountId,cmd.payload.toAccountId),source:'GOAL',sourceType:'GOAL',sourceId:g.id,links:[{entityType:'GOAL',entityId:g.id,label:g.name,relation:'CONTRIBUTION'}],canEdit:true,createdBy:S.user.id};S.transactions.unshift(tx);adjustTx(tx,1);g.current=Number(g.current||0)+Number(tx.amount||0);g.contributionTotal=Number(g.contributionTotal||0)+Number(tx.amount||0);g.contributionCount=Number(g.contributionCount||0)+1;g.accountId=tx.toAccountId||g.accountId;}}
-    localMarker=markLocalState();persistSnapshot();renderAll();showChatThinking('Saya kerjakan…');
+    localMarker=markLocalState();persistSnapshot();renderAll();
   }catch(e){CHAT_BUSY=false;restoreState(backup);appendChatMessage('assistant','Belum bisa diproses: '+e.message,'feedback');return}
   const mutationPayload={...cmd.payload,clientMutationId:id('MUTCMD')};
-  CONN.pendingWrites++;api(cmd.action,mutationPayload).then(r=>{if(r&&r.duplicatePrevented){finishChat('Data yang sama sudah ada di server, jadi tidak saya gandakan. Saya sinkronkan status terbarunya.','feedback');syncAll(false,{silent:true}).catch(()=>{});return}if(tempId&&r&&r.id)replaceTempId(tempId,r.id);if(r&&r._revision)S.revision=Number(r._revision);persistSnapshot();renderAll();finishChat(cmd.success||'✓ Sudah dilakukan.','success');if((r&&r.refreshRequired)||['bill.pay','bill.unpay','goal.contribute','task.cost','event.cost','shopping.post','transaction.save','transaction.delete'].includes(cmd.action))syncAll(false,{silent:true}).catch(()=>{});else scheduleSync(1200)}).catch(e=>{if(isTransientConnectionError(e)){queueMutation(cmd.action,mutationPayload);persistSnapshot();renderAll();finishChat('✓ Perubahan sudah **dicatat di perangkat**. Sinkronisasi ke server akan dilanjutkan otomatis; tidak perlu mengulangi perintah.','pending');setTimeout(()=>flushMutationQueue({silent:true}).catch(()=>{}),900);return}const restored=restoreStateIfCurrent(backup,localMarker);if(!restored)syncAll(false,{silent:true}).catch(()=>{});finishChat(restored?`Belum tersimpan karena **${e.message}**. Perubahan lokal sudah saya batalkan.`:`Server menolak perubahan karena **${e.message}**. Perubahan lain tetap dipertahankan; data akan saya selaraskan.`,'feedback')}).finally(()=>{CONN.pendingWrites=Math.max(0,CONN.pendingWrites-1);updateConnectionUI()});
+  const localFirstTask=(cmd.action==='task.save'&&cmd.create==='task');
+  if(localFirstTask){
+    setChatCommandGuard(cmd,'LOCAL');
+    finishChat((cmd.success||'✓ Task sudah dicatat.')+'\n\n_Sinkronisasi server berjalan otomatis di belakang._','success');
+  }else showChatThinking('Saya kerjakan…');
+  CONN.pendingWrites++;api(cmd.action,mutationPayload).then(r=>{
+    if(r&&r.duplicatePrevented){if(localFirstTask){syncAll(false,{silent:true}).catch(()=>{});return}finishChat('Data yang sama sudah ada di server, jadi tidak saya gandakan. Saya sinkronkan status terbarunya.','feedback');syncAll(false,{silent:true}).catch(()=>{});return}
+    if(tempId&&r&&r.id)replaceTempId(tempId,r.id);if(r&&r._revision)S.revision=Number(r._revision);persistSnapshot();renderAll();
+    if(localFirstTask){setChatCommandGuard(cmd,'SAVED',(r&&r.id)||'');}
+    else finishChat(cmd.success||'✓ Sudah dilakukan.','success');
+    if((r&&r.refreshRequired)||['bill.pay','bill.unpay','goal.contribute','task.cost','event.cost','shopping.post','transaction.save','transaction.delete'].includes(cmd.action))syncAll(false,{silent:true}).catch(()=>{});else scheduleSync(1200)
+  }).catch(e=>{
+    if(isTransientConnectionError(e)){
+      queueMutation(cmd.action,mutationPayload);persistSnapshot();renderAll();setChatCommandGuard(cmd,'PENDING');
+      if(!localFirstTask)finishChat('✓ Perubahan sudah **dicatat di perangkat**. Sinkronisasi ke server akan dilanjutkan otomatis; tidak perlu mengulangi perintah.','pending');
+      else toast('Task sudah dicatat. Koneksi sedang lambat; sinkronisasi dilanjutkan otomatis.');
+      setTimeout(()=>flushMutationQueue({silent:true}).catch(()=>{}),900);return
+    }
+    const restored=restoreStateIfCurrent(backup,localMarker);if(!restored)syncAll(false,{silent:true}).catch(()=>{});
+    if(localFirstTask){appendChatMessage('assistant',restored?`⚠️ Task tadi **belum tersimpan di server** karena ${e.message}. Catatan lokal sudah dibatalkan.`:`⚠️ Server menolak task tadi karena ${e.message}. Data lain tetap aman dan akan diselaraskan.`,'feedback',true);}
+    else finishChat(restored?`Belum tersimpan karena **${e.message}**. Perubahan lokal sudah saya batalkan.`:`Server menolak perubahan karena **${e.message}**. Perubahan lain tetap dipertahankan; data akan saya selaraskan.`,'feedback')
+  }).finally(()=>{CONN.pendingWrites=Math.max(0,CONN.pendingWrites-1);updateConnectionUI()});
 }
+
 function chatClarification(q){
   const x=String(q||'').trim(),l=x.toLowerCase();
   if(x.length<2)return 'Boleh diperjelas sedikit? Contohnya: **“keluar berapa bulan ini?”**, **“besok ada apa?”**, atau **“catat kopi 15 ribu pakai BCA”**.';
@@ -1713,14 +1741,14 @@ function shortChatFollowup(q){
   return 'Siap 👍';
 }
 function askPreset(q){
-  q=String(q||'').trim();if(!q||CHAT_BUSY)return;goPage('ai',document.querySelector('.navbtn[data-page="ai"]'));appendChatMessage('user',q,'normal',true);
+  q=String(q||'').trim();if(!q||CHAT_BUSY)return;const preDirectTask=parseDirectTaskCommand(q);if(preDirectTask&&recentChatCommandGuard(preDirectTask)){toast('Perintah task yang sama baru saja dicatat. Duplikat dicegah.');return}goPage('ai',document.querySelector('.navbtn[data-page="ai"]'));appendChatMessage('user',q,'normal',true);
   if(CHAT_PENDING&&CHAT_PENDING.kind==='transaction'){
     const acc=matchPendingAccount(q);if(acc){const cmd={payload:{...CHAT_PENDING.payload,accountId:acc.id,scope:acc.scope==='JOINT'?'JOINT':'PERSONAL'},account:acc};CHAT_PENDING=null;runChatTransaction(cmd);return;}
     if(/^(?:batal|tidak|nggak|ngga|gak|ga)$/i.test(q)){CHAT_PENDING=null;appendChatMessage('assistant','Baik, transaksi belum saya catat.','normal',true);return;}
     if(/^(?:iya|ya|ok|oke|lanjut|jadi)$/i.test(q)){appendChatMessage('assistant',pendingTransactionPrompt(CHAT_PENDING),'feedback',true);return;}
     CHAT_PENDING=null;
   }
-  const directTask=parseDirectTaskCommand(q);if(directTask){runChatAction(directTask);return}
+  const directTask=preDirectTask||parseDirectTaskCommand(q);if(directTask){runChatAction(directTask);return}
   const action=parseChatAction(q);if(action){runChatAction(action);return}
   const tx=parseChatTransaction(q);if(tx){if(tx.pending){CHAT_PENDING={kind:'transaction',payload:tx.payload,items:tx.items||[],amount:tx.amount,accounts:tx.accounts||[]};appendChatMessage('assistant',pendingTransactionPrompt(CHAT_PENDING),'feedback',true);return}if(tx.needs){appendChatMessage('assistant',tx.needs,'feedback',true);return}runChatTransaction(tx);return}
   if(shouldTryAiCommand(q)){runAiCommandFallback(q);return}
