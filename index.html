@@ -378,7 +378,7 @@
 <script>
 const C = window.RUMA_CONFIG || {};
 const API_URL = (C.API_URL || '').trim();
-const VERSION = '2.16.3';
+const VERSION = '2.16.6';
 const RUMA_BUILD_VERSION = VERSION;
 const CACHE_TTL = Number(C.CACHE_TTL_MS || 300000);
 const BG_SYNC_MS = Number(C.BACKGROUND_SYNC_MS || 120000);
@@ -1173,8 +1173,9 @@ function extractTxDescription(text,type){
   let m=q.match(/(?:beli|membeli|jajan|bayar|membayar|buat|untuk)\s+(.+?)\s+(?:(?:rp\.?\s*)?\d[\d.,]*\s*(?:k|ribu|rb|rebu|ewu|juta|jt|mio)?)(?:\b|\s)/i);
   if(m&&m[1])return m[1].replace(/\b(?:seharga|sebesar|senilai|harga)\b/gi,'').trim().slice(0,80);
   if(type==='INCOME'){
-    m=q.match(/(?:terima|menerima|dapat|dapet|masuk|pemasukan|gaji|honor|fee)\s+(.+?)\s+(?:(?:rp\.?\s*)?\d[\d.,]*\s*(?:k|ribu|rb|juta|jt|mio)?)(?:\b|\s)/i);
-    if(m&&m[1])return m[1].trim().slice(0,80);
+    if(/^pendapat\s+anda(?=\s+(?:rp\.?\s*)?\d)/i.test(q))return 'Pemasukan via chat';
+    m=q.match(/(?:terima|menerima|mendapat|mendapatkan|dapat|dapet|masuk|pemasukan|income|pendapatan|gaji|gajian|honor|fee|bonus|upah)\s+(.+?)\s+(?:(?:rp\.?\s*)?\d[\d.,]*\s*(?:k|ribu|rb|juta|jt|mio)?)(?:\b|\s)/i);
+    if(m&&m[1])return m[1].trim().replace(/^[,.:;-]+|[,.:;-]+$/g,'').slice(0,80);
   }
   m=q.match(/(?:buat|untuk)\s+(.+?)(?:\s+(?:dari|pakai|pake|rekening|rek|wallet)\b|$)/i);if(m&&m[1])return m[1].trim().slice(0,80);
   return type==='EXPENSE'?'Pengeluaran via chat':'Pemasukan via chat';
@@ -1189,12 +1190,17 @@ function chatIntentProfile(raw){
     && /\b(?:beli|bayar|keluar|pakai|ambil|transfer|belanja)\b/.test(l);
   const startsWrite=/^(?:tolong\s+)?(?:jangan lupa|catat|catetin|catet|catatkan|simpan|simpen|masukkan|masukan|masukin|masukkin|input|rekam|record|tambahkan|tambah|tambahin|buat|bikin|gawe|jadwalkan|jadwalin|agendakan|masukin kalender|ingatkan|ingetin|reminder(?:kan)?|set reminder|transfer|transferin|pindahkan|pindahin|kirim|bayarkan|bayarin)\b/.test(l);
   const recentWrite=/\b(?:tadi|barusan|baru saja|baru aja|habis|abis|tadi pagi|tadi siang|tadi sore|tadi malam)\b/.test(l)&&/\b(?:beli|membeli|bayar|membayar|jajan|belanja|terima|menerima|dapat|dapet|keluar)\b/.test(l);
-  const directMoney=/^(?:saya|aku|gue|kami|kita)?\s*(?:habis|abis)?\s*(?:beli|membeli|bayar|membayar|jajan|belanja|terima|menerima|dapet|dapat|keluar)\b/.test(l);
+  const directMoney=/^(?:saya|aku|gue|kami|kita)?\s*(?:habis|abis)?\s*(?:beli|membeli|bayar|membayar|jajan|belanja|terima|menerima|mendapat|mendapatkan|dapet|dapat|keluar)\b/.test(l);
+  // v2.16.6: perintah pemasukan jelas dieksekusi local-first; tanggal default hari ini.
+  const directIncome=/^(?:saya|aku|gue|kami|kita)?\s*(?:(?:baru|barusan|tadi)\s+)?(?:uang masuk|duit masuk|pemasukan|income|pendapatan|terima|menerima|mendapat|mendapatkan|dapet|dapat|gaji|gajian|honor|fee|bonus|upah)\b/.test(l)
+    || /^(?:uang|duit)\s+masuk\b/.test(l)
+    || /^pendapat\s+anda(?=\s+(?:rp\.?\s*)?\d)/.test(l); // toleransi autocorrect "pendapatan" -> "pendapat anda" hanya jika diikuti nominal
+  const directExpense=/^(?:saya|aku|gue|kami|kita)?\s*(?:(?:baru|barusan|tadi)\s+)?(?:makan|minum|bensin|bbm|parkir|pulsa|ongkir|kopi|bakso|jajan|belanja|pengeluaran|expense|duit keluar|uang keluar)\b/.test(l);
   // v2.11.3: dukung format ledger singkat seperti "Transaksi Belanja Dapur: -Rp10.000".
   // Tanda +/- atau kata transaksi hanya dianggap perintah jika kalimat bukan pertanyaan/hipotetis.
   const shorthandLedger=/^(?:transaksi|tx)\b/.test(l)&&/(?:rp\.?\s*)?[+-]?\s*\d[\d.,]*\s*(?:k|rb|ribu|rebu|ewu|jt|juta|mio)?\b/.test(l);
   const signedLedger=/(?:^|[\s:])[+-]\s*(?:rp\.?\s*)?\d/.test(l)&&/\b(?:transaksi|belanja|makan|bbm|bensin|tagihan|gaji|honor|pemasukan|pengeluaran)\b/.test(l);
-  return {questionLike,hypothetical,mutationAllowed:!questionLike&&!hypothetical&&(startsWrite||recentWrite||directMoney||shorthandLedger||signedLedger)};
+  return {questionLike,hypothetical,mutationAllowed:!questionLike&&!hypothetical&&(startsWrite||recentWrite||directMoney||directIncome||directExpense||shorthandLedger||signedLedger)};
 }
 function parseMultiExpenseItems(raw){
   let body=String(raw||'').trim();
@@ -1229,7 +1235,7 @@ function parseChatTransaction(q){
   }
   const signedExpense=/(?:^|[\s:])-\s*(?:rp\.?\s*)?\d/i.test(l),signedIncome=/(?:^|[\s:])\+\s*(?:rp\.?\s*)?\d/i.test(l);
   const expenseIntent=signedExpense||/(pengeluaran|expense|habis beli|abis beli|habis membeli|\bbeli\b|membeli|\bbayar\b|membayar|bayarin|\bkeluar\b|keluar(?:in)? uang|duit keluar|uang keluar|keluar buat|belanja|jajan|kopi|bakso|makan|bensin|bbm|parkir|pulsa|ongkir|spent|spend)/i.test(l);
-  const incomeIntent=signedIncome||/(pemasukan|income|terima gaji|menerima|dapet|dapat|\bgaji\b|uang masuk|duit masuk|masuk rekening|masuk ke rekening|dibayar|honor|fee|bonus)/i.test(l);
+  const incomeIntent=signedIncome||/(pemasukan|income|pendapatan|pendapat\s+anda(?=\s+(?:rp\.?\s*)?\d)|terima gaji|menerima|mendapat|mendapatkan|dapet|dapat|\bgaji(?:an)?\b|uang masuk|duit masuk|masuk rekening|masuk ke rekening|dibayar|honor|fee|bonus|upah|salary|tambah(?:kan)?(?: ke)? saldo|masuk(?:kan|in)?(?: ke)? saldo)/i.test(l);
   const intent=chatIntentProfile(raw);
   const writeIntent=intent.mutationAllowed;
   if(!writeIntent||(!expenseIntent&&!incomeIntent))return null;
