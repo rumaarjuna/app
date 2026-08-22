@@ -1,4 +1,4 @@
-const CACHE='ruma-pwa-v2.16.0';
+const CACHE='ruma-pwa-v2.16.1';
 const STATIC=['./','./index.html','./config.js','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
 const NETWORK_FIRST_TIMEOUT=2600;
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(CACHE).then(c=>c.addAll(STATIC).catch(()=>{})))});
