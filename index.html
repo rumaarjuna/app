@@ -378,7 +378,7 @@
 <script>
 const C = window.RUMA_CONFIG || {};
 const API_URL = (C.API_URL || '').trim();
-const VERSION = '2.17.0A';
+const VERSION = '2.17.0A.1';
 const RUMA_BUILD_VERSION = VERSION;
 const CACHE_TTL = Number(C.CACHE_TTL_MS || 300000);
 const BG_SYNC_MS = Number(C.BACKGROUND_SYNC_MS || 120000);
@@ -723,7 +723,7 @@ async function refreshPushTokenSilently(){try{if(!S.user||!C.FIREBASE?.enabled||
 function bindForegroundPush_(rt){if(FCM_FOREGROUND_BOUND||!rt?.onMessage)return;FCM_FOREGROUND_BOUND=true;rt.onMessage(rt.messaging,async payload=>{try{const n=payload?.notification||{},d=payload?.data||{},score=Number(d.score||0),urgent=score>=85||String(d.priority||'').toUpperCase()==='URGENT',reg=await navigator.serviceWorker.ready;await reg.showNotification(n.title||'RUMA',{body:n.body||'Ada informasi baru.',icon:'./icon-192.png',badge:'./icon-192.png',tag:d.notificationId||'ruma-foreground',renotify:urgent,requireInteraction:urgent,silent:false,vibrate:urgent?[300,150,300,150,500]:[200,100,200],data:d});}catch(e){console.warn('foreground push',e)}})}
 async function testPushNotificationUI(){try{const r=await api('notifications.testPush',{score:92},{timeout:30000});toast(r.sent?'Tes push urgent dikirim ✓':(r.message||'Push belum terkirim.'),!r.sent)}catch(e){toast(e.message,true)}}
 async function disablePushNotifications(){try{await api('notifications.deviceDelete',{deviceId:DEVICE_ID});if(FCM_RUNTIME?.deleteToken)try{await FCM_RUNTIME.deleteToken(FCM_RUNTIME.messaging)}catch(e){}renderPushStatus();toast('Push RUMA dimatikan untuk perangkat ini.')}catch(e){toast(e.message,true)}}
-function shouldTryAiCommand(q){q=String(q||'').trim();if(!q)return false;const explicit=/(buat|bikin|catat|tambah|tambahkan|ingatkan|ingetin|jangan lupa|kasih notif|bayar|lunas|lunasin|pindah|pindahin|transfer|selesaikan|tandai|hapus|mundur|mundurin|set budget|atur budget)/i.test(q),follow=/^(mundurin?|mundurkan?|kasih notif|ingatkan|hapus)\b/i.test(q),implicit=/\b(hari ini|besok|lusa|senin|selasa|rabu|kamis|jumat|sabtu|minggu|pagi|siang|sore|malam|jam|pukul)\b/i.test(q)&&!/\b(sibuk|berapa|apa saja|gimana|bagaimana|cek|lihat)\b/i.test(q);return explicit||follow||implicit}
+function shouldTryAiCommand(q){q=String(q||'').trim();if(!q)return false;const l=q.toLowerCase().replace(/\s+/g,' '),explicit=/(buat|bikin|catat|tambah|tambahkan|ingatkan|ingetin|jangan lupa|kasih notif|bayar|lunas|lunasin|pindah|pindahin|transfer|selesaikan|tandai|hapus|mundur|mundurin|set budget|atur budget)/i.test(q),follow=/^(mundurin?|mundurkan?|kasih notif|ingatkan|hapus)\b/i.test(q),readQuestion=!explicit&&(/^(?:apa|berapa|bagaimana|gimana|kapan|siapa|apakah|adakah|mana|kenapa|mengapa|kok)\b/.test(l)||/\b(?:ada apa|apa saja|apa yang|agenda apa|jadwal apa|kegiatan apa|aktivitas apa|berapa banyak|sisa berapa|sibuk gak|sibuk nggak|sibuk tidak)\b/.test(l)),implicit=/\b(hari ini|besok|lusa|senin|selasa|rabu|kamis|jumat|sabtu|minggu|pagi|siang|sore|malam|jam|pukul)\b/i.test(q)&&!/\b(sibuk|berapa|apa saja|apa yang|ada apa|gimana|bagaimana|cek|lihat)\b/i.test(q);if(readQuestion)return false;return explicit||follow||implicit}
 function runAiCommandFallback(q){CHAT_BUSY=true;showChatThinking('RUMA menyiapkan tindakan…');const history=usableChatHistory().slice(0,-1).slice(-6).map(m=>({role:m.role,text:m.text}));api('ai.command',{prompt:q,history:history},{timeout:70000}).then(r=>{document.getElementById('chatThinking')?.remove();CHAT_BUSY=false;if(r.handled){appendChatMessage('assistant',r.text||'Tindakan selesai ✓','success',true);scheduleSync(250);return}if(r.text&&/\?$/.test(r.text.trim())){appendChatMessage('assistant',r.text,'feedback',true);return}askAiOnly(q)}).catch(e=>{document.getElementById('chatThinking')?.remove();CHAT_BUSY=false;appendChatMessage('assistant','Saya belum menjalankan tindakan karena **'+e.message+'**. Tidak ada data yang diubah.','feedback',true);toast(e.message,true)})}
 function askAiOnly(q){const aiHistory=usableChatHistory().slice(0,-1).slice(-6).map(m=>({role:m.role,text:m.text})),aiContext=buildAiClientContext(q,aiHistory);CHAT_BUSY=true;showChatThinking('RUMA AI menjawab…');api('ai.chat',{message:q,history:aiHistory,context:aiContext},{timeout:70000}).then(r=>finishChat(r.text,'normal')).catch(e=>{finishChat('Saya belum bisa menyelesaikan ini. **'+e.message+'**','feedback');toast(e.message,true)})}
 
@@ -918,7 +918,7 @@ function stableStringify(v){
   if(Array.isArray(v))return '['+v.map(stableStringify).join(',')+']';
   return '{'+Object.keys(v).sort().map(k=>JSON.stringify(k)+':'+stableStringify(v[k])).join(',')+'}';
 }
-function mutationFingerprint(action,payload){const clean={...payload};delete clean.clientMutationId;return action+'|'+stableStringify(clean)}
+function mutationFingerprint(action,payload){const clean={...payload};delete clean.clientMutationId;delete clean._chatSourceText;return action+'|'+stableStringify(clean)}
 const CHAT_TX_GUARD_KEY='ruma_chat_tx_guard_v1';
 function readChatTxGuards(){try{const a=JSON.parse(localStorage.getItem(CHAT_TX_GUARD_KEY)||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}}
 function writeChatTxGuards(a){const now=Date.now(),clean=(a||[]).filter(x=>x&&now-Number(x.at||0)<3600000).slice(-24);try{localStorage.setItem(CHAT_TX_GUARD_KEY,JSON.stringify(clean))}catch(e){}}
