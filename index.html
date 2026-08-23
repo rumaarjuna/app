@@ -378,7 +378,7 @@
 <script>
 const C = window.RUMA_CONFIG || {};
 const API_URL = (C.API_URL || '').trim();
-const VERSION = '2.16.6';
+const VERSION = '2.17.0A';
 const RUMA_BUILD_VERSION = VERSION;
 const CACHE_TTL = Number(C.CACHE_TTL_MS || 300000);
 const BG_SYNC_MS = Number(C.BACKGROUND_SYNC_MS || 120000);
@@ -1756,6 +1756,7 @@ function shortChatFollowup(q){
   if(/\?$|yang mana|sebutkan|pilih|berapa|kapan|rekening\/wallet mana/i.test(text))return 'Saya masih perlu jawaban yang spesifik dari pertanyaan terakhir. Sebutkan pilihannya agar saya tidak menebak.';
   return 'Siap 👍';
 }
+function tagChatSource(cmd,q){if(cmd&&cmd.payload&&typeof cmd.payload==='object')cmd.payload={...cmd.payload,_chatSourceText:String(q||'').slice(0,1200)};return cmd}
 function askPreset(q){
   q=String(q||'').trim();if(!q||CHAT_BUSY)return;const preDirectTask=parseDirectTaskCommand(q);goPage('ai',document.querySelector('.navbtn[data-page="ai"]'));appendChatMessage('user',q,'normal',true);if(preDirectTask){const guard=recentChatCommandGuard(preDirectTask);if(guard){appendChatMessage('assistant',chatCommandGuardReply(preDirectTask,guard),'pending',true);return}}
   if(CHAT_PENDING&&CHAT_PENDING.kind==='transaction'){
@@ -1764,9 +1765,9 @@ function askPreset(q){
     if(/^(?:iya|ya|ok|oke|lanjut|jadi)$/i.test(q)){appendChatMessage('assistant',pendingTransactionPrompt(CHAT_PENDING),'feedback',true);return;}
     CHAT_PENDING=null;
   }
-  const directTask=preDirectTask||parseDirectTaskCommand(q);if(directTask){runChatAction(directTask);return}
-  const action=parseChatAction(q);if(action){runChatAction(action);return}
-  const tx=parseChatTransaction(q);if(tx){if(tx.pending){CHAT_PENDING={kind:'transaction',payload:tx.payload,items:tx.items||[],amount:tx.amount,accounts:tx.accounts||[]};appendChatMessage('assistant',pendingTransactionPrompt(CHAT_PENDING),'feedback',true);return}if(tx.needs){appendChatMessage('assistant',tx.needs,'feedback',true);return}runChatTransaction(tx);return}
+  const directTask=preDirectTask||parseDirectTaskCommand(q);if(directTask){runChatAction(tagChatSource(directTask,q));return}
+  const action=parseChatAction(q);if(action){runChatAction(tagChatSource(action,q));return}
+  const tx=parseChatTransaction(q);if(tx){tagChatSource(tx,q);if(tx.pending){CHAT_PENDING={kind:'transaction',payload:tx.payload,items:tx.items||[],amount:tx.amount,accounts:tx.accounts||[]};appendChatMessage('assistant',pendingTransactionPrompt(CHAT_PENDING),'feedback',true);return}if(tx.needs){appendChatMessage('assistant',tx.needs,'feedback',true);return}runChatTransaction(tx);return}
   if(shouldTryAiCommand(q)){runAiCommandFallback(q);return}
   const shortReply=shortChatFollowup(q);if(shortReply){appendChatMessage('assistant',shortReply,'normal',true);return}
   const feedback=chatClarification(q);if(feedback){appendChatMessage('assistant',feedback,'feedback',true);return}
