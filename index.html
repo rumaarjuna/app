@@ -378,7 +378,7 @@
 <script>
 const C = window.RUMA_CONFIG || {};
 const API_URL = (C.API_URL || '').trim();
-const VERSION = '3.0.0';
+const VERSION = '3.0.1';
 const RUMA_BUILD_VERSION = VERSION;
 const CACHE_TTL = Number(C.CACHE_TTL_MS || 300000);
 const BG_SYNC_MS = Number(C.BACKGROUND_SYNC_MS || 120000);
@@ -424,6 +424,7 @@ function id(prefix){return prefix+'_'+(crypto.randomUUID?crypto.randomUUID().rep
 function todayISO(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function normText_(v){return String(v??'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim()}
 function localDT(v){if(!v)return'';const d=new Date(v);return d.toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'})}
+function eventLocalRange(e){if(!e||!e.startAt)return'';const st=new Date(e.startAt),en=e.endAt?new Date(e.endAt):null;if(Number.isNaN(st.getTime()))return'';const date=st.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'}),a=st.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',hour12:false}).replace('.',':');if(!en||Number.isNaN(en.getTime()))return date+', '+a;const same=st.toDateString()===en.toDateString(),b=en.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',hour12:false}).replace('.',':');return same?date+', '+a+'–'+b:date+', '+a+' → '+localDT(e.endAt)}
 function fmtDate(v){
   if(!v)return'-';
   let d=null,s=String(v).trim();
@@ -754,7 +755,7 @@ function combinedActivities(){
 function activityRow(a,opts={}){
   const done=a.status==='DONE',isEvent=a.kind==='EVENT',time=isEvent?(String(a.startAt||'').slice(11,16)||'Agenda'):(a.dueDate?fmtDate(a.dueDate):'Fleksibel');
   const toggle=isEvent?`toggleEvent('${a.id}')`:`toggleTask('${a.id}')`,edit=isEvent?`openActivityModal('${a.id}','AGENDA')`:`openActivityModal('${a.id}','TASK')`;
-  const who=a.assignedTo==='HOUSEHOLD'?'Bersama':userName(a.assignedTo),cost=Number(a.actualCost||0),meta=(isEvent?`${localDT(a.startAt)} · ${esc(who)}${a.location?' · '+esc(a.location):''}`:`${a.dueDate?fmtDate(a.dueDate):'Tanpa tanggal'} · ${esc(who)}${a.priority?' · '+esc(a.priority):''}`)+(cost?` · Biaya ${rupiah(cost)}`:'');
+  const who=a.assignedTo==='HOUSEHOLD'?'Bersama':userName(a.assignedTo),cost=Number(a.actualCost||0),meta=(isEvent?`${eventLocalRange(a)} · ${esc(who)}${a.location?' · '+esc(a.location):''}`:`${a.dueDate?fmtDate(a.dueDate):'Tanpa tanggal'} · ${esc(who)}${a.priority?' · '+esc(a.priority):''}`)+(cost?` · Biaya ${rupiah(cost)}`:'');
   return `<div class="item"><button class="checkbtn ${done?'done':''}" onclick="${toggle}">${done?'✓':'○'}</button>${opts.timeline?`<div class="activity-time">${esc(isEvent?(String(a.startAt||'').slice(11,16)||'—'):(a.dueDate===todayISO()?'Hari ini':'Task'))}</div>`:''}<div class="main"><div class="row wrap" style="gap:6px"><span class="activity-kind ${isEvent?'event':'task'}">${isEvent?'Agenda':'Task'}</span><div class="name ${done?'done-text':''}">${esc(a.title)}</div></div><div class="meta">${meta}</div></div>${opts.edit===false?'':`<div class="row wrap"><button class="btn secondary sm" onclick="openActivityCost('${isEvent?'EVENT':'TASK'}','${a.id}')">+ Biaya</button><button class="btn ghost sm" onclick="${edit}">Edit</button></div>`}</div>`;
 }
 function renderTodayActivities(){
@@ -868,7 +869,7 @@ function renderTasks(){
 }
 function renderEvents(){
   const el=document.getElementById('eventsList');if(!el)return;if(!S.events.length){el.innerHTML='<div class="empty">Belum ada agenda.</div>';return}
-  el.innerHTML=S.events.map(e=>`<div class="item"><button class="checkbtn ${e.status==='DONE'?'done':''}" onclick="toggleEvent('${e.id}')">${e.status==='DONE'?'✓':'○'}</button><div class="main"><div class="name ${e.status==='DONE'?'done-text':''}">${esc(e.title)}</div><div class="meta">${localDT(e.startAt)}${e.location?' · '+esc(e.location):''}</div></div><button class="btn ghost sm" onclick="openEventModal('${e.id}')">Edit</button></div>`).join('');
+  el.innerHTML=S.events.map(e=>`<div class="item"><button class="checkbtn ${e.status==='DONE'?'done':''}" onclick="toggleEvent('${e.id}')">${e.status==='DONE'?'✓':'○'}</button><div class="main"><div class="name ${e.status==='DONE'?'done-text':''}">${esc(e.title)}</div><div class="meta">${eventLocalRange(e)}${e.location?' · '+esc(e.location):''}</div></div><button class="btn ghost sm" onclick="openEventModal('${e.id}')">Edit</button></div>`).join('');
 }
 function calISO(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function setCalendarMode(mode){CAL_MODE=mode;document.getElementById('calendarMonthView')?.classList.toggle('hidden',mode!=='month');document.getElementById('calendarDayPanel')?.classList.toggle('hidden',mode!=='month');document.getElementById('calendarListView')?.classList.toggle('hidden',mode!=='list');document.getElementById('calModeMonth')?.classList.toggle('active',mode==='month');document.getElementById('calModeList')?.classList.toggle('active',mode==='list');renderCalendar()}
@@ -887,7 +888,7 @@ function renderCalendar(){
 function renderCalendarDay(){
   const el=document.getElementById('calendarDayList'),ttl=document.getElementById('calendarSelectedTitle');if(!el)return;const d=CAL_SELECTED||todayISO();if(ttl)ttl.textContent=new Date(d+'T12:00:00').toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long'});
   const items=[];
-  S.events.filter(x=>String(x.startAt||'').slice(0,10)===d).forEach(x=>items.push({kind:'event',sort:String(x.startAt||''),html:`<div class="item"><button class="checkbtn ${x.status==='DONE'?'done':''}" onclick="toggleEvent('${x.id}')">${x.status==='DONE'?'✓':'○'}</button><div class="main"><div class="name ${x.status==='DONE'?'done-text':''}">${esc(x.title)}</div><div class="meta">Agenda · ${localDT(x.startAt)}${x.location?' · '+esc(x.location):''}</div></div><button class="btn ghost sm" onclick="openEventModal('${x.id}')">Edit</button></div>`}));
+  S.events.filter(x=>String(x.startAt||'').slice(0,10)===d).forEach(x=>items.push({kind:'event',sort:String(x.startAt||''),html:`<div class="item"><button class="checkbtn ${x.status==='DONE'?'done':''}" onclick="toggleEvent('${x.id}')">${x.status==='DONE'?'✓':'○'}</button><div class="main"><div class="name ${x.status==='DONE'?'done-text':''}">${esc(x.title)}</div><div class="meta">Agenda · ${eventLocalRange(x)}${x.location?' · '+esc(x.location):''}</div></div><button class="btn ghost sm" onclick="openEventModal('${x.id}')">Edit</button></div>`}));
   S.tasks.filter(x=>String(x.dueDate||'').slice(0,10)===d).forEach(x=>items.push({kind:'task',sort:d+'T'+(x.dueTime||'23:50'),html:`<div class="item"><button class="checkbtn ${x.status==='DONE'?'done':''}" onclick="toggleTask('${x.id}')">${x.status==='DONE'?'✓':'○'}</button><div class="main"><div class="name ${x.status==='DONE'?'done-text':''}">${esc(x.title)}</div><div class="meta">Task${x.dueTime?' · '+esc(x.dueTime):''} · ${esc(userName(x.assignedTo))} · ${esc(x.priority||'')}</div></div></div>`}));
   S.bills.filter(x=>String(x.dueDate||'').slice(0,10)===d).forEach(x=>items.push({kind:'bill',sort:d+'T23:59',html:`<div class="item"><div class="main"><div class="name ${x.status==='PAID'?'done-text':''}">${esc(x.name)}</div><div class="meta">Tagihan · ${rupiah(x.amount)} · ${esc(accountName(x.accountId))}${x.linkedTransactionId?' · TX terhubung':''}</div></div>${x.status==='PAID'?`<span class="badge ${x.linkedTransactionId?'ok':'warn'}">Lunas</span>`:`<button class="btn sm" onclick="openBillPayment('${x.id}')">Bayar</button>`}</div>`}));
   items.sort((a,b)=>a.sort.localeCompare(b.sort));el.innerHTML=items.length?items.map(x=>x.html).join(''):'<div class="empty small">Belum ada agenda, task, atau tagihan pada tanggal ini.</div>';
@@ -1297,6 +1298,11 @@ function parseNaturalDateTime(text){
   if(hh===null){if(/\bpagi\b/.test(l))hh=8;else if(/\bsiang\b/.test(l))hh=12;else if(/\bsore\b/.test(l))hh=16;else if(/\bmalam\b/.test(l))hh=19;else hh=9;}
   return d+'T'+String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');
 }
+function parseNaturalEventRange(text){
+  const startAt=parseNaturalDateTime(text);if(!startAt)return{startAt:'',endAt:''};const l=String(text||'').toLowerCase();
+  const m=l.match(/\b(?:jam|pukul|pk|pkl)\s*(\d{1,2})(?:[:.]([0-5]\d))?\s*(pagi|siang|sore|malam)?\s*(?:sampai|hingga|s\/?d|-)\s*(?:(?:jam|pukul|pk|pkl)\s*)?(\d{1,2})(?:[:.]([0-5]\d))?\s*(pagi|siang|sore|malam)?\b/);if(!m)return{startAt,endAt:''};
+  const clock=(h,mi,part)=>{h=Number(h);mi=Number(mi||0);part=part||'';if((part==='sore'||part==='malam')&&h<12)h+=12;else if(part==='siang'&&h<11)h+=12;else if(part==='pagi'&&h===12)h=0;return{h,mi};},a=clock(m[1],m[2],m[3]),b=clock(m[4],m[5],m[6]||m[3]);let d=String(startAt).slice(0,10),end=new Date(d+'T'+String(b.h).padStart(2,'0')+':'+String(b.mi).padStart(2,'0')+':00'),start=new Date(startAt+':00');if(end<=start)end.setDate(end.getDate()+1);const endAt=isoDateFrom(end)+'T'+String(end.getHours()).padStart(2,'0')+':'+String(end.getMinutes()).padStart(2,'0');return{startAt,endAt};
+}
 function resolveCommandAssignee(raw){
   const text=normText_(raw||'');if(/\b(?:bersama|berdua|bareng|kita|untuk kita|rumah tangga)\b/.test(text))return 'HOUSEHOLD';
   const other=(S.users||[]).find(u=>u.id!==S.user.id);if(/\b(?:pasangan|suami|istri|partner)\b/.test(text)&&other)return other.id;
@@ -1309,6 +1315,7 @@ function cleanCommandTitle(q){return String(q||'')
   .replace(/\b(?:hari ini|besok|lusa|kemarin|nanti|pagi ini|siang ini|sore ini|malam ini)\b/gi,' ')
   .replace(/\b(?:hari\s+)?(?:minggu|senin|selasa|rabu|kamis|jum['’]?at|sabtu)(?:\s+(?:depan|berikutnya))?\b/gi,' ')
   .replace(/\b(?:tanggal|tgl)\s*\d{1,2}(?:[\s\/-]+\d{1,2})?(?:[\s\/-]+\d{4})?/gi,' ')
+  .replace(/\b(?:jam|pukul|pk|pkl)\s*\d{1,2}(?:[:.]\d{2})?\s*(?:pagi|siang|sore|malam)?\s*(?:sampai|hingga|s\/?d|-)\s*(?:(?:jam|pukul|pk|pkl)\s*)?\d{1,2}(?:[:.]\d{2})?\s*(?:pagi|siang|sore|malam)?/gi,' ')
   .replace(/\b(?:jam|pukul|pk|pkl)\s*\d{1,2}(?:[:.]\d{2})?\s*(?:pagi|siang|sore|malam)?/gi,' ')
   .replace(/\b(?:rp\.?\s*)?\d[\d.,]*\s*(?:k|ribu|rb|rebu|ewu|juta|jt|mio)?\b/gi,' ')
   .replace(/\s+/g,' ').trim().replace(/^[,.:;-]+|[,.:;-]+$/g,'').slice(0,100)}
@@ -1389,7 +1396,7 @@ function parseChatAction(q){
     const acc=S.accounts.find(a=>l.includes(String(a.name||'').toLowerCase()));return {action:'bill.save',payload:{name,amount,dueDate:due,accountId:acc?acc.id:'',recurring:/\b(tiap bulan|setiap bulan|bulanan|monthly)\b/.test(l)?'YES':'NO',scope:acc&&acc.scope==='PERSONAL'?'PERSONAL':'JOINT'},create:'bill',success:`✓ Tagihan **${name}** untuk **${fmtDate(due)}** sudah dicatat${amount?' sebesar **'+rupiah(amount)+'**':''}${/\b(tiap bulan|setiap bulan|bulanan|monthly)\b/.test(l)?' · berulang bulanan':''}.`};
   }
   if(/\b(jadwalkan|jadwalin|agendakan|buat agenda|bikin agenda|tambah agenda|catat agenda|masukkan agenda|masukin agenda|masukin kalender|masukkan kalender|set jadwal|set agenda)\b/.test(l)){
-    const start=parseNaturalDateTime(raw);if(!start)return {needs:'Waktu agendanya belum jelas. Contoh: **“jadwalin dokter besok jam 9 pagi”**.'};const title=cleanCommandTitle(raw);if(!title)return {needs:'Judul agendanya apa?'};const assignedTo=resolveCommandAssignee(raw),scope=assignedTo===S.user.id?'PERSONAL':'JOINT';return {action:'event.save',payload:{title,startAt:start,endAt:'',location:'',assignedTo,scope},create:'event',success:`✓ Agenda **${title}** dibuat untuk **${localDT(start)}** · ${commandAssignmentLabel(assignedTo)}.`};
+    const range=parseNaturalEventRange(raw),start=range.startAt;if(!start)return {needs:'Waktu agendanya belum jelas. Contoh: **“jadwalin dokter besok jam 9 pagi”**.'};const title=cleanCommandTitle(raw);if(!title)return {needs:'Judul agendanya apa?'};const assignedTo=resolveCommandAssignee(raw),scope=assignedTo===S.user.id?'PERSONAL':'JOINT';return {action:'event.save',payload:{title,startAt:start,endAt:range.endAt||'',location:'',assignedTo,scope},create:'event',success:`✓ Agenda **${title}** dibuat untuk **${eventLocalRange({startAt:start,endAt:range.endAt||''})}** · ${commandAssignmentLabel(assignedTo)}.`};
   }
   if(/\b(buat tugas|bikin tugas|gawe tugas|tambah tugas|tambahin tugas|catat tugas|masukkan tugas|masukin tugas|buat to do|tambah to do|ingatkan|ingetin|jangan lupa|remind me|set reminder)\b/.test(l)){
     const title=cleanCommandTitle(raw);if(!title)return {needs:'Tugasnya apa? Contoh: **“ingetin service motor besok”**.'};const spec=parseTaskReminderSpec(raw),due=spec.date,assignedTo=resolveCommandAssignee(raw),scope=assignedTo===S.user.id?'PERSONAL':'JOINT';return {action:'task.save',payload:{title,dueDate:due,dueTime:spec.dueTime,reminderMinutes:spec.reminderMinutes,assignedTo,priority:/\b(penting|urgent|prioritas tinggi|high)\b/.test(l)?'HIGH':'NORMAL',scope},create:'task',success:`✓ Task **${title}** dibuat${due?' untuk **'+fmtDate(due)+'**':''}${spec.dueTime?' pukul **'+spec.dueTime+'**':''}${spec.reminderMinutes<0?' · pengingat tepat waktu aktif':spec.reminderMinutes>0?' · pengingat '+spec.reminderMinutes+' menit sebelumnya aktif':''} · ${commandAssignmentLabel(assignedTo)}.`};
