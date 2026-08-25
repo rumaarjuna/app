@@ -1,4 +1,5 @@
 // Stable service worker: cache version comes from the registration URL (?v=BUILD_VERSION).
+// v3 functional change: actionable notification pairs (complete/pay + snooze) while body click remains Open.
 const SW_PARAMS=new URL(self.location.href).searchParams;
 const SW_VERSION=SW_PARAMS.get('v')||'stable';
 const CACHE=`ruma-pwa-${SW_VERSION}`;
@@ -28,7 +29,7 @@ self.addEventListener('fetch',e=>{
 self.addEventListener('push',event=>{
   let payload={};try{payload=event.data?event.data.json():{}}catch(e){payload={notification:{title:'RUMA',body:event.data?event.data.text():'Ada informasi baru.'}}}
   const n=payload.notification||{},d=payload.data||{},title=n.title||'RUMA',body=n.body||'Ada informasi penting dari RUMA.',score=Number(d.score||0),priority=String(d.priority||'').toUpperCase(),urgent=score>=85||priority==='URGENT',important=!urgent&&(score>=65||priority==='HIGH');
-  const actions=[];if(d.actionType==='COMPLETE_TASK')actions.push({action:'COMPLETE_TASK',title:'Selesai'});if(d.actionType==='PAY_BILL')actions.push({action:'PAY_BILL',title:'Sudah Dibayar'});if(d.actionType==='SNOOZE')actions.push({action:'SNOOZE',title:'Tunda'});actions.push({action:'OPEN',title:'Buka'});
+  const actions=[];if(d.actionType==='COMPLETE_TASK'){actions.push({action:'COMPLETE_TASK',title:'Selesai'},{action:'SNOOZE',title:'Tunda'});}else if(d.actionType==='PAY_BILL'){actions.push({action:'PAY_BILL',title:'Sudah Dibayar'},{action:'SNOOZE',title:'Ingatkan Lagi'});}else if(String(d.sourceType||'').toUpperCase()==='EVENT'||String(d.sourceType||'').toUpperCase()==='CALENDAR'){actions.push({action:'SNOOZE',title:'Ingatkan Lagi'},{action:'OPEN',title:'Buka Agenda'});}else if(d.actionType==='SNOOZE'){actions.push({action:'SNOOZE',title:'Tunda'},{action:'OPEN',title:'Buka'});}else{actions.push({action:'OPEN',title:'Buka'});}
   const options={body,icon:'./icon-192.png',badge:'./icon-192.png',tag:d.notificationId||undefined,renotify:urgent,requireInteraction:urgent,silent:false,data:d,actions:actions.slice(0,2),vibrate:urgent?[300,150,300,150,500]:(important?[200,100,200]:[120])};
   event.waitUntil(self.registration.showNotification(title,options));
 });
