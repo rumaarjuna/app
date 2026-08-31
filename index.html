@@ -192,7 +192,7 @@
     </section>
 
     <section id="page-money" class="page">
-      <div class="sectionhead"><h2>Money</h2><button class="btn sm" onclick="openTransactionModal()">+ Transaksi</button></div>
+      <div class="sectionhead"><h2>Money</h2><div class="row wrap"><button class="btn secondary sm" onclick="openUserTransferModal()">⇄ Transfer User</button><button class="btn sm" onclick="openTransactionModal()">+ Transaksi</button></div></div>
       <div class="tabs">
         <button class="tab active" data-moneytab="overview" onclick="moneyTab('overview',this)">Overview</button>
         <button class="tab" data-moneytab="transactions" onclick="moneyTab('transactions',this)">Transaksi</button>
@@ -378,7 +378,7 @@
 <script>
 const C = window.RUMA_CONFIG || {};
 const API_URL = (C.API_URL || '').trim();
-const VERSION = '3.0.1';
+const VERSION = '3.0.3';
 const RUMA_BUILD_VERSION = VERSION;
 const CACHE_TTL = Number(C.CACHE_TTL_MS || 300000);
 const BG_SYNC_MS = Number(C.BACKGROUND_SYNC_MS || 120000);
@@ -436,10 +436,10 @@ function fmtDate(v){
 function formVal(id){return document.getElementById(id)?.value ?? ''}
 function checked(id){return !!document.getElementById(id)?.checked}
 
-const DIRECT_READ_ACTIONS=new Set(['system.ping','bootstrap.status','app.snapshot','app.revision','system.fastStatus','system.status','system.diagnose','system.healthV3','calendar.status','mutation.status','context.get','assistant.brief','assistant.insights','notifications.list','language.runtime']);
+const DIRECT_READ_ACTIONS=new Set(['system.ping','bootstrap.status','app.snapshot','app.revision','system.fastStatus','system.status','system.diagnose','system.healthV3','calendar.status','mutation.status','context.get','assistant.brief','assistant.insights','notifications.list','transfer.userAccounts','language.runtime']);
 const TRANSPORT={read:'Direct JSONP',write:'Direct Bridge',fallback:'POST job + poll',ai:'Direct Bridge',last:'-'};
 const BRIDGE={frame:null,ready:false,booting:false,pending:new Map(),listener:false,failures:0};
-function isClientMutationAction(action){return /\.(save|delete|toggle|pay|unpay|cost|contribute)$/.test(action)||['shopping.post','account.reconcile','settings.save','user.save','system.cleanupLegacyGhosts','system.moneyRepair','system.selfHeal','calendar.saveSettings','calendar.setup','calendar.sync','calendar.test','notifications.read','notifications.readAll','notifications.action','notifications.deviceSave','notifications.deviceDelete','ai.command','ai.orchestrate','file.receiptSave'].includes(action)}
+function isClientMutationAction(action){return /\.(save|delete|toggle|pay|unpay|cost|contribute)$/.test(action)||['shopping.post','account.reconcile','settings.save','user.save','system.cleanupLegacyGhosts','system.moneyRepair','system.selfHeal','calendar.saveSettings','calendar.setup','calendar.sync','calendar.test','notifications.read','notifications.readAll','notifications.action','notifications.deviceSave','notifications.deviceDelete','transfer.user','ai.command','ai.orchestrate','file.receiptSave'].includes(action)}
 function ensureMutationId(action,payload){if(!isClientMutationAction(action)||payload.clientMutationId)return payload;return {...payload,clientMutationId:id('MUTAPI')}}
 function shouldUseBridge(action){return !DIRECT_READ_ACTIONS.has(action)}
 function resetBridge(){
@@ -760,12 +760,12 @@ function activityRow(a,opts={}){
 }
 function renderTodayActivities(){
   const el=document.getElementById('todayActivities'),badge=document.getElementById('todayActivityCount');if(!el)return;const today=todayISO();
-  const arr=combinedActivities().filter(a=>{const d=activityDateKey(a);if(a.kind==='EVENT')return d===today;return a.status!=='DONE'&&d&&d<=today}).slice(0,8);
+  const arr=combinedActivities().filter(a=>{const d=activityDateKey(a);if(a.status==='DONE')return false;if(a.kind==='EVENT')return d===today;return d&&d<=today}).slice(0,8);
   if(badge)badge.textContent=arr.length+' aktivitas';
   el.innerHTML=arr.length?arr.map(a=>activityRow(a,{timeline:true,edit:false})).join(''):'<div class="empty small">Tidak ada aktivitas yang perlu ditangani hari ini ✓</div>';
 }
 function renderActivities(){
-  const el=document.getElementById('activitiesList');if(!el)return;const today=todayISO();const arr=combinedActivities().filter(a=>a.status!=='DONE'||activityDateKey(a)>=today).slice(0,120);
+  const el=document.getElementById('activitiesList');if(!el)return;const today=todayISO();const arr=combinedActivities().filter(a=>a.status!=='DONE').slice(0,120);
   el.innerHTML=arr.length?arr.map(a=>activityRow(a)).join(''):'<div class="empty">Belum ada aktivitas.</div>';
   const cal=document.getElementById('activitiesCalendarList');if(cal)cal.innerHTML=arr.length?arr.map(a=>activityRow(a)).join(''):'<div class="empty">Belum ada aktivitas.</div>';
 }
@@ -773,7 +773,7 @@ function renderTodayEvents(data){const e=document.getElementById('todayEvents');
 function renderTodayTasks(data){const e=document.getElementById('todayTasks');if(!data.length){e.innerHTML='<div class="empty small">Semua task selesai ✓</div>';return}e.innerHTML=data.map(x=>`<div class="item"><button class="checkbtn" onclick="toggleTask('${x.id}')">○</button><div class="main"><div class="name">${esc(x.title)}</div><div class="meta">${x.dueDate?fmtDate(x.dueDate):'Tanpa jatuh tempo'} · ${esc(userName(x.assignedTo))}${x.recurring&&x.recurring!=='NO'?' · '+esc(x.recurring):''}</div></div></div>`).join('')}
 function renderTodayBills(){
   const e=document.getElementById('todayBills'),badge=document.getElementById('billReminderCount');if(!e)return;
-  const arr=S.bills.filter(b=>{const d=daysTo(b.dueDate);return (d>=0&&d<=2)||(b.status!=='PAID'&&d<0)}).sort((a,b)=>String(a.dueDate).localeCompare(String(b.dueDate))).slice(0,8),unpaid=arr.filter(b=>b.status!=='PAID').length;if(badge)badge.textContent=unpaid+' perlu dibayar';
+  const arr=S.bills.filter(b=>{const d=daysTo(b.dueDate);return b.status!=='PAID'&&((d>=0&&d<=2)||d<0)}).sort((a,b)=>String(a.dueDate).localeCompare(String(b.dueDate))).slice(0,8),unpaid=arr.filter(b=>b.status!=='PAID').length;if(badge)badge.textContent=unpaid+' perlu dibayar';
   if(!arr.length){e.innerHTML='<div class="empty small">Tidak ada tagihan H-2/H-1 yang perlu dibayar.</div>';return}
   e.innerHTML=arr.map(b=>{const d=b.status==='PAID'?['Lunas','']:dueLabel(b.dueDate),linked=!!b.linkedTransactionId;return `<div class="item"><div class="main"><div class="name ${b.status==='PAID'?'done-text':''}">${esc(b.name)}</div><div class="meta">${rupiah(b.amount)} · ${fmtDate(b.dueDate)} · ${esc(accountName(b.accountId))}${linked?' · TX terhubung':b.legacyPaid?' · lunas lama belum terhubung':''}</div></div>${b.status==='PAID'?`<span class="badge ${linked?'ok':'warn'}">${linked?'Lunas · Money':'Lunas lama'}</span><button class="btn ${linked?'ghost':'secondary'} sm" onclick="${linked?`undoBillPayment('${b.id}')`:`openBillPayment('${b.id}')`}">${linked?'Batalkan':'Catat transaksi'}</button>`:`<span class="duechip ${d[1]}">${d[0]}</span><button class="btn sm" onclick="openBillPayment('${b.id}')">Bayar</button>`}</div>`}).join('');
 }
@@ -819,7 +819,7 @@ function syncTxScopeFromAccount(){const type=formVal('mTxType')||'EXPENSE',e=doc
 function moneyOverviewData(){
   const active=(S.accounts||[]).filter(a=>a.active!==false&&!a.summaryOnly),mine=active.filter(a=>a.ownerId===S.user.id&&a.scope==='PERSONAL'),joint=active.filter(a=>a.scope==='JOINT');
   const balance=mine.concat(joint).reduce((n,a)=>n+Number(a.balance||0),0),month=todayISO().slice(0,7),inc=Number((S.summary||{}).monthIncome||0),exp=Number((S.summary||{}).monthExpense||0);
-  const budgets=(S.budgets||[]).filter(b=>b.month===month),budgetTotal=budgets.reduce((n,b)=>n+Number(b.amount||0),0),budgetSpent=budgets.reduce((n,b)=>n+Number(b.spent||0),0);
+  const budgets=(S.budgets||[]).filter(b=>b.month===month),budgetTotal=budgets.reduce((n,b)=>n+Number(b.amount||0),0),budgetSpent=budgets.reduce((n,b)=>n+localBudgetSpent(b),0);
   const bills=(S.bills||[]).filter(b=>b.status!=='PAID'&&daysTo(b.dueDate)>=0&&daysTo(b.dueDate)<=7),billTotal=bills.reduce((n,b)=>n+Number(b.amount||0),0);
   const goals=S.goals||[],goalTarget=goals.reduce((n,g)=>n+Number(g.target||0),0),goalCurrent=goals.reduce((n,g)=>n+Number(g.current||0),0);
   const localIssues=localMoneyIntegrity().issues;
@@ -853,7 +853,7 @@ function renderTransactions(){
 }
 function renderBudgets(){
   const el=document.getElementById('budgetsList');if(!el)return;if(!S.budgets.length){el.innerHTML='<div class="empty span12">Belum ada budget.</div>';return}
-  el.innerHTML=S.budgets.map(b=>{const spent=Number(b.spent||0),amount=Number(b.amount||0),pct=Math.min(100,Math.round((spent/Math.max(1,amount))*100)),remaining=amount-spent,count=Number.isFinite(Number(b.transactionCount))?Number(b.transactionCount):localBudgetTxs(b).length,status=remaining<0?'Melebihi '+rupiah(Math.abs(remaining)):'Sisa '+rupiah(remaining);return `<div class="card span4"><div class="row between"><div><b>${esc(b.category)}</b><div class="small muted">${b.scope==='JOINT'?'Bersama':'Pribadi'} · ${count} transaksi cocok</div></div><span class="badge">${esc(b.month)}</span></div><div class="metric">${rupiah(spent)} <span class="small muted">/ ${rupiah(amount)}</span></div><div class="progress"><span style="width:${pct}%"></span></div><div class="row between" style="margin-top:8px"><span class="small muted">${pct}% terpakai · ${status}</span><button class="btn ghost sm" onclick="openBudgetModal('${b.id}')">Edit</button></div></div>`}).join('');
+  el.innerHTML=S.budgets.map(b=>{const spent=localBudgetSpent(b),amount=Number(b.amount||0),pct=Math.min(100,Math.round((spent/Math.max(1,amount))*100)),remaining=amount-spent,count=Number.isFinite(Number(b.transactionCount))?Number(b.transactionCount):localBudgetTxs(b).length,status=remaining<0?'Melebihi '+rupiah(Math.abs(remaining)):'Sisa '+rupiah(remaining);return `<div class="card span4"><div class="row between"><div><b>${esc(b.category)}</b><div class="small muted">${b.scope==='JOINT'?'Bersama':'Pribadi'} · ${count} transaksi cocok</div></div><span class="badge">${esc(b.month)}</span></div><div class="metric">${rupiah(spent)} <span class="small muted">/ ${rupiah(amount)}</span></div><div class="progress"><span style="width:${pct}%"></span></div><div class="row between" style="margin-top:8px"><span class="small muted">${pct}% terpakai · ${status}</span><button class="btn ghost sm" onclick="openBudgetModal('${b.id}')">Edit</button></div></div>`}).join('');
 }
 function renderBills(){
   const el=document.getElementById('billsList');if(!el)return;if(!S.bills.length){el.innerHTML='<div class="empty">Belum ada tagihan.</div>';return}
@@ -865,11 +865,11 @@ function renderGoals(){
 }
 function renderTasks(){
   const el=document.getElementById('tasksList');if(!el)return;if(!S.tasks.length){el.innerHTML='<div class="empty">Belum ada task.</div>';return}
-  el.innerHTML=S.tasks.map(t=>`<div class="item"><button class="iconbtn" style="width:34px;height:34px" onclick="toggleTask('${t.id}')">${t.status==='DONE'?'✓':'○'}</button><div class="main"><div class="name" style="${t.status==='DONE'?'text-decoration:line-through;opacity:.55':''}">${esc(t.title)}</div><div class="meta">${t.dueDate?fmtDate(t.dueDate):'Tanpa tanggal'}${t.dueTime?' · '+esc(t.dueTime):''} · ${esc(userName(t.assignedTo))} · ${esc(t.priority)}${Number(t.reminderMinutes||0)<0?' · notif tepat waktu':Number(t.reminderMinutes||0)>0?' · notif '+Number(t.reminderMinutes)+'m':''}${t.recurring&&t.recurring!=='NO'?' · '+esc(t.recurring):''}</div></div><button class="btn ghost sm" onclick="openTaskModal('${t.id}')">Edit</button></div>`).join('');
+  const active=S.tasks.filter(t=>t.status!=='DONE');if(!active.length){el.innerHTML='<div class="empty">Belum ada task aktif.</div>';return} el.innerHTML=active.map(t=>`<div class="item"><button class="iconbtn" style="width:34px;height:34px" onclick="toggleTask('${t.id}')">${t.status==='DONE'?'✓':'○'}</button><div class="main"><div class="name" style="${t.status==='DONE'?'text-decoration:line-through;opacity:.55':''}">${esc(t.title)}</div><div class="meta">${t.dueDate?fmtDate(t.dueDate):'Tanpa tanggal'}${t.dueTime?' · '+esc(t.dueTime):''} · ${esc(userName(t.assignedTo))} · ${esc(t.priority)}${Number(t.reminderMinutes||0)<0?' · notif tepat waktu':Number(t.reminderMinutes||0)>0?' · notif '+Number(t.reminderMinutes)+'m':''}${t.recurring&&t.recurring!=='NO'?' · '+esc(t.recurring):''}</div></div><button class="btn ghost sm" onclick="openTaskModal('${t.id}')">Edit</button></div>`).join('');
 }
 function renderEvents(){
   const el=document.getElementById('eventsList');if(!el)return;if(!S.events.length){el.innerHTML='<div class="empty">Belum ada agenda.</div>';return}
-  el.innerHTML=S.events.map(e=>`<div class="item"><button class="checkbtn ${e.status==='DONE'?'done':''}" onclick="toggleEvent('${e.id}')">${e.status==='DONE'?'✓':'○'}</button><div class="main"><div class="name ${e.status==='DONE'?'done-text':''}">${esc(e.title)}</div><div class="meta">${eventLocalRange(e)}${e.location?' · '+esc(e.location):''}</div></div><button class="btn ghost sm" onclick="openEventModal('${e.id}')">Edit</button></div>`).join('');
+  const active=S.events.filter(e=>e.status!=='DONE');if(!active.length){el.innerHTML='<div class="empty">Belum ada agenda aktif.</div>';return} el.innerHTML=active.map(e=>`<div class="item"><button class="checkbtn ${e.status==='DONE'?'done':''}" onclick="toggleEvent('${e.id}')">${e.status==='DONE'?'✓':'○'}</button><div class="main"><div class="name ${e.status==='DONE'?'done-text':''}">${esc(e.title)}</div><div class="meta">${eventLocalRange(e)}${e.location?' · '+esc(e.location):''}</div></div><button class="btn ghost sm" onclick="openEventModal('${e.id}')">Edit</button></div>`).join('');
 }
 function calISO(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function setCalendarMode(mode){CAL_MODE=mode;document.getElementById('calendarMonthView')?.classList.toggle('hidden',mode!=='month');document.getElementById('calendarDayPanel')?.classList.toggle('hidden',mode!=='month');document.getElementById('calendarListView')?.classList.toggle('hidden',mode!=='list');document.getElementById('calModeMonth')?.classList.toggle('active',mode==='month');document.getElementById('calModeList')?.classList.toggle('active',mode==='list');renderCalendar()}
@@ -882,15 +882,15 @@ function renderCalendar(){
   const grid=document.getElementById('calendarGrid');if(!grid)return;
   const y=CAL_CURSOR.getFullYear(),m=CAL_CURSOR.getMonth(),title=document.getElementById('calendarTitle');if(title)title.textContent=new Date(y,m,1).toLocaleDateString('id-ID',{month:'long',year:'numeric'});
   const first=new Date(y,m,1,12),offset=(first.getDay()+6)%7,start=new Date(y,m,1-offset,12),cells=[];
-  for(let i=0;i<42;i++){const d=new Date(start);d.setDate(start.getDate()+i);const key=calISO(d),inMonth=d.getMonth()===m,ev=S.events.filter(x=>String(x.startAt||'').slice(0,10)===key),ta=S.tasks.filter(x=>String(x.dueDate||'').slice(0,10)===key&&x.status!=='DONE'),bi=S.bills.filter(x=>String(x.dueDate||'').slice(0,10)===key&&x.status!=='PAID');const dots=[];if(ev.length)dots.push('<i class="cal-dot event"></i>');if(ta.length)dots.push('<i class="cal-dot task"></i>');if(bi.length)dots.push('<i class="cal-dot bill"></i>');const total=ev.length+ta.length+bi.length;cells.push(`<button class="cal-day ${inMonth?'':'out'} ${key===todayISO()?'today':''} ${key===CAL_SELECTED?'selected':''}" onclick="selectCalendarDay('${key}')"><div class="cal-num">${d.getDate()}</div><div class="cal-dots">${dots.join('')}</div>${total?`<div class="cal-count">${total} item</div>`:''}</button>`)}
+  for(let i=0;i<42;i++){const d=new Date(start);d.setDate(start.getDate()+i);const key=calISO(d),inMonth=d.getMonth()===m,ev=S.events.filter(x=>x.status!=='DONE'&&String(x.startAt||'').slice(0,10)===key),ta=S.tasks.filter(x=>String(x.dueDate||'').slice(0,10)===key&&x.status!=='DONE'),bi=S.bills.filter(x=>String(x.dueDate||'').slice(0,10)===key&&x.status!=='PAID');const dots=[];if(ev.length)dots.push('<i class="cal-dot event"></i>');if(ta.length)dots.push('<i class="cal-dot task"></i>');if(bi.length)dots.push('<i class="cal-dot bill"></i>');const total=ev.length+ta.length+bi.length;cells.push(`<button class="cal-day ${inMonth?'':'out'} ${key===todayISO()?'today':''} ${key===CAL_SELECTED?'selected':''}" onclick="selectCalendarDay('${key}')"><div class="cal-num">${d.getDate()}</div><div class="cal-dots">${dots.join('')}</div>${total?`<div class="cal-count">${total} item</div>`:''}</button>`)}
   grid.innerHTML=cells.join('');renderCalendarDay();
 }
 function renderCalendarDay(){
   const el=document.getElementById('calendarDayList'),ttl=document.getElementById('calendarSelectedTitle');if(!el)return;const d=CAL_SELECTED||todayISO();if(ttl)ttl.textContent=new Date(d+'T12:00:00').toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long'});
   const items=[];
-  S.events.filter(x=>String(x.startAt||'').slice(0,10)===d).forEach(x=>items.push({kind:'event',sort:String(x.startAt||''),html:`<div class="item"><button class="checkbtn ${x.status==='DONE'?'done':''}" onclick="toggleEvent('${x.id}')">${x.status==='DONE'?'✓':'○'}</button><div class="main"><div class="name ${x.status==='DONE'?'done-text':''}">${esc(x.title)}</div><div class="meta">Agenda · ${eventLocalRange(x)}${x.location?' · '+esc(x.location):''}</div></div><button class="btn ghost sm" onclick="openEventModal('${x.id}')">Edit</button></div>`}));
-  S.tasks.filter(x=>String(x.dueDate||'').slice(0,10)===d).forEach(x=>items.push({kind:'task',sort:d+'T'+(x.dueTime||'23:50'),html:`<div class="item"><button class="checkbtn ${x.status==='DONE'?'done':''}" onclick="toggleTask('${x.id}')">${x.status==='DONE'?'✓':'○'}</button><div class="main"><div class="name ${x.status==='DONE'?'done-text':''}">${esc(x.title)}</div><div class="meta">Task${x.dueTime?' · '+esc(x.dueTime):''} · ${esc(userName(x.assignedTo))} · ${esc(x.priority||'')}</div></div></div>`}));
-  S.bills.filter(x=>String(x.dueDate||'').slice(0,10)===d).forEach(x=>items.push({kind:'bill',sort:d+'T23:59',html:`<div class="item"><div class="main"><div class="name ${x.status==='PAID'?'done-text':''}">${esc(x.name)}</div><div class="meta">Tagihan · ${rupiah(x.amount)} · ${esc(accountName(x.accountId))}${x.linkedTransactionId?' · TX terhubung':''}</div></div>${x.status==='PAID'?`<span class="badge ${x.linkedTransactionId?'ok':'warn'}">Lunas</span>`:`<button class="btn sm" onclick="openBillPayment('${x.id}')">Bayar</button>`}</div>`}));
+  S.events.filter(x=>x.status!=='DONE'&&String(x.startAt||'').slice(0,10)===d).forEach(x=>items.push({kind:'event',sort:String(x.startAt||''),html:`<div class="item"><button class="checkbtn ${x.status==='DONE'?'done':''}" onclick="toggleEvent('${x.id}')">${x.status==='DONE'?'✓':'○'}</button><div class="main"><div class="name ${x.status==='DONE'?'done-text':''}">${esc(x.title)}</div><div class="meta">Agenda · ${eventLocalRange(x)}${x.location?' · '+esc(x.location):''}</div></div><button class="btn ghost sm" onclick="openEventModal('${x.id}')">Edit</button></div>`}));
+  S.tasks.filter(x=>x.status!=='DONE'&&String(x.dueDate||'').slice(0,10)===d).forEach(x=>items.push({kind:'task',sort:d+'T'+(x.dueTime||'23:50'),html:`<div class="item"><button class="checkbtn ${x.status==='DONE'?'done':''}" onclick="toggleTask('${x.id}')">${x.status==='DONE'?'✓':'○'}</button><div class="main"><div class="name ${x.status==='DONE'?'done-text':''}">${esc(x.title)}</div><div class="meta">Task${x.dueTime?' · '+esc(x.dueTime):''} · ${esc(userName(x.assignedTo))} · ${esc(x.priority||'')}</div></div></div>`}));
+  S.bills.filter(x=>x.status!=='PAID'&&String(x.dueDate||'').slice(0,10)===d).forEach(x=>items.push({kind:'bill',sort:d+'T23:59',html:`<div class="item"><div class="main"><div class="name ${x.status==='PAID'?'done-text':''}">${esc(x.name)}</div><div class="meta">Tagihan · ${rupiah(x.amount)} · ${esc(accountName(x.accountId))}${x.linkedTransactionId?' · TX terhubung':''}</div></div>${x.status==='PAID'?`<span class="badge ${x.linkedTransactionId?'ok':'warn'}">Lunas</span>`:`<button class="btn sm" onclick="openBillPayment('${x.id}')">Bayar</button>`}</div>`}));
   items.sort((a,b)=>a.sort.localeCompare(b.sort));el.innerHTML=items.length?items.map(x=>x.html).join(''):'<div class="empty small">Belum ada agenda, task, atau tagihan pada tanggal ini.</div>';
 }
 
@@ -1571,6 +1571,27 @@ function saveAccount(i){const p={id:i,name:formVal('mAccName'),type:formVal('mAc
 
 function openReconcileModal(accountId){const a=S.accounts.find(x=>x.id===accountId);if(!a)return;modal('Sesuaikan saldo',`<div class="alert">Saldo RUMA saat ini <b>${rupiah(a.balance)}</b>. Masukkan saldo aktual yang terlihat di bank/wallet. Selisih akan dicatat sebagai transaksi penyesuaian agar histori tetap rapi.</div><div class="field"><label>Saldo aktual</label><input id="mRecActual" type="number" inputmode="numeric" value="${Number(a.balance||0)}"></div><button class="btn" onclick="saveReconcile('${a.id}')">Sesuaikan Saldo</button>`)}
 function saveReconcile(accountId){const a=S.accounts.find(x=>x.id===accountId),actual=Number(formVal('mRecActual'));if(!a||!Number.isFinite(actual))return toast('Saldo aktual tidak valid.',true);const diff=actual-Number(a.balance||0);if(Math.abs(diff)<.0001){closeModal();return toast('Saldo sudah sama. Tidak ada penyesuaian.')}optimistic('account.reconcile',{id:accountId,actualBalance:actual},()=>{const tid=id('TMPREC'),type=diff>0?'INCOME':'EXPENSE',tx={id:tid,date:todayISO(),type,amount:Math.abs(diff),accountId,category:'Penyesuaian Saldo',description:'Rekonsiliasi saldo',scope:a.scope,canEdit:true};S.transactions.unshift(tx);adjustTx(tx,1);return{tempId:tid}},{message:'Saldo langsung disesuaikan. Saya simpan di belakang…'})}
+
+async function openUserTransferModal(){
+  const users=(S.users||[]).filter(u=>u.id!==S.user.id);
+  const source=(S.accounts||[]).find(a=>a.active!==false&&!a.summaryOnly&&(a.ownerId===S.user.id||a.scope==='JOINT'));
+  if(!source)return toast('Tambahkan rekening pribadi dulu.',true);
+  if(!users.length)return toast('Belum ada user lain yang aktif.',true);
+  const userOpts=users.map(u=>`<option value="${esc(u.id)}">${esc(u.name)}</option>`).join('');
+  const sourceOpts=(S.accounts||[]).filter(a=>a.active!==false&&!a.summaryOnly&&(a.ownerId===S.user.id||a.scope==='JOINT')).map(a=>`<option value="${esc(a.id)}">${esc(a.name)}</option>`).join('');
+  modal('Transfer Antar User',`<div class="alert">Transfer antar user memindahkan saldo dari rekening Anda ke rekening pribadi user tujuan. Tidak dihitung sebagai pemasukan/pengeluaran/budget.</div><div class="field"><label>Dari rekening</label><select id="mUTFrom">${sourceOpts}</select></div><div class="field"><label>User tujuan</label><select id="mUTUser" onchange="loadUserTransferAccounts()">${userOpts}</select></div><div class="field"><label>Rekening tujuan</label><select id="mUTTo"><option value="">Memuat…</option></select></div><div class="field"><label>Nominal</label><input id="mUTAmount" type="number" inputmode="numeric" placeholder="500000"></div><div class="field"><label>Keterangan</label><input id="mUTDesc" placeholder="Opsional"></div><button class="btn" onclick="saveUserTransfer()">Transfer</button>`);
+  await loadUserTransferAccounts();
+}
+async function loadUserTransferAccounts(){
+  const uid=formVal('mUTUser'),sel=document.getElementById('mUTTo');if(!uid||!sel)return;sel.innerHTML='<option value="">Memuat…</option>';
+  try{const r=await api('transfer.userAccounts',{userId:uid},{healthNeutral:true});const rows=r?.accounts||[];sel.innerHTML=rows.length?rows.map(a=>`<option value="${esc(a.id)}">${esc(a.name)} · ${esc(a.type)}</option>`).join(''):'<option value="">User belum memiliki rekening pribadi</option>';}catch(e){sel.innerHTML='<option value="">Gagal memuat</option>';toast(e.message,true)}
+}
+function saveUserTransfer(){
+  const toUserId=formVal('mUTUser'),fromAccountId=formVal('mUTFrom'),toAccountId=formVal('mUTTo'),amount=Number(formVal('mUTAmount')),recipient=S.users.find(u=>u.id===toUserId);
+  if(!toUserId||!toAccountId||!amount||amount<=0)return toast('User, rekening tujuan, dan nominal wajib diisi.',true);
+  if(!confirm(`Transfer ${rupiah(amount)} ke ${recipient?.name||'user ini'}?`))return;
+  integratedMutation('transfer.user',{toUserId,fromAccountId,toAccountId,amount,description:formVal('mUTDesc')},{start:'Memproses transfer…',success:'Transfer antar user berhasil ✓',pending:'Transfer disimpan dan akan disinkronkan otomatis.'});
+}
 
 function openTransactionModal(i=''){const t=S.transactions.find(x=>x.id===i)||{},links=Array.isArray(t.links)?t.links:[],linked=links.length>0,requiredType=links.some(l=>l.entityType==='GOAL')?'TRANSFER':links.some(l=>['BILL','SHOPPING','TASK','EVENT'].includes(l.entityType))?'EXPENSE':'',firstAcc=t.accountId||(S.accounts||[]).find(a=>a.active!==false&&!a.summaryOnly&&(a.canEdit||a.scope==='JOINT'||a.ownerId===S.user.id))?.id||'',firstAccObj=(S.accounts||[]).find(a=>a.id===firstAcc),defaultScope=t.scope||(firstAccObj?.scope==='JOINT'?'JOINT':'PERSONAL'),cats=budgetCategoryList(),catList=cats.length?`<datalist id="txCategoryList">${cats.map(x=>`<option value="${esc(x)}"></option>`).join('')}</datalist>`:'',itemInfo=Array.isArray(t.items)&&t.items.length?`<div class="alert" style="margin-bottom:12px"><b>Rincian ${t.items.length} item</b><div class="small" style="margin-top:6px">${t.items.slice(0,15).map(x=>esc(x.name||x.item||'Item')+' · '+rupiah(x.amount||0)).join('<br>')}</div></div>`:'',linkInfo=linked?`<div class="alert" style="margin-bottom:12px"><b>Transaksi terintegrasi</b><div class="small" style="margin-top:6px">${links.map(l=>esc((l.label||l.entityType)+(l.relationLabel?' · '+l.relationLabel:''))).join('<br>')}</div><div class="small muted" style="margin-top:6px">Mengubah nominal/rekening akan otomatis terbaca kembali oleh modul terkait. Tipe transaksi dikunci agar relasi tidak rusak.</div></div>`:'';modal(i?'Edit Transaksi':'Tambah Transaksi',`${linkInfo}${itemInfo}
 <div class="field"><label>Tipe</label><select id="mTxType" ${requiredType?'disabled':''} onchange="document.getElementById('toAccWrap').classList.toggle('hidden',this.value!=='TRANSFER');syncTxScopeFromAccount()">${['EXPENSE','INCOME','TRANSFER'].map(x=>`<option ${t.type===x||(!t.type&&x==='EXPENSE')?'selected':''}>${x}</option>`).join('')}</select></div>
