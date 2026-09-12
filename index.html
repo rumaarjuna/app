@@ -309,6 +309,19 @@
             <div class="field"><label>Jam kirim (0–23)</label><input id="setEmailHour" type="number" min="0" max="23" value="7"></div>
             <div class="row wrap"><button class="btn" onclick="saveNotificationSettings()">Simpan Notifikasi</button><button class="btn secondary" onclick="sendTestEmail()">Kirim Email Uji</button><button class="btn ghost" onclick="runNotificationNow()">Jalankan Sekarang</button></div>
           </div>
+          <div class="card span6" id="whatsappNotifyCard">
+            <div class="row between wrap"><div><h2 style="margin:0">WhatsApp Reminder</h2><div class="small muted">Fonnte berjalan melalui <b>backend Notify terpisah</b>, sehingga tidak memperlambat CRUD RUMA.</div></div><span id="waNotifyBadge" class="badge gray">Belum diperiksa</span></div>
+            <div class="switchline"><div><b>Aktifkan WhatsApp</b><div class="small muted">Kirim reminder penting ke nomor Anda</div></div><input id="setWaEnabled" type="checkbox"></div>
+            <div class="field"><label>Nomor WhatsApp</label><input id="setWaPhone" inputmode="tel" autocomplete="tel" placeholder="08xxxxxxxxxx atau 62xxxxxxxxxx"></div>
+            <div class="grid">
+              <div class="span6"><div class="switchline"><div><b>Task</b><div class="small muted">Task & reminder eksplisit</div></div><input id="setWaTask" type="checkbox"></div></div>
+              <div class="span6"><div class="switchline"><div><b>Agenda</b><div class="small muted">Agenda yang segera dimulai</div></div><input id="setWaEvent" type="checkbox"></div></div>
+              <div class="span6"><div class="switchline"><div><b>Tagihan</b><div class="small muted">Jatuh tempo & overdue</div></div><input id="setWaBill" type="checkbox"></div></div>
+              <div class="span6"><div class="switchline"><div><b>Notifikasi penting lain</b><div class="small muted">Budget, briefing, dan reminder AI</div></div><input id="setWaGeneral" type="checkbox"></div></div>
+            </div>
+            <div class="row wrap"><button class="btn" onclick="saveWhatsAppSettings()">Simpan WhatsApp</button><button class="btn secondary" onclick="testWhatsAppNotification()">Kirim Pesan Tes</button><button class="btn ghost" onclick="loadWhatsAppSettings(true)">Muat Status</button></div>
+            <div id="waNotifyInfo" class="small muted" style="margin-top:10px">Belum diperiksa.</div>
+          </div>
           <div class="card span12" id="calendarSettingsCard" data-owner-only="1">
             <div class="row between wrap"><div><h2 style="margin:0">Google Calendar</h2><div class="small muted">Sinkronisasi berjalan di background agar CRUD RUMA tetap cepat.</div></div><span id="calendarStatusBadge" class="badge gray">Belum aktif</span></div>
             <div class="grid" style="margin-top:12px">
@@ -346,6 +359,7 @@
               <div class="statusbox"><b>AI</b><div id="stAI" class="statusvalue">-</div></div>
               <div class="statusbox"><b>Foto Struk</b><div id="stReceipt" class="statusvalue">-</div></div>
               <div class="statusbox"><b>Notifikasi Email</b><div id="stEmail" class="statusvalue">-</div></div>
+              <div class="statusbox"><b>WhatsApp / Fonnte</b><div id="stWhatsApp" class="statusvalue">Belum diperiksa</div></div>
               <div class="statusbox"><b>Google Calendar</b><div id="stCalendar" class="statusvalue">-</div></div>
               <div class="statusbox"><b>Sinkronisasi</b><div id="stSync" class="statusvalue">-</div></div>
               <div class="statusbox"><b>Versi</b><div id="stVersion" class="statusvalue">-</div></div>
@@ -388,7 +402,8 @@
 <script>
 const C = window.RUMA_CONFIG || {};
 const API_URL = (C.API_URL || '').trim();
-const VERSION = '3.2.6';
+const NOTIFY_API_URL = (C.NOTIFY_API_URL || '').trim();
+const VERSION = '3.3.0';
 const RUMA_BUILD_VERSION = VERSION;
 const CACHE_TTL = Number(C.CACHE_TTL_MS || 300000);
 const BG_SYNC_MS = Number(C.BACKGROUND_SYNC_MS || 120000);
@@ -401,6 +416,9 @@ const ASSISTANT_CONTEXT_KEY='ruma_assistant_context_v3';
 const DEVICE_ID=localStorage.getItem(DEVICE_KEY)||id('DEV');
 localStorage.setItem(DEVICE_KEY,DEVICE_ID);
 const PERSONAL_THEME_PREFIX='ruma_personal_theme_';
+const WHATSAPP_NOTIFY_CACHE_PREFIX='ruma_whatsapp_notify_v1_';
+const NOTIFY_BRIDGE={frame:null,ready:false,booting:false,pending:new Map(),listener:false,failures:0};
+let WHATSAPP_NOTIFY={loaded:false,loading:false,enabled:false,phone:'',task:true,event:true,bill:true,general:true,minScore:65,service:{configured:false,trigger:false,pending:0,failed:0,lastSentAt:'',lastRunAt:'',lastError:''}};
 let CONN={online:navigator.onLine,backend:null,latency:null,lastSync:0,lastError:'',checking:false,pendingWrites:0,activeSessions:0,fastStatusAt:0};
 let syncTimer=null;
 const AI_CACHE=new Map();
@@ -716,7 +734,7 @@ function renderAll(){
   renderTodayBills();
   renderHistory();
   document.getElementById('aiStatus').textContent=S.settings.aiConfigured?(S.settings.aiProvider+' · '+S.settings.aiModel):'Belum dikonfigurasi';
-  document.getElementById('setAiProvider').value=S.settings.aiProvider||'GEMINI';document.getElementById('setAiModel').value=S.settings.aiModel||'gemini-3.6-flash';const rm=document.getElementById('setReceiptModel'),rv=S.settings.receiptModel||'gemini-3.5-flash-lite';if(rm){rm.value=[...rm.options].some(o=>o.value===rv)?rv:'gemini-3.5-flash-lite';}document.getElementById('setEmailEnabled').checked=S.settings.emailEnabled!==false;document.getElementById('setEmailBill').checked=S.settings.emailBill!==false;document.getElementById('setEmailTask').checked=S.settings.emailTask!==false;document.getElementById('setEmailEvent').checked=S.settings.emailEvent!==false;document.getElementById('setEmailHour').value=Number(S.settings.emailHour??7);fillCalendarSettings();fillPersonalSettings();applySettingsRoleVisibility();applyTheme(personalTheme());renderStartGuide();
+  document.getElementById('setAiProvider').value=S.settings.aiProvider||'GEMINI';document.getElementById('setAiModel').value=S.settings.aiModel||'gemini-3.6-flash';const rm=document.getElementById('setReceiptModel'),rv=S.settings.receiptModel||'gemini-3.5-flash-lite';if(rm){rm.value=[...rm.options].some(o=>o.value===rv)?rv:'gemini-3.5-flash-lite';}document.getElementById('setEmailEnabled').checked=S.settings.emailEnabled!==false;document.getElementById('setEmailBill').checked=S.settings.emailBill!==false;document.getElementById('setEmailTask').checked=S.settings.emailTask!==false;document.getElementById('setEmailEvent').checked=S.settings.emailEvent!==false;document.getElementById('setEmailHour').value=Number(S.settings.emailHour??7);fillCalendarSettings();fillPersonalSettings();fillWhatsAppSettings();applySettingsRoleVisibility();applyTheme(personalTheme());renderStartGuide();
   document.getElementById('dbInfo').textContent=(S.settings.databaseName||'RUMA Database')+' · '+(S.settings.spreadsheetId||'');updateConnectionUI();renderNotificationBadge();renderProactiveInsights();renderPushStatus();
   renderMoneyOverview();renderAccounts();renderTransactions();renderBudgets();renderBills();renderGoals();renderTasks();renderEvents();renderActivities();renderCalendar();renderTargets();renderShopping();renderNotes();renderUsers();if(!CHAT_BUSY)renderChatHistory();
 }
@@ -1059,8 +1077,8 @@ function goPage(p,b){document.body.classList.toggle('chat-mode',p==='ai');docume
 function exitChat(){goPage('today',document.querySelector('.navbtn[data-page="today"]'))}
 function moneyTab(p,b){['overview','transactions','accounts','budgets','bills','goals'].forEach(x=>document.getElementById('money-'+x).classList.toggle('hidden',x!==p));b.parentElement.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active')}
 function planTab(p,b){['activities','calendar','targets'].forEach(x=>document.getElementById('plan-'+x)?.classList.toggle('hidden',x!==p));b?.parentElement?.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));if(b)b.classList.add('active');if(p==='calendar')renderCalendar();else if(p==='targets')renderTargets();else renderActivities()}
-function moreTab(p,b){['shopping','notes','history','settings'].forEach(x=>document.getElementById('more-'+x).classList.toggle('hidden',x!==p));b.parentElement.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active')}
-function openSettings(){goPage('more',document.querySelector('.navbtn[data-page="more"]'));const btn=[...document.querySelectorAll('#page-more .tab')].find(x=>x.textContent.includes('Pengaturan'));moreTab('settings',btn);applySettingsRoleVisibility();fillPersonalSettings();if(S.user&&S.user.role==='OWNER')setTimeout(()=>{checkSystemStatus(false,true);loadLanguageLearningUI(false)},80)}
+function moreTab(p,b){['shopping','notes','history','settings'].forEach(x=>document.getElementById('more-'+x).classList.toggle('hidden',x!==p));b.parentElement.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');if(p==='settings'){fillWhatsAppSettings();setTimeout(()=>loadWhatsAppSettings(false).catch(()=>{}),60)}}
+function openSettings(){goPage('more',document.querySelector('.navbtn[data-page="more"]'));const btn=[...document.querySelectorAll('#page-more .tab')].find(x=>x.textContent.includes('Pengaturan'));moreTab('settings',btn);applySettingsRoleVisibility();fillPersonalSettings();fillWhatsAppSettings();setTimeout(()=>loadWhatsAppSettings(false).catch(()=>{}),60);if(S.user&&S.user.role==='OWNER')setTimeout(()=>{checkSystemStatus(false,true);loadLanguageLearningUI(false)},80)}
 function closeModal(){document.getElementById('modal').classList.add('hidden')}
 function modal(title,html){document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').innerHTML=html;document.getElementById('modal').classList.remove('hidden')}
 function accountOptions(sel=''){const active=S.accounts.filter(a=>a.active!==false&&(a.canEdit||a.scope==='JOINT'||a.ownerId===S.user.id));let out=active.map(a=>`<option value="${a.id}" ${a.id===sel?'selected':''}>${esc(a.name)} · ${esc(a.scope)}</option>`).join('');const old=sel&&S.accounts.find(a=>a.id===sel&&a.active===false);if(old)out=`<option value="${old.id}" selected>${esc(old.name)} · ARSIP</option>`+out;return out}
@@ -1836,6 +1854,37 @@ function saveUser(i){const p={id:i,name:formVal('mUserName'),email:formVal('mUse
 
 function saveSystemSettings(){if(!S.user||S.user.role!=='OWNER')return toast('Hanya Owner yang dapat mengubah AI dan Foto Struk.',true);const p={aiProvider:formVal('setAiProvider'),aiModel:formVal('setAiModel'),aiKey:formVal('setAiKey'),receiptModel:formVal('setReceiptModel'),geminiVisionKey:formVal('setGeminiVisionKey')};S.settings={...S.settings,aiProvider:p.aiProvider,aiModel:p.aiModel,receiptModel:p.receiptModel};document.getElementById('setAiKey').value='';document.getElementById('setGeminiVisionKey').value='';persistSnapshot();renderAll();api('settings.save',p).then(r=>{if(r&&r.receiptConfigured)S.settings.receiptConfigured=true;updateConnectionUI();toast('Pengaturan disimpan');scheduleSync(300)}).catch(e=>toast(e.message,true))}
 function saveNotificationSettings(){const p={enabled:checked('setEmailEnabled'),bill:checked('setEmailBill'),task:checked('setEmailTask'),event:checked('setEmailEvent'),hour:Number(formVal('setEmailHour')||7)};S.settings={...S.settings,emailEnabled:p.enabled,emailBill:p.bill,emailTask:p.task,emailEvent:p.event,emailHour:p.hour};persistSnapshot();updateConnectionUI();api('notifications.save',p).then(()=>{toast('Notifikasi email disimpan ✓');setTimeout(()=>checkSystemStatus(false),250)}).catch(e=>toast(e.message,true))}
+
+function whatsappNotifyCacheKey(){return WHATSAPP_NOTIFY_CACHE_PREFIX+(S.user?.id||'guest')}
+function readWhatsAppNotifyCache(){if(!S.user)return null;try{const x=JSON.parse(localStorage.getItem(whatsappNotifyCacheKey())||'null');return x&&typeof x==='object'?x:null}catch(e){return null}}
+function writeWhatsAppNotifyCache(){if(!S.user)return;try{localStorage.setItem(whatsappNotifyCacheKey(),JSON.stringify({...WHATSAPP_NOTIFY,cachedAt:Date.now()}))}catch(e){}}
+function hydrateWhatsAppNotifyCache(){if(WHATSAPP_NOTIFY.loaded||!S.user)return;const c=readWhatsAppNotifyCache();if(c)WHATSAPP_NOTIFY={...WHATSAPP_NOTIFY,...c,loading:false};}
+function fillWhatsAppSettings(){
+  if(!S.user)return;hydrateWhatsAppNotifyCache();const by=id=>document.getElementById(id),enabled=by('setWaEnabled'),phone=by('setWaPhone');if(!enabled||!phone)return;
+  enabled.checked=!!WHATSAPP_NOTIFY.enabled;phone.value=WHATSAPP_NOTIFY.phone||'';by('setWaTask').checked=WHATSAPP_NOTIFY.task!==false;by('setWaEvent').checked=WHATSAPP_NOTIFY.event!==false;by('setWaBill').checked=WHATSAPP_NOTIFY.bill!==false;by('setWaGeneral').checked=WHATSAPP_NOTIFY.general!==false;
+  const badge=by('waNotifyBadge'),info=by('waNotifyInfo'),sys=by('stWhatsApp'),svc=WHATSAPP_NOTIFY.service||{},configured=!!NOTIFY_API_URL&&svc.configured!==false,active=WHATSAPP_NOTIFY.enabled&&configured&&svc.fonnteConfigured!==false;
+  if(badge){badge.className='badge '+(active?'ok':configured?'warn':'gray');badge.textContent=active?'Aktif':configured?'Siap · nonaktif':'Belum terhubung'}
+  const bits=[];if(!NOTIFY_API_URL)bits.push('Tambahkan NOTIFY_API_URL di config.js');else{bits.push(svc.trigger===false?'trigger belum aktif':'backend terpisah');if(Number(svc.pending||0))bits.push(Number(svc.pending)+' antre');if(Number(svc.failed||0))bits.push(Number(svc.failed)+' gagal');if(svc.lastSentAt)bits.push('terakhir '+new Date(svc.lastSentAt).toLocaleString('id-ID'));if(svc.lastError)bits.push('⚠ '+svc.lastError)}if(info)info.textContent=bits.join(' · ')||'Backend Notify siap.';if(sys)sys.textContent=bits.join(' · ')||'Belum diperiksa';
+}
+function resetNotifyBridge(){NOTIFY_BRIDGE.ready=false;NOTIFY_BRIDGE.booting=false;NOTIFY_BRIDGE.failures++;try{NOTIFY_BRIDGE.frame?.remove()}catch(e){}NOTIFY_BRIDGE.frame=null;for(const [rid,req] of NOTIFY_BRIDGE.pending){clearTimeout(req.timer);req.reject(new Error('Notify bridge di-reset.'))}NOTIFY_BRIDGE.pending.clear()}
+function initNotifyBridge(){
+  if(!NOTIFY_API_URL||NOTIFY_API_URL.includes('PASTE_')||NOTIFY_BRIDGE.frame)return;
+  if(!NOTIFY_BRIDGE.listener){NOTIFY_BRIDGE.listener=true;window.addEventListener('message',ev=>{const d=ev.data||{};if(!d||d.rumaNotifyBridge!==1)return;if(NOTIFY_BRIDGE.frame&&ev.source!==NOTIFY_BRIDGE.frame.contentWindow)return;if(d.type==='ready'){NOTIFY_BRIDGE.ready=true;NOTIFY_BRIDGE.booting=false;fillWhatsAppSettings();return}if(!d.id)return;const req=NOTIFY_BRIDGE.pending.get(d.id);if(!req)return;NOTIFY_BRIDGE.pending.delete(d.id);clearTimeout(req.timer);if(d.error){req.reject(new Error(String(d.error)));return}const res=d.result;if(res&&res.ok)req.resolve(res.data);else req.reject(new Error((res&&res.error)||'Respons Notify Service tidak valid.'))})}
+  NOTIFY_BRIDGE.booting=true;const f=document.createElement('iframe');f.style.display='none';f.setAttribute('aria-hidden','true');f.src=NOTIFY_API_URL+(NOTIFY_API_URL.includes('?')?'&':'?')+'bridge=1&_='+Date.now();f.onerror=()=>{if(NOTIFY_BRIDGE.frame===f)resetNotifyBridge()};document.body.appendChild(f);NOTIFY_BRIDGE.frame=f;
+}
+async function ensureNotifyBridge(timeout=4500){initNotifyBridge();if(NOTIFY_BRIDGE.ready&&NOTIFY_BRIDGE.frame)return true;const started=Date.now();while(Date.now()-started<timeout){if(NOTIFY_BRIDGE.ready&&NOTIFY_BRIDGE.frame)return true;await sleepMs(70)}resetNotifyBridge();const e=new Error('Backend WhatsApp belum dapat dihubungi. Periksa NOTIFY_API_URL.');e.code='NOTIFY_UNAVAILABLE';throw e}
+async function notifyApi(action,payload={},opts={}){if(!NOTIFY_API_URL)throw new Error('NOTIFY_API_URL belum diisi di config.js.');if(!S.session)throw new Error('Silakan login kembali.');if(!navigator.onLine)throw new Error('Perangkat offline. Pengaturan WhatsApp tidak dapat disinkronkan.');await ensureNotifyBridge();const timeout=Number(opts.timeout||22000);return new Promise((resolve,reject)=>{const rid=id('NTBRG'),timer=setTimeout(()=>{NOTIFY_BRIDGE.pending.delete(rid);const e=new Error('Notify Service timeout. CRUD RUMA tetap aman; coba lagi nanti.');e.code='TIMEOUT';reject(e);setTimeout(()=>resetNotifyBridge(),0)},timeout);NOTIFY_BRIDGE.pending.set(rid,{resolve,reject,timer});try{NOTIFY_BRIDGE.frame.contentWindow.postMessage({rumaNotifyBridge:1,id:rid,action,payload,session:S.session,deviceId:DEVICE_ID},'*')}catch(err){clearTimeout(timer);NOTIFY_BRIDGE.pending.delete(rid);resetNotifyBridge();reject(err)}})}
+async function loadWhatsAppSettings(force=false){
+  if(!S.user)return;if(WHATSAPP_NOTIFY.loading)return;if(!NOTIFY_API_URL){fillWhatsAppSettings();return}
+  const cached=readWhatsAppNotifyCache();if(!force&&WHATSAPP_NOTIFY.loaded&&cached&&Date.now()-Number(cached.cachedAt||0)<120000){fillWhatsAppSettings();return}
+  WHATSAPP_NOTIFY.loading=true;try{const r=await notifyApi('settings.get',{}, {timeout:18000});WHATSAPP_NOTIFY={...WHATSAPP_NOTIFY,...r,loaded:true,loading:false,service:r.service||{}};writeWhatsAppNotifyCache();fillWhatsAppSettings()}catch(e){WHATSAPP_NOTIFY.loading=false;fillWhatsAppSettings();if(force)toast('WhatsApp Notify: '+e.message,true)}
+}
+async function saveWhatsAppSettings(){
+  if(!S.user)return;const p={enabled:checked('setWaEnabled'),phone:formVal('setWaPhone'),task:checked('setWaTask'),event:checked('setWaEvent'),bill:checked('setWaBill'),general:checked('setWaGeneral'),minScore:65},prev={...WHATSAPP_NOTIFY};WHATSAPP_NOTIFY={...WHATSAPP_NOTIFY,...p,loaded:true};writeWhatsAppNotifyCache();fillWhatsAppSettings();
+  try{const r=await notifyApi('settings.save',p,{timeout:22000});WHATSAPP_NOTIFY={...WHATSAPP_NOTIFY,...r,loaded:true};writeWhatsAppNotifyCache();fillWhatsAppSettings();toast('WhatsApp reminder disimpan ✓');setTimeout(()=>loadWhatsAppSettings(true).catch(()=>{}),350)}catch(e){WHATSAPP_NOTIFY=prev;writeWhatsAppNotifyCache();fillWhatsAppSettings();toast('WhatsApp belum tersimpan: '+e.message,true)}
+}
+async function testWhatsAppNotification(){const phone=formVal('setWaPhone')||WHATSAPP_NOTIFY.phone;if(!phone)return toast('Isi nomor WhatsApp terlebih dahulu.',true);try{toast('Mengirim pesan tes WhatsApp…');const r=await notifyApi('test.send',{phone},{timeout:30000});toast('Pesan tes dikirim ke '+(r.to||'WhatsApp')+' ✓');setTimeout(()=>loadWhatsAppSettings(true).catch(()=>{}),350)}catch(e){toast('Tes WhatsApp gagal: '+e.message,true)}}
+
 
 function fillCalendarSettings(){
   const by=id=>document.getElementById(id);if(!by('setCalendarEnabled'))return;
