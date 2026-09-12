@@ -24,3 +24,8 @@ window.RUMA_CONFIG = {
     vapidKey: "BDBiG0ThNzvxi2tmkjl0R_4S_hlGJAy8CGtac-f1IYIR0KB9PiJOP2j974TLR5zW1n5o9P8nBGyScFprem5QtJ0"
   }
 };
+
+ // URL Web App project RUMA Notify Service BARU:
+  NOTIFY_API_URL: 'https://script.google.com/macros/s/AKfycbzkwt5phMJWg3a_Bn2CeokTGwHFgVm89pt7efS80i-1SDfd0cW0v4rx1hiIq8c73o3k/exec'
+};
+
